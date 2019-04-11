@@ -27,29 +27,54 @@ namespace TradingDemoConsole
 			public float TradUSD { get; set; }
 			public float TradBTC { get; set; }
 
+			public Balance balance { get; set; }
+			public Ticker ticker { get; set; }
+
+			public Trading()
+			{
+			}
 
 			public void trading(ref Balance balance, Ticker ticker)
 			{
-				//buy BTC
-				balance.BTC += TradBTC;
-				balance.USD -= TradBTC * ticker.ask;
+				this.ticker = ticker;
 
+				if (oldTicker != null)
+				{
+					if(ticker.ask < oldTicker.ask) buyBTC(ref balance);
 
-				//sel BTC
-				balance.BTC -= TradBTC;
-				balance.USD += TradBTC * ticker.bid;
+					if (ticker.bid > oldTicker.bid) selBTC(ref balance);
+				}
 
 				oldTicker = ticker;
+			}
+
+			public void buyBTC(ref Balance balance)
+			{
+				balance.BTC += TradBTC;
+				balance.USD -= TradBTC * ticker.ask;
+			}
+
+			public void selBTC(ref Balance balance)
+			{
+				balance.BTC -= TradBTC;
+				balance.USD += TradBTC * ticker.bid;
+			}
+
+			public void calcEstimete(ref Balance balance, Ticker ticker)
+			{
+				balance.estimatedUSD = balance.USD + (balance.BTC * ticker.bid);
+				balance.estimatedBTC = balance.BTC + (balance.USD / ticker.ask);
 			}
 		}
 
 		static void printScreen(Balance balance, Stack<float> stack)
 		{
 			Console.Clear();
-			Console.Title = string.Format("BTC/USD {0:0000.000}", stack.Peek());
+			Console.Title = string.Format("BTC/USD {0:0000.000}     Initial estimated USD {1:000.000000}",
+				stack.Peek(), 100.0f + (0.01f * stack.Last<float>()));
 
-			Console.SetCursorPosition(30, 0);
-			Console.WriteLine("Balance USD {0:000.000}", balance.USD);
+			Console.SetCursorPosition(22, 0);
+			Console.WriteLine("Trading balance USD {0:000.000}", balance.USD);
 
 			Console.SetCursorPosition(38, 1);
 			Console.WriteLine("BTC {0:0.00000}", balance.BTC);
@@ -68,14 +93,7 @@ namespace TradingDemoConsole
 			}
 
 		}
-
-		static void calcEstimete(ref Balance b, Ticker t)
-		{
-			b.estimatedUSD = b.USD + (b.BTC * t.ask);
-			b.estimatedBTC = b.BTC + (b.USD / t.bid);
-		}
-
-		
+				
 
 		static void Main(string[] args)
 		{
@@ -101,7 +119,7 @@ namespace TradingDemoConsole
 
 				trading.trading(ref balance, ticker);
 
-				calcEstimete(ref balance, ticker);
+				trading.calcEstimete(ref balance, ticker);
 
 				printScreen(balance, stack);
 				Thread.Sleep(2000);
