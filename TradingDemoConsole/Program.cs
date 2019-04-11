@@ -49,6 +49,11 @@ namespace TradingDemoConsole
 
 		}
 
+		void rading()
+		{
+
+		}
+
 		static void Main(string[] args)
 		{
 			Balance balance = new Balance();
