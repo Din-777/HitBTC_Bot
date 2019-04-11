@@ -20,8 +20,28 @@ namespace TradingDemoConsole
 			public float estimatedBTC;
 		}
 
-		float tradUSD = 1.0f;
-		float tradBTC = 0.0001f;
+		public class Trading
+		{
+			private static Ticker oldTicker;
+
+			public float TradUSD { get; set; }
+			public float TradBTC { get; set; }
+
+
+			public void trading(ref Balance balance, Ticker ticker)
+			{
+				//buy BTC
+				balance.BTC += TradBTC;
+				balance.USD -= TradBTC * ticker.ask;
+
+
+				//sel BTC
+				balance.BTC -= TradBTC;
+				balance.USD += TradBTC * ticker.bid;
+
+				oldTicker = ticker;
+			}
+		}
 
 		static void printScreen(Balance balance, Stack<float> stack)
 		{
@@ -36,10 +56,10 @@ namespace TradingDemoConsole
 
 
 			Console.SetCursorPosition(55, 0);
-			Console.WriteLine("Estimated USD {0:000.000}", balance.estimatedUSD);
+			Console.WriteLine("Estimated USD {0:000.000000}", balance.estimatedUSD);
 
 			Console.SetCursorPosition(65, 1);
-			Console.WriteLine("BTC {0:0.00000}", balance.estimatedBTC);
+			Console.WriteLine("BTC {0:0.00000000}", balance.estimatedBTC);
 
 			for (int i = 0; i < 20; i++)
 			{
@@ -55,11 +75,7 @@ namespace TradingDemoConsole
 			b.estimatedBTC = b.BTC + (b.USD / t.bid);
 		}
 
-		static void trading(ref Balance b, Ticker t)
-		{
-			float oldAsk;
-			oldAsk = t.ask;
-		}
+		
 
 		static void Main(string[] args)
 		{
@@ -67,16 +83,23 @@ namespace TradingDemoConsole
 			Ticker ticker = new Ticker();
 			HBTC hitBtc = new HBTC();
 			Stack<float> stack = new Stack<float>();
+			Trading trading = new Trading();
 
 			balance.USD = 100.0f;
 			balance.BTC = 0.01f;
+
+			float tradUSD = 1.0f;
+			float tradBTC = 0.0001f;
+
+			trading.TradUSD = tradUSD;
+			trading.TradBTC = tradBTC;
 
 			while (true)
 			{
 				string respons = hitBtc.Request(out ticker, Pair.BTCUSD);
 				stack.Push(Convert.ToSingle(ticker.ask));
 
-				trading(ref balance, ticker);
+				trading.trading(ref balance, ticker);
 
 				calcEstimete(ref balance, ticker);
 
