@@ -85,6 +85,13 @@ namespace TradingDemoConsole
 				}
 				else
 				{	
+
+					var v = from d in OpenDeals
+							where d.tred == "buy"
+							where d.price > ticker.bid
+							select d;
+
+
 					foreach (Dealing d in OpenDeals)
 					{
 						if(d.tred == "buy")
