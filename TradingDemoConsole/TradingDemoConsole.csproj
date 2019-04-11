@@ -4,11 +4,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{46AEA94D-50DC-47F4-9748-8D5C56DC36E4}</ProjectGuid>
+    <ProjectGuid>{88D6B754-DF30-479B-AF50-A2F2487EF5ED}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>HitBTC_Bot_v0._02</RootNamespace>
-    <AssemblyName>HitBTC_Bot_v0.02</AssemblyName>
+    <RootNamespace>TradingDemoConsole</RootNamespace>
+    <AssemblyName>TradingDemoConsole</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -48,6 +48,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\HitBTC\HitBTC.csproj">
+      <Project>{88ce0c74-eece-4787-b726-ad4c3185735b}</Project>
+      <Name>HitBTC</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

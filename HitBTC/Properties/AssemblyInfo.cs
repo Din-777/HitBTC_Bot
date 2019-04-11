@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // Управление общими сведениями о сборке осуществляется с помощью 
 // набора атрибутов. Измените значения этих атрибутов, чтобы изменить сведения,
 // связанные со сборкой.
-[assembly: AssemblyTitle("HitBTC_Bot_v0.02")]
+[assembly: AssemblyTitle("HitBTC")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Microsoft")]
-[assembly: AssemblyProduct("HitBTC_Bot_v0.02")]
+[assembly: AssemblyProduct("HitBTC")]
 [assembly: AssemblyCopyright("Copyright © Microsoft 2019")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // Следующий GUID служит для идентификации библиотеки типов, если этот проект будет видимым для COM
-[assembly: Guid("46aea94d-50dc-47f4-9748-8d5c56dc36e4")]
+[assembly: Guid("88ce0c74-eece-4787-b726-ad4c3185735b")]
 
 // Сведения о версии сборки состоят из следующих четырех значений:
 //
