@@ -23,35 +23,42 @@ namespace TradingDemoConsole
 		float tradUSD = 1.0f;
 		float tradBTC = 0.0001f;
 
-		static void printScreen(Stack<float> stack, Balance balance)
+		static void printScreen(Balance balance, Stack<float> stack)
 		{
 			Console.Clear();
-			Console.Title = string.Format("BTC/USD {0:0000.00}", stack.Peek());
+			Console.Title = string.Format("BTC/USD {0:0000.000}", stack.Peek());
 
 			Console.SetCursorPosition(30, 0);
-			Console.WriteLine("Balance USD {0:00.000}", balance.estimatedUSD);
+			Console.WriteLine("Balance USD {0:000.000}", balance.USD);
 
 			Console.SetCursorPosition(38, 1);
-			Console.WriteLine("BTC {0:0.0000}", balance.estimatedBTC);
+			Console.WriteLine("BTC {0:0.00000}", balance.BTC);
 
 
 			Console.SetCursorPosition(55, 0);
-			Console.WriteLine("Estimated USD {0:00.000}", balance.estimatedUSD);
+			Console.WriteLine("Estimated USD {0:000.000}", balance.estimatedUSD);
 
 			Console.SetCursorPosition(65, 1);
-			Console.WriteLine("BTC {0:0.0000}", balance.estimatedBTC);
+			Console.WriteLine("BTC {0:0.00000}", balance.estimatedBTC);
 
 			for (int i = 0; i < 20; i++)
 			{
 				Console.SetCursorPosition(0, i);
-				Console.Write("{0:00.000}", stack.ElementAtOrDefault<float>(i));
+				Console.Write("{0:0000.000}", stack.ElementAtOrDefault<float>(i));
 			}
 
 		}
 
-		void trading()
+		static void calcEstimete(ref Balance b, Ticker t)
 		{
+			b.estimatedUSD = b.USD + (b.BTC * t.ask);
+			b.estimatedBTC = b.BTC + (b.USD / t.bid);
+		}
 
+		static void trading(ref Balance b, Ticker t)
+		{
+			float oldAsk;
+			oldAsk = t.ask;
 		}
 
 		static void Main(string[] args)
@@ -62,14 +69,18 @@ namespace TradingDemoConsole
 			Stack<float> stack = new Stack<float>();
 
 			balance.USD = 100.0f;
-			balance.BTC = 0.001f;
+			balance.BTC = 0.01f;
 
 			while (true)
 			{
 				string respons = hitBtc.Request(out ticker, Pair.BTCUSD);
 				stack.Push(Convert.ToSingle(ticker.ask));
 
-				printScreen(stack, balance);
+				trading(ref balance, ticker);
+
+				calcEstimete(ref balance, ticker);
+
+				printScreen(balance, stack);
 				Thread.Sleep(2000);
 
 			}

@@ -162,14 +162,14 @@ namespace HitBTC
 
 	public class Ticker
 	{
-		public float? ask { get; set; }
-		public float? bid { get; set; }
-		public float? last { get; set; }
-		public float? open { get; set; }
-		public float? low { get; set; }
-		public float? high { get; set; }
-		public float? volume { get; set; }
-		public float? volumeQuote { get; set; }
+		public float ask { get; set; }
+		public float bid { get; set; }
+		public float last { get; set; }
+		public float open { get; set; }
+		public float low { get; set; }
+		public float high { get; set; }
+		public float volume { get; set; }
+		public float volumeQuote { get; set; }
 		public DateTime timestamp { get; set; }
 		public string symbol { get; set; }
 	}
