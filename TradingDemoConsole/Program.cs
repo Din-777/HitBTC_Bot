@@ -49,7 +49,7 @@ namespace TradingDemoConsole
 
 		}
 
-		void rading()
+		void trading()
 		{
 
 		}
@@ -62,6 +62,7 @@ namespace TradingDemoConsole
 			Stack<float> stack = new Stack<float>();
 
 			balance.USD = 100.0f;
+			balance.BTC = 0.001f;
 
 			while (true)
 			{
