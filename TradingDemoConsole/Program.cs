@@ -9,6 +9,7 @@ using HitBTC;
 
 namespace TradingDemoConsole
 {
+	//123
 	class Program
 	{
 		public class Dealing
