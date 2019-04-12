@@ -32,10 +32,12 @@ namespace Temp
 			balance.OpenOrders = new List<Dealing>();
 
 			balance.OpenOrders.Add(new Dealing("buy", 1.0f));
-			balance.OpenOrders.Add(new Dealing("sel", 2.0f));
+			balance.OpenOrders.Add(new Dealing("buy", 2.0f));
 			balance.OpenOrders.Add(new Dealing("buy", 3.0f));
-			balance.OpenOrders.Add(new Dealing("sel", 4.0f));
+			balance.OpenOrders.Add(new Dealing("buy", 4.0f));
 			balance.OpenOrders.Add(new Dealing("buy", 5.0f));
+
+			bool res = balance.OpenOrders.Any(t => t.tred == "sel");
 
 			float price = 3.0f;
 			balance.OpenOrders = (  from openOperder in balance.OpenOrders

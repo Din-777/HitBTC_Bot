@@ -37,6 +37,8 @@ namespace HitBTC
 		static public string DASHBTC { get { return "DASHBTC"; } }
 		static public string DOGEBTC { get { return "DOGEBTC"; } }
 
+		static public string TNTUSD { get { return "TNTUSD"; } }
+
 
 		static public string BTCUSD { get { return "BTCUSD"; } }
 		static public string BCCUSD { get { return "BCCUSD"; } }
@@ -67,6 +69,7 @@ namespace HitBTC
         "max":"0.030353",
         "volume":"662.744",
         "volumeQuote":"19.907778902 */
+
 		public DateTime timestamp { get; set; }
 		public float open { get; set; }
 		public float close { get; set; }
@@ -193,7 +196,6 @@ namespace HitBTC
 		public float quantity { get; set; }
 		public string side { get; set; }
 		public DateTime timestamp { get; set; }
-
 	}
 
 
