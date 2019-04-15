@@ -11,7 +11,6 @@ namespace TradingDemoConsole
 {
 	class Program
 	{
-
 		public class Dealing
 		{
 			public string tred { get; set; } // "buy" "sel"
@@ -180,7 +179,6 @@ namespace TradingDemoConsole
 				balance.estimatedBTC = balance.BTC + (balance.USD / ticker.ask);
 			}
 		}
-
 
 		static void printScreen(Balance balance, Stack<float> prices)
 		{
