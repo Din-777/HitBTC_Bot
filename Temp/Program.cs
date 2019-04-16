@@ -33,6 +33,8 @@ namespace Temp
 		public float closePrice { get; set; }
 		public float amount { get; set; }
 
+		public Order() { }
+
 		public Order(string tred, float openPrice, float amount, float closePrice)
 		{
 			this.tred = tred;
@@ -46,7 +48,11 @@ namespace Temp
 	{
 		public float loss { get; set; }
 		public float prof { get; set; }
-
+		
+		public Orders(ref int ticker)
+		{
+			
+		}
 
 		new public void Add(Order item)
 		{
@@ -58,13 +64,24 @@ namespace Temp
 			base.RemoveAt(index);
 		}
 
-		private void lossProfUpdate()
+		public void lossProfUpdate(int x)
 		{
-			
+			foreach(Order o in this)
+			{
+				if (o.tred == "sel")
+				{
+					prof += (x - o.openPrice) * o.amount;
+					
+				}
+				if (o.tred == "buy")
+				{
+					prof += (o.openPrice - x) * o.amount; 
+				}
+			}	
 		}
 	}
 
-	public struct Balance
+	public class Balance
 	{
 		public float USD;
 		public float BTC;
@@ -73,7 +90,12 @@ namespace Temp
 		public float estimatedBTC;
 
 		public Stack<Dealing> Deals;
-		public List<Dealing> OpenOrders;
+		public Orders Orders;
+
+		public void Update(int x)
+		{
+			Orders.lossProfUpdate(x);
+		}
 	}
 
 
@@ -81,22 +103,20 @@ namespace Temp
 	{
 		static void Main(string[] args)
 		{
+			int x = 1;
 			Balance balance = new Balance();
-			balance.OpenOrders = new Dealings();
+			balance.Orders = new Orders(ref x);
+			balance.Deals = new Stack<Dealing>();
 
-			balance.OpenOrders.Add(new Dealing("buy", 1.0f, 0.0f));
-			balance.OpenOrders.Add(new Dealing("buy", 2.0f, 0.0f));
-			balance.OpenOrders.Add(new Dealing("buy", 3.0f, 0.0f));
-			balance.OpenOrders.Add(new Dealing("bay", 4.0f, 0.0f));
-			balance.OpenOrders.RemoveAt(0);
+			balance.Orders.Add(new Order { tred = "buy", openPrice = 0.0f, amount = 0.0f, closePrice = 0.0f });
+			balance.Orders.Add(new Order { tred = "buy", openPrice = 0.0f, amount = 0.0f, closePrice = 0.0f });
+			balance.Orders.Add(new Order { tred = "buy", openPrice = 0.0f, amount = 0.0f, closePrice = 0.0f });
+			balance.Orders.Add(new Order { tred = "buy", openPrice = 0.0f, amount = 0.0f, closePrice = 0.0f });
+			balance.Orders.RemoveAt(0);
 
+			balance.Update(x);
 
-			Console.ReadLine();
-		}
-
-		private static void OpenOrdersEvents()
-		{
-			Console.WriteLine("asdf");
+			//Console.ReadLine();
 		}
 	}
 
