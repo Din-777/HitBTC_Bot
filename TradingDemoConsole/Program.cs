@@ -156,7 +156,20 @@ namespace TradingDemoConsole
 						}
 					}
 
-					if (balance.Orders.Count == 0)
+					if (!balance.Orders.Any(t => t.tred == "sel"))
+					{
+						//selBTC(ref balance, TradBTC);
+
+						balance.Orders.Add(new Order
+						{
+							tred = "sel",
+							openPrice = ticker.ask,
+							amount = TradBTC * 1,
+							closePrice = ticker.ask + ticker.ask.Percent(Fee)
+						});
+					}
+
+					if (!balance.Orders.Any(t => t.tred == "buy"))
 					{
 						//buyBTC(ref balance, TradBTC);
 
@@ -168,15 +181,6 @@ namespace TradingDemoConsole
 							closePrice = ticker.bid - ticker.bid.Percent(Fee)
 						});
 					}
-
-					/*if (!balance.OpenOrders.Any(t => t.tred == "buy"))
-					{
-						selBTC(ref balance, TradBTC * 6);
-
-						balance.OpenOrders.Add(new Dealing("buy", ticker.ask - ticker.ask.Percent(Fee * 3), TradBTC * 1));
-						balance.OpenOrders.Add(new Dealing("buy", ticker.ask - ticker.ask.Percent(Fee * 2), TradBTC * 2));
-						balance.OpenOrders.Add(new Dealing("buy", ticker.ask - ticker.ask.Percent(Fee * 1), TradBTC * 3));
-					}*/
 				}
 
 				oldTicker = ticker;
@@ -291,17 +295,22 @@ namespace TradingDemoConsole
 
 			float fee = 0.001f;
 			float tradUSD = 1.0f;
-			float tradBTC = 0.01f;
+			float tradBTC = 0.001f;
 			
 			trading.Fee = fee;
 			trading.TradUSD = tradUSD;
 			trading.TradBTC = tradBTC;
 
+			float price = 0.0f;
+			float lastPrice = 0.0f;
 
 			while (true)
 			{
 				string respons = hitBtc.Request(out ticker, Pair.BTCUSD);
-				prices.Push(Convert.ToSingle(ticker.last));
+
+				price = Convert.ToSingle(ticker.last);
+
+				if (price != lastPrice) prices.Push(price);
 
 				trading.trading_3(ref balance, ticker);
 
@@ -309,6 +318,8 @@ namespace TradingDemoConsole
 
 				printScreen(balance, prices);
 				Thread.Sleep(500);
+
+				lastPrice = price;
 			}
 
 			Console.ReadKey();
