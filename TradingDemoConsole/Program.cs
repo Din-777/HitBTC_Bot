@@ -30,6 +30,9 @@ namespace TradingDemoConsole
 		{
 			public float USD;
 			public float BTC;
+			
+			public float loss { get; set; }
+			public float prof { get; set; }
 
 			public float estimatedUSD;
 			public float estimatedBTC;
@@ -54,78 +57,22 @@ namespace TradingDemoConsole
 
 			}
 
-			public void trading_1(ref Balance balance, Ticker ticker)
-			{
-				this.ticker = ticker;
-
-				if (oldTicker != null)
-				{
-					if(ticker.ask < oldTicker.ask) buyBTC(ref balance, TradBTC);
-
-					if (ticker.bid > oldTicker.bid) selBTC(ref balance, TradBTC);
-				}
-
-				oldTicker = ticker;
-			}
-			
-			public void trading_2(ref Balance balance, Ticker ticker)
-			{
-				this.ticker = ticker;
-
-				if (oldTicker == null)
-				{
-					buyBTC(ref balance, TradBTC);
-					balance.OpenOrders.Add(new Dealing("buy", ticker.ask, TradBTC / 3));
-					balance.Deals.Push(new Dealing("buy", ticker.ask, TradBTC / 3));
-
-					selBTC(ref balance, TradBTC);
-					balance.OpenOrders.Add(new Dealing("sel", ticker.bid, TradBTC / 3));
-					balance.Deals.Push(new Dealing("sel", ticker.bid, TradBTC / 3));
-				}
-				else
-				{
-					for(int i = 0; i < balance.OpenOrders.Count; i ++)
-					{
-						if(balance.OpenOrders[i].tred == "buy")
-						{
-							if (ticker.bid > balance.OpenOrders[i].price)
-							{
-								selBTC(ref balance, TradBTC);
-								balance.OpenOrders.RemoveAt(i);
-								balance.OpenOrders.Add(new Dealing("sel", ticker.bid, TradBTC / 3));
-							}
-						}
-						if (balance.OpenOrders[i].tred == "sel")
-						{
-							if (ticker.ask < balance.OpenOrders[i].price)
-							{
-								buyBTC(ref balance, TradBTC);
-								balance.OpenOrders.RemoveAt(i);
-								balance.OpenOrders.Add(new Dealing("buy", ticker.ask, TradBTC / 3));
-							}
-						}
-					}
-				}
-
-				oldTicker = ticker;
-			}
-
 			public void trading_3(ref Balance balance, Ticker ticker)
 			{
 				this.ticker = ticker;
 
 				if (oldTicker == null)
 				{
-					buyBTC(ref balance, TradBTC * 6);
+					buyBTC(ref balance, TradBTC);
 
 					balance.OpenOrders.Add(new Dealing("sel", ticker.bid + ticker.bid.Percent(Fee*3), TradBTC * 1));
-					balance.OpenOrders.Add(new Dealing("sel", ticker.bid + ticker.bid.Percent(Fee*2), TradBTC * 2));
-					balance.OpenOrders.Add(new Dealing("sel", ticker.bid + ticker.bid.Percent(Fee*1), TradBTC * 3));
+					//balance.OpenOrders.Add(new Dealing("sel", ticker.bid + ticker.bid.Percent(Fee*2), TradBTC * 2));
+					//balance.OpenOrders.Add(new Dealing("sel", ticker.bid + ticker.bid.Percent(Fee*1), TradBTC * 3));
 
 					selBTC(ref balance, TradBTC);
 					balance.OpenOrders.Add(new Dealing("buy", ticker.ask - ticker.ask.Percent(Fee*3), TradBTC * 1));
-					balance.OpenOrders.Add(new Dealing("buy", ticker.ask - ticker.ask.Percent(Fee*2), TradBTC * 2));
-					balance.OpenOrders.Add(new Dealing("buy", ticker.ask - ticker.ask.Percent(Fee*1), TradBTC * 3));
+					//balance.OpenOrders.Add(new Dealing("buy", ticker.ask - ticker.ask.Percent(Fee*2), TradBTC * 2));
+					//balance.OpenOrders.Add(new Dealing("buy", ticker.ask - ticker.ask.Percent(Fee*1), TradBTC * 3));
 				}
 				else
 				{
@@ -145,17 +92,13 @@ namespace TradingDemoConsole
 							{
 								buyBTC(ref balance, balance.OpenOrders[i].amount);
 								balance.OpenOrders.RemoveAt(i);
-
-								balance.OpenOrders.Add(new Dealing("sel", ticker.bid + ticker.bid.Percent(Fee*3), TradBTC * 1));
-								balance.OpenOrders.Add(new Dealing("sel", ticker.bid + ticker.bid.Percent(Fee*2), TradBTC * 2));
-								balance.OpenOrders.Add(new Dealing("sel", ticker.bid + ticker.bid.Percent(Fee*1), TradBTC * 3));
 							}
 						}
 					}
 
-					if (!balance.OpenOrders.Any(t => t.tred == "sel"))
+					/*if (!balance.OpenOrders.Any(t => t.tred == "sel"))
 					{
-						//buyBTC(ref balance, TradBTC * 6);
+						buyBTC(ref balance, TradBTC * 6);
 
 						balance.OpenOrders.Add(new Dealing("sel", ticker.bid + ticker.bid.Percent(Fee * 3), TradBTC * 1));
 						balance.OpenOrders.Add(new Dealing("sel", ticker.bid + ticker.bid.Percent(Fee * 2), TradBTC * 2));
@@ -164,12 +107,12 @@ namespace TradingDemoConsole
 
 					if (!balance.OpenOrders.Any(t => t.tred == "buy"))
 					{
-						//selBTC(ref balance, TradBTC);
+						selBTC(ref balance, TradBTC * 6);
 
 						balance.OpenOrders.Add(new Dealing("buy", ticker.ask - ticker.ask.Percent(Fee * 3), TradBTC * 1));
 						balance.OpenOrders.Add(new Dealing("buy", ticker.ask - ticker.ask.Percent(Fee * 2), TradBTC * 2));
 						balance.OpenOrders.Add(new Dealing("buy", ticker.ask - ticker.ask.Percent(Fee * 1), TradBTC * 3));
-					}
+					}*/
 				}
 
 				oldTicker = ticker;
@@ -203,6 +146,8 @@ namespace TradingDemoConsole
 			int column_3 = 30;	// Open orders
 			int column_4 = 47;	// Trad balance
 			int column_5 = 65;  // Estim balance
+
+			Console.CursorVisible = false;
 
 			// Сортировка OpenOrder в порядке удаления от текущей цены
 			balance.OpenOrders = (from openOperder in balance.OpenOrders
@@ -282,18 +227,25 @@ namespace TradingDemoConsole
 			balance.USD = 100.0f;
 			balance.BTC = 0.01f;
 
-			float fee = 0.01f;
+			float fee = 0.001f;
 			float tradUSD = 1.0f;
 			float tradBTC = 0.0001f;
+
+			float loss = 0.0001f;
+			float prof = 0.0001f;
 
 			trading.Fee = fee;
 			trading.TradUSD = tradUSD;
 			trading.TradBTC = tradBTC;
 
+			balance.loss = loss;
+			balance.prof = prof;
+
+
 			while (true)
 			{
 				string respons = hitBtc.Request(out ticker, Pair.BTCUSD);
-				prices.Push(Convert.ToSingle(ticker.ask));
+				prices.Push(Convert.ToSingle(ticker.last));
 
 				trading.trading_3(ref balance, ticker);
 
