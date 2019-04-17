@@ -18,14 +18,32 @@ namespace TradingDemoConsole
 			public float closePrice { get; set; }
 			public float amount { get; set; }
 
+			private float stopLossPrice;
+
+			private float stopLossPercent;
+
+			public float StopLossPrice { get; set; }
+
+			public float StopLossPercent
+			{
+				get { return stopLossPercent; }
+				set
+				{
+					stopLossPercent = value;
+					stopLossPrice = tred == "buy" ? openPrice + openPrice.Percent(stopLossPercent) : openPrice - openPrice.Percent(stopLossPercent);
+				}
+			}
+
 			public Order() { }
 
-			public Order(string tred, float openPrice, float amount, float closePrice)
+			public Order(string tred, float openPrice, float amount, float closePrice, float stopLossPercent = 0.0f)
 			{
 				this.tred = tred;
 				this.closePrice = closePrice;
 				this.openPrice = openPrice;
 				this.amount = amount;
+				this.stopLossPercent = stopLossPercent;
+				this.stopLossPrice = tred == "buy" ? openPrice + openPrice.Percent(stopLossPercent) : openPrice - openPrice.Percent(stopLossPercent);
 			}
 		}
 
@@ -53,14 +71,16 @@ namespace TradingDemoConsole
 			public string tred { get; set; } // "buy" "sel"
 			public float price { get; set; }
 			public float amount { get; set; }
+			public float profit { get; set; }
 
 			public Dealing() { }
 
-			public Dealing(string tred, float price, float amount = 0.0f)
+			public Dealing(string tred, float price, float amount = 0.0f, float profit = 0.0f)
 			{
 				this.tred = tred;
 				this.price = price;
 				this.amount = amount;
+				this.profit = profit;
 			}
 
 		}
@@ -101,13 +121,15 @@ namespace TradingDemoConsole
 			private static Ticker oldTicker;
 
 			public float Fee { get; set; }
+			public float StopLossPercent { get; set; }
+
 			public float TradUSD { get; set; }
 			public float TradBTC { get; set; }
 
 			public Balance balance { get; set; }
 			public Ticker ticker { get; set; }
 
-			public Trading(){}
+			public Trading() { }
 
 			public void trading_3(ref Balance balance, Ticker ticker)
 			{
@@ -122,7 +144,8 @@ namespace TradingDemoConsole
 						tred = "sel",
 						openPrice = ticker.ask,
 						amount = TradBTC * 1,
-						closePrice = ticker.ask + ticker.ask.Percent(Fee)
+						closePrice = ticker.ask + ticker.ask.Percent(Fee),
+						StopLossPercent = StopLossPercent
 					});
 
 					selBTC(ref balance, TradBTC);
@@ -131,7 +154,8 @@ namespace TradingDemoConsole
 						tred = "buy",
 						openPrice = ticker.bid,
 						amount = TradBTC * 1,
-						closePrice = ticker.bid - ticker.bid.Percent(Fee)
+						closePrice = ticker.bid - ticker.bid.Percent(Fee),
+						StopLossPercent = StopLossPercent
 					});
 				}
 				else
@@ -145,12 +169,23 @@ namespace TradingDemoConsole
 								selBTC(ref balance, balance.Orders[i].amount);
 								balance.Orders.RemoveAt(i);
 							}
+							if (ticker.bid < balance.Orders[i].StopLossPrice)
+							{
+								//selBTC(ref balance, balance.Orders[i].amount);
+								balance.Orders.RemoveAt(i);
+							}
+
 						}
 						else
 						{
 							if (ticker.ask < balance.Orders[i].closePrice)
 							{
 								buyBTC(ref balance, balance.Orders[i].amount);
+								balance.Orders.RemoveAt(i);
+							}
+							if (ticker.ask > balance.Orders[i].StopLossPrice)
+							{
+								//buyBTC(ref balance, balance.Orders[i].amount);
 								balance.Orders.RemoveAt(i);
 							}
 						}
@@ -165,7 +200,8 @@ namespace TradingDemoConsole
 							tred = "sel",
 							openPrice = ticker.ask,
 							amount = TradBTC * 1,
-							closePrice = ticker.ask + ticker.ask.Percent(Fee)
+							closePrice = ticker.ask + ticker.ask.Percent(Fee),
+							StopLossPercent = StopLossPercent
 						});
 					}
 
@@ -178,7 +214,8 @@ namespace TradingDemoConsole
 							tred = "buy",
 							openPrice = ticker.bid,
 							amount = TradBTC * 1,
-							closePrice = ticker.bid - ticker.bid.Percent(Fee)
+							closePrice = ticker.bid - ticker.bid.Percent(Fee),
+							StopLossPercent = StopLossPercent
 						});
 					}
 				}
@@ -202,13 +239,14 @@ namespace TradingDemoConsole
 
 		}
 
-		static void printScreen(Balance balance, Stack<float> prices)
+		static void printScreen(Balance balance, Stack<float> prices, Ticker ticker)
 		{
-			int column_1 = 0;   // Prices
-			int column_2 = 14;  // Dealings
-			int column_3 = 30;  // Open orders
-			int column_4 = 47;  // Trad balance
-			int column_5 = 65;  // Estim balance
+			int column_1 = 0;				// Prices
+			int column_2 = 12;				// Dealings
+			int column_3 = column_2 + 15;	// Open orders
+			int column_4 = column_3 + 14;	// Orders profit
+			int column_5 = column_4 + 14;	// Trad balance
+			int column_6 = column_5 + 16;	// Estim balance
 
 			Console.CursorVisible = false;
 
@@ -219,10 +257,12 @@ namespace TradingDemoConsole
 								  Tred = Order.tred,
 								  Price = Order.closePrice,
 								  Amount = Order.amount,
-								  Diff = Math.Abs(Order.closePrice - prices.Peek())
+								  Diff = Math.Abs(Order.closePrice - prices.Peek()),
+								  Profit = Order.tred == "buy" ? (ticker.ask - Order.openPrice) * Order.amount : 
+																	(Order.openPrice - ticker.bid) * Order.amount
 							  }
 							  orderby l.Diff descending
-							  select new Dealing(l.Tred, l.Price, l.Amount)).ToList<Dealing>();
+							  select new Dealing(l.Tred, l.Price, l.Amount, l.Profit)).ToList<Dealing>();
 
 
 			Console.Clear();
@@ -240,22 +280,25 @@ namespace TradingDemoConsole
 			Console.Write("Open order {0}", balance.Orders.Count);
 
 			Console.SetCursorPosition(column_4, 0);
-			Console.WriteLine("Trad balance");
+			Console.Write("Profit");
 
 			Console.SetCursorPosition(column_5, 0);
+			Console.WriteLine("Trad balance");
+
+			Console.SetCursorPosition(column_6, 0);
 			Console.WriteLine("Estim balance");
 
-			Console.SetCursorPosition(column_4, 1);
+			Console.SetCursorPosition(column_5, 1);
 			Console.WriteLine("USD {0:000.000000}", balance.USD);
-			Console.SetCursorPosition(column_4, 2);
+			Console.SetCursorPosition(column_5, 2);
 			Console.WriteLine("BTC {0:0.00000000}", balance.BTC);
 
-			Console.SetCursorPosition(column_5, 1);
+			Console.SetCursorPosition(column_6, 1);
 			Console.WriteLine("USD {0:000.000000}", balance.estimatedUSD);
-			Console.SetCursorPosition(column_5, 2);
+			Console.SetCursorPosition(column_6, 2);
 			Console.WriteLine("BTC {0:0.00000000}", balance.estimatedBTC);
 
-			Console.SetCursorPosition(column_4, 4);
+			Console.SetCursorPosition(column_5, 4);
 			Console.WriteLine("Prof/Loss in orders USD {0:000.000000}", balance.prof);
 
 			tempOrders.Reverse();
@@ -275,6 +318,9 @@ namespace TradingDemoConsole
 				{
 					Console.SetCursorPosition(column_3, i + 1);   //Open order
 					Console.Write(tempOrders.ElementAtOrDefault<Dealing>(i).tred + " {0:0000.000}", tempOrders.ElementAtOrDefault<Dealing>(i).price);
+
+					Console.SetCursorPosition(column_4, i + 1);   //Order Profit
+					Console.Write("{0:0.00000000}", tempOrders.ElementAtOrDefault<Dealing>(i).profit);
 				}
 			}
 		}
@@ -294,10 +340,13 @@ namespace TradingDemoConsole
 			balance.BTC = 0.01f;
 
 			float fee = 0.001f;
+			float stopLossPercent = 0.001f;
+
 			float tradUSD = 1.0f;
 			float tradBTC = 0.001f;
-			
+
 			trading.Fee = fee;
+			trading.StopLossPercent = stopLossPercent;
 			trading.TradUSD = tradUSD;
 			trading.TradBTC = tradBTC;
 
@@ -316,7 +365,7 @@ namespace TradingDemoConsole
 
 				balance.Update(ticker);
 
-				printScreen(balance, prices);
+				printScreen(balance, prices, ticker);
 				Thread.Sleep(500);
 
 				lastPrice = price;
