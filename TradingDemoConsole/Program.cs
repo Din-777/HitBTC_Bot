@@ -330,6 +330,14 @@ namespace TradingDemoConsole
 			Console.SetCursorPosition(column_6, 4);
 			Console.WriteLine("Prof in orders USD {0:0.00000000}", balance.Prof);
 
+
+			float profitDeals = 0.0f;
+			foreach (Dealing d in balance.Deals)
+				profitDeals += d.Profit;
+			Console.SetCursorPosition(column_6, 5);
+			Console.WriteLine("Prof in dealin USD {0:0.00000000}", profitDeals);
+
+
 			tempOrders.Reverse();
 
 			for (int i = 0; i < 20; i++)
@@ -371,8 +379,8 @@ namespace TradingDemoConsole
 			balance.USD = 100.0f;
 			balance.BTC = 0.01f;
 
-			float fee = 0.001f;
-			float stopLossPercent = 1.0f;
+			float fee = 0.3f;
+			float stopLossPercent = 0.05f;
 
 			float tradUSD = 1.0f;
 			float tradBTC = 0.001f;
