@@ -61,6 +61,12 @@
   <ItemGroup>
     <Analyzer Include="..\packages\AWSSDK.DynamoDBv2.3.3.100.5\analyzers\dotnet\cs\AWSSDK.DynamoDBv2.CodeAnalysis.dll" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\HitBTC\HitBTC.csproj">
+      <Project>{88ce0c74-eece-4787-b726-ad4c3185735b}</Project>
+      <Name>HitBTC</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
