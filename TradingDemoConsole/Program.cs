@@ -150,7 +150,7 @@ namespace TradingDemoConsole
 
 				if (oldTicker == null)
 				{
-					buyBTC(ref balance, TradBTC);
+					//buyBTC(ref balance, TradBTC);
 					balance.Orders.Add(new Order
 					{
 						Side = "sel",
@@ -160,7 +160,7 @@ namespace TradingDemoConsole
 						StopLossPercent = StopLossPercent
 					});
 
-					selBTC(ref balance, TradBTC);
+					//selBTC(ref balance, TradBTC);
 					balance.Orders.Add(new Order
 					{
 						Side = "buy",
@@ -376,8 +376,8 @@ namespace TradingDemoConsole
 			Stack<float> prices = new Stack<float>();
 			Trading trading = new Trading();
 
-			balance.USD = 100.0f;
-			balance.BTC = 0.01f;
+			balance.USD = 11.0f;
+			balance.BTC = 0.006f;
 
 			float fee = 0.3f;
 			float stopLossPercent = 0.05f;
