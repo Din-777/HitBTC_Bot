@@ -150,7 +150,7 @@ namespace TradingOfflineConsole
 
 				if (oldTicker == null)
 				{
-					buyBTC(ref balance, TradBTC);
+					//buyBTC(ref balance, TradBTC);
 					balance.Orders.Add(new Order
 					{
 						Side = "sel",
@@ -160,7 +160,7 @@ namespace TradingOfflineConsole
 						StopLossPercent = StopLossPercent
 					});
 
-					selBTC(ref balance, TradBTC);
+					//selBTC(ref balance, TradBTC);
 					balance.Orders.Add(new Order
 					{
 						Side = "buy",
@@ -376,7 +376,7 @@ namespace TradingOfflineConsole
 			Stack<float> prices = new Stack<float>();
 			Trading trading = new Trading();
 
-			hitBtc.Request(Pair.BTCUSD, Period.M1, 500);
+			hitBtc.Request(Pair.BTCUSD, Period.M15, 1000);
 			Candle[] candles = hitBtc.candles;
 
 			Ticker[] tickers = (from candel in candles
@@ -398,8 +398,8 @@ namespace TradingOfflineConsole
 			balance.USD = 11.0f;
 			balance.BTC = 0.006f;
 
-			float fee = 0.3f;
-			float stopLossPercent = 0.1f;
+			float fee = 0.4f;
+			float stopLossPercent = 0.001f;
 
 			float tradUSD = 10.0f;
 			float tradBTC = 0.001f;
@@ -418,15 +418,15 @@ namespace TradingOfflineConsole
 
 				balance.Update(t);
 
-				printScreen(balance, prices, t);
+				//printScreen(balance, prices, t);
 
-				Thread.Sleep(10);
+				//Thread.Sleep(10);
 			}
 
 			//trading.buyBTC(ref balance, 0.001f);
-			trading.buyBTC(ref balance, 0.001f);
-			balance.Update(tickers.ElementAt(99));
-			printScreen(balance, prices, tickers.ElementAt(99));
+			//trading.buyBTC(ref balance, 0.005f);
+			balance.Update(tickers.ElementAt(tickers.Count()-1));
+			printScreen(balance, prices, tickers.ElementAt(tickers.Count()-1));
 
 			Console.ReadKey();
 		}

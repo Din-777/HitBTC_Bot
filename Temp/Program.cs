@@ -1,16 +1,15 @@
 ﻿using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-using System.Collections.ObjectModel;
-using System.Collections.Specialized;
-using System.Runtime.CompilerServices;
-using System.ComponentModel;
-using Amazon.DynamoDBv2.Model;
 
 using HitBTC;
+
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Json;
 
 namespace Temp
 {
@@ -98,19 +97,33 @@ namespace Temp
 
 	}
 
+	[DataContract]
 	public class Balance
 	{
+		[DataMember]
 		public float USD;
+		[DataMember]
 		public float BTC;
 
+		[DataMember]
 		public float Loss { get; set; }
+		[DataMember]
 		public float Prof { get; set; }
 
 		public float estimatedUSD;
 		public float estimatedBTC;
 
+		[DataMember]
 		public Stack<Dealing> Deals;
+		[DataMember]
 		public Orders Orders;
+
+		public Balance() { }
+
+		public Balance(string fileName)
+		{
+			
+		}
 
 		public void Update(TestTicker ticker)
 		{
@@ -128,6 +141,25 @@ namespace Temp
 			}
 
 			Prof = tempProf;
+		}
+
+		public void Save(string fileNeme)
+		{
+			DataContractJsonSerializer jsonFormatter = new DataContractJsonSerializer(typeof(Balance));
+
+			using (FileStream fs = new FileStream(fileNeme, FileMode.OpenOrCreate))
+			{
+				jsonFormatter.WriteObject(fs, this);
+			}
+		}
+
+		public Balance Load(string fileNeme)
+		{
+			DataContractJsonSerializer jsonFormatter = new DataContractJsonSerializer(typeof(Balance));
+			using (FileStream fs = new FileStream(fileNeme, FileMode.OpenOrCreate))
+			{
+				return (Balance)jsonFormatter.ReadObject(fs);
+			}
 		}
 	}
 
@@ -221,22 +253,27 @@ namespace Temp
 
 	}
 	
+
 	class Program
 	{
 		static void Main(string[] args)
 		{
-			Balance balance = new Balance();
-			balance.Orders = new Orders();
+			Balance balance = new Balance("balance.json");
+			Balance balance2 = new Balance();
 			balance.Deals = new Stack<Dealing>();
+			balance.Orders = new Orders();
+			Ticker ticker = new Ticker();
+			HBTC hitBtc = new HBTC();
+			Stack<float> prices = new Stack<float>();
 			Trading trading = new Trading();
 
-			balance.Orders.Add(new Order { Side = "buy", OpenPrice = 10.0f, Amount = 1.0f, ClosePrice = 09.0f, StopLossPrice = 11.0f });
-			balance.Orders.Add(new Order { Side = "sel", OpenPrice = 10.0f, Amount = 1.0f, ClosePrice = 11.0f, StopLossPrice = 09.0f });
-			//balance.Orders.Add(new Order { Side = "buy", OpenPrice = 0.0f, Amount = 0.0f, ClosePrice = 0.0f });
+			//balance.USD = 10.0f;
+			//balance.BTC = 0.005f;
 
-			balance.Update(new TestTicker { ask = 7, bid = 8 });
+			//balance.Save("balance.json");
+			//balance2 = balance.Load("balance.json");
 
-			trading.trading_3(ref balance, new TestTicker { ask = 7, bid = 8 });
+
 
 			Console.ReadLine();
 		}
