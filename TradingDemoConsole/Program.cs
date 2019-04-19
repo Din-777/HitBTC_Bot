@@ -17,27 +17,11 @@ namespace TradingDemoConsole
 	{
 		public string Side { get; set; } // "buy" "sel"
 		public float OpenPrice { get; set; }
-		public float ClosePrice { get; set; }
 		public float Amount { get; set; }
-
-		public float Profit { get; set; }
-		public float ProfitPercent { get; set; }
-
-		public float CalcProfit(float price)
-		{
-			Profit = Amount * (Side == "sel" ? price - OpenPrice : OpenPrice - price);
-			return Profit;
-		}
-
-		public float CalcProfitPercent(float price)
-		{
-			ProfitPercent = (100.0f / (Side == "buy" ? price / OpenPrice : OpenPrice / price)) - 100;
-			return ProfitPercent;
-		}
-
-		private float stopLossPrice;
-
+	
+		//private float stopLossPrice;
 		private float stopLossPercent;
+		private float profitPercent;
 
 		public float StopLossPrice { get; set; }
 
@@ -47,26 +31,69 @@ namespace TradingDemoConsole
 			set
 			{
 				stopLossPercent = value;
-				stopLossPrice = Side == "buy" ? OpenPrice + OpenPrice.Percent(stopLossPercent) : OpenPrice - OpenPrice.Percent(stopLossPercent);
-				StopLossPrice = stopLossPrice;
+				StopLossPrice = Side == "sel" ? OpenPrice - OpenPrice.Percent(stopLossPercent) : OpenPrice + OpenPrice.Percent(stopLossPercent);
+			}
+		}
+				
+		public float ProfitPercent 
+		{ 
+			get { return profitPercent;}
+			set 
+			{
+				profitPercent = value;
+				ClosePrice = Side == "sel" ? OpenPrice + OpenPrice.Percent(profitPercent) :
+													OpenPrice - OpenPrice.Percent(profitPercent);
 			}
 		}
 
+		public float ClosePrice { get;  set; }
+
+
+		public float CurrProfit { get; set; }
+		public float CurrProfitPercent { get; set; }
+
+		public float CalcCurrProfit(float price)
+		{
+			CurrProfit = Amount * (Side == "sel" ? price - OpenPrice : OpenPrice - price);
+			return CurrProfit;
+		}
+
+		public float CalcCurrProfitPercent(float price)
+		{
+			CurrProfitPercent = ((100.0f / (OpenPrice / price)) - 100) * (Side == "sel" ? 1 : (-1));
+			return CurrProfitPercent;
+		}
+
+
 		public Order() { }
 
-		public Order(string tred, float openPrice, float amount, float closePrice, float stopLossPercent = 0.0f)
+		public Order(string side, float openPrice, float amount, float stopLossPercent, float profitPercent)
 		{
-			this.Side = tred;
-			this.ClosePrice = closePrice;
+			this.Side = side;
 			this.OpenPrice = openPrice;
 			this.Amount = amount;
-			this.stopLossPercent = stopLossPercent;
-			this.stopLossPrice = tred == "buy" ? openPrice + openPrice.Percent(stopLossPercent) :
-													openPrice - openPrice.Percent(stopLossPercent);
-
-			this.StopLossPrice = this.stopLossPrice;
+			this.StopLossPercent = stopLossPercent;
+			this.ProfitPercent = profitPercent;			
+						
+			this.StopLossPrice = side == "sel" ? openPrice - openPrice.Percent(stopLossPercent) :
+													openPrice + openPrice.Percent(stopLossPercent);
 		}
-	}
+
+		public Order(string side, float openPrice, float amount, float stopLossPercent, float profitPercent, float closePrice )
+		{
+			this.Side = side;
+			this.OpenPrice = openPrice;
+			this.Amount = amount;
+			this.StopLossPercent = stopLossPercent;
+			this.ProfitPercent = profitPercent;			
+						
+			this.StopLossPrice = side == "sel" ? openPrice - openPrice.Percent(stopLossPercent) :
+													openPrice + openPrice.Percent(stopLossPercent);
+			this.ClosePrice = closePrice;
+		}
+
+
+}
 
 	[Serializable]
 	public class Orders : List<Order>
@@ -138,10 +165,10 @@ namespace TradingDemoConsole
 
 			foreach (Order order in Orders)
 			{
-				if (order.Side == "sel") { order.CalcProfit(ticker.bid); order.CalcProfitPercent(ticker.bid); }
-				if (order.Side == "buy") { order.CalcProfit(ticker.ask); order.CalcProfitPercent(ticker.ask); }
+				if (order.Side == "sel") { order.CalcCurrProfit(ticker.bid); order.CalcCurrProfitPercent(ticker.bid); }
+				if (order.Side == "buy") { order.CalcCurrProfit(ticker.ask); order.CalcCurrProfitPercent(ticker.ask); }
 
-				tempProf += order.Profit;
+				tempProf += order.CurrProfit;
 			}
 
 			Prof = tempProf;
@@ -179,7 +206,7 @@ namespace TradingDemoConsole
 	{
 		private static Ticker oldTicker;
 
-		public float Fee { get; set; }
+		public float ProfitPercent { get; set; }
 		public float StopLossPercent { get; set; }
 		public float StopLossPrice { get; set; }
 
@@ -203,8 +230,8 @@ namespace TradingDemoConsole
 					Side = "sel",
 					OpenPrice = ticker.bid,
 					Amount = TradBTC * 1,
-					ClosePrice = ticker.bid + ticker.bid.Percent(Fee),
-					StopLossPercent = StopLossPercent
+					ProfitPercent = ProfitPercent,
+					StopLossPercent = StopLossPercent					
 				});
 
 				//selBTC(ref balance, TradBTC);
@@ -213,7 +240,7 @@ namespace TradingDemoConsole
 					Side = "buy",
 					OpenPrice = ticker.ask,
 					Amount = TradBTC * 1,
-					ClosePrice = ticker.ask - ticker.ask.Percent(Fee),
+					ProfitPercent = ProfitPercent,
 					StopLossPercent = StopLossPercent
 				});
 			}
@@ -226,10 +253,19 @@ namespace TradingDemoConsole
 						if (ticker.bid > balance.Orders[i].ClosePrice)
 						{
 							balance.Update(ticker);
-							if (selBTC(ref balance, balance.Orders[i].Amount, balance.Orders[i].CalcProfit(ticker.bid)))
+							if (selBTC(ref balance, balance.Orders[i].Amount, balance.Orders[i].CalcCurrProfit(ticker.bid)))
 								balance.Orders.RemoveAt(i);
+
+							balance.Orders.Add(new Order
+							{
+								Side = "buy",
+								OpenPrice = ticker.ask,
+								Amount = TradBTC * 1,
+								ProfitPercent = ProfitPercent,
+								StopLossPercent = StopLossPercent
+							});
 						}
-						else if (ticker.bid < balance.Orders[i].StopLossPrice)
+						else if (ticker.bid <= balance.Orders[i].StopLossPrice)
 						{
 							//selBTC(ref balance, balance.Orders[i].amount);
 							balance.Orders.RemoveAt(i);
@@ -244,10 +280,19 @@ namespace TradingDemoConsole
 						if (ticker.ask < balance.Orders[i].ClosePrice)
 						{
 							balance.Update(ticker);
-							if (buyBTC(ref balance, balance.Orders[i].Amount, balance.Orders[i].CalcProfit(ticker.ask)))
+							if (buyBTC(ref balance, balance.Orders[i].Amount, balance.Orders[i].CalcCurrProfit(ticker.ask)))
 								balance.Orders.RemoveAt(i);
+
+							balance.Orders.Add(new Order
+							{
+								Side = "sel",
+								OpenPrice = ticker.bid,
+								Amount = TradBTC * 1,
+								ProfitPercent = ProfitPercent,
+								StopLossPercent = StopLossPercent
+							});
 						}
-						else if (ticker.ask > balance.Orders[i].StopLossPrice)
+						else if (ticker.ask >= balance.Orders[i].StopLossPrice)
 						{
 							//buyBTC(ref balance, balance.Orders[i].amount);
 							balance.Orders.RemoveAt(i);
@@ -264,7 +309,7 @@ namespace TradingDemoConsole
 					Side = "sel",
 					OpenPrice = ticker.bid,
 					Amount = TradBTC * 1,
-					ClosePrice = ticker.bid + ticker.bid.Percent(Fee),
+					ProfitPercent = ProfitPercent,
 					StopLossPercent = StopLossPercent
 				});
 			}
@@ -277,7 +322,7 @@ namespace TradingDemoConsole
 					Side = "buy",
 					OpenPrice = ticker.ask,
 					Amount = TradBTC * 1,
-					ClosePrice = ticker.ask - ticker.ask.Percent(Fee),
+					ProfitPercent = ProfitPercent,
 					StopLossPercent = StopLossPercent
 				});
 			}
@@ -337,7 +382,7 @@ namespace TradingDemoConsole
 			{
 				if (beep)
 				{
-					Console.Beep(400, 200);
+					Console.Beep(400, 100);
 					beep = false;
 				}
 			}
@@ -349,18 +394,29 @@ namespace TradingDemoConsole
 			// Сортировка OpenOrder в порядке удаления от текущей цены
 			var tempOrders = (from Order in balance.Orders
 							  let l = new
-							  {
+							  {	
 								  Side = Order.Side,
-								  ClosePrice = Order.ClosePrice,
 								  OpenPrice = Order.OpenPrice,
 								  Amount = Order.Amount,
+								  StopLossPercent = Order.StopLossPercent,
+								  ProfitPercent = Order.ProfitPercent,
+								  ClosePrice = Order.ClosePrice,
 								  Diff = Math.Abs(Order.ClosePrice - prices.Peek()),
-								  Profit = Order.Profit,
-								  ProfitPercent = Order.ProfitPercent
+								  CurrProfit = Order.CurrProfit,
+								  CurrProfitPercent = Order.CurrProfitPercent
 							  }
 							  orderby l.Diff descending
 							  select new Order
-								{ Side = l.Side, Profit = l.Profit, ProfitPercent = l.ProfitPercent, OpenPrice = l.OpenPrice, ClosePrice = l.ClosePrice }).ToList<Order>();
+								{
+								  Side = l.Side,
+								  OpenPrice = l.OpenPrice,
+								  Amount = l.Amount,
+								  StopLossPercent = l.StopLossPercent,
+								  ProfitPercent = l.ProfitPercent,
+								  ClosePrice = l.ClosePrice,
+								  CurrProfit = l.CurrProfit,
+								  CurrProfitPercent = l.CurrProfitPercent
+							  }).ToList<Order>();
 
 
 			Console.Clear();
@@ -432,10 +488,10 @@ namespace TradingDemoConsole
 					Console.Write(tempOrders.ElementAtOrDefault<Order>(i).Side + " {0:0000.000}", tempOrders.ElementAtOrDefault<Order>(i).ClosePrice);
 
 					Console.SetCursorPosition(column_3, i + 1);   //Order Profit
-					Console.Write("{0:0.00000000}", tempOrders.ElementAtOrDefault<Order>(i).Profit);
+					Console.Write("{0:0.00000000}", tempOrders.ElementAtOrDefault<Order>(i).CurrProfit);
 
 					Console.SetCursorPosition(column_3+12, i + 1);   //Order Profit
-					Console.Write("{0:0.00000000}%", tempOrders.ElementAtOrDefault<Order>(i).ProfitPercent);
+					Console.Write("{0:0.00000000}%", tempOrders.ElementAtOrDefault<Order>(i).CurrProfitPercent);
 						
 				}
 			}
@@ -465,20 +521,20 @@ namespace TradingDemoConsole
 			Screen Screen = new Screen(balance);
 
 
-			float fee = 0.001f;
+			float fee = 0.4f;
 			float stopLossPercent = 0.1f;
 
 			float tradUSD = 1.0f;
 			float tradBTC = 0.001f;
 
-			trading.Fee = fee;
+			trading.ProfitPercent = fee;
 			trading.StopLossPercent = stopLossPercent;
 			trading.TradUSD = tradUSD;
 			trading.TradBTC = tradBTC;
 
 			float price = 0.0f;
 			float lastPrice = 0.0f;
-
+			
 			while (true)
 			{
 				string respons = hitBtc.Request(out ticker, Pair.BTCUSD);
@@ -493,7 +549,7 @@ namespace TradingDemoConsole
 
 				Screen.Print(balance, prices, ticker);
 
-				balance.Save("balance.dat");
+				//balance.Save("balance.dat");
 				lastPrice = price;
 
 				Thread.Sleep(500);

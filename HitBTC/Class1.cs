@@ -5,6 +5,9 @@ using System.Net;
 using System.IO;
 using Newtonsoft;
 using Newtonsoft.Json;
+using System.Collections.Generic;
+using RestSharp;
+using RestSharp.Authenticators;
 
 namespace HitBTC
 {
@@ -225,12 +228,48 @@ namespace HitBTC
 			]	  */
 	}
 
+	public class Balance
+	{
+		[JsonProperty("currency")]
+		public string Currency { get; set; }    // String  Currency code
+
+		[JsonProperty("available")]
+		public float Available { get; set; }    // Number  Amount available for trading or transfer to main account
+
+		[JsonProperty("reserved")]
+		public decimal Reserved { get; set; }     // Number  Amount reserved for active orders or incomplete transfers to main account
+	}
+
 	public class HBTC
 	{
 		public string respons { get; set; }
 
 		public Candle[] candles { get; private set; }
 		public CandleScale[] candleScale { get; private set; }
+
+		public List<Balance> Balance { get; private set; }
+
+
+		public string Request(out List<Balance> Balance)
+		{
+			string key = "";
+			string secret = "";
+
+			string url = "https://api.hitbtc.com/api/2/";
+
+			var client = new RestClient(url);
+			client.Authenticator = new HttpBasicAuthenticator(key, secret);
+
+			var request = new RestRequest("trading/balance", Method.GET);
+
+			// execute the request
+			IRestResponse response = client.Execute(request);
+			var content = response.Content;
+
+			Balance = JsonConvert.DeserializeObject<List<Balance>>(content);
+
+			return content;
+		}
 
 		public string Request(out Trade[] trades, string pair, int limit, int from = 0)
 		{
