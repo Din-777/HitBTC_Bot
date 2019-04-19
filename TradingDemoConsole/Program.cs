@@ -521,13 +521,13 @@ namespace TradingDemoConsole
 			Screen Screen = new Screen(balance);
 
 
-			float fee = 0.4f;
-			float stopLossPercent = 0.1f;
+			float profitPercent = 0.2f;
+			float stopLossPercent = 0.01f;
 
 			float tradUSD = 1.0f;
 			float tradBTC = 0.001f;
 
-			trading.ProfitPercent = fee;
+			trading.ProfitPercent = profitPercent;
 			trading.StopLossPercent = stopLossPercent;
 			trading.TradUSD = tradUSD;
 			trading.TradBTC = tradBTC;

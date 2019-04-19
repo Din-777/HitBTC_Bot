@@ -21,9 +21,6 @@ namespace Temp
 	
 	class Program
 	{		
-		
-
-
 		static void Main(string[] args)
 		{
 			List<Balance> balance = new List<Balance>();
