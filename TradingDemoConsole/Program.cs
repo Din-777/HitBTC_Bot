@@ -254,16 +254,18 @@ namespace TradingDemoConsole
 						{
 							balance.Update(ticker);
 							if (selBTC(ref balance, balance.Orders[i].Amount, balance.Orders[i].CalcCurrProfit(ticker.bid)))
+							{
 								balance.Orders.RemoveAt(i);
 
-							balance.Orders.Add(new Order
-							{
-								Side = "buy",
-								OpenPrice = ticker.ask,
-								Amount = TradBTC * 1,
-								ProfitPercent = ProfitPercent,
-								StopLossPercent = StopLossPercent
-							});
+								balance.Orders.Add(new Order
+								{
+									Side = "buy",
+									OpenPrice = ticker.ask,
+									Amount = TradBTC * 1,
+									ProfitPercent = ProfitPercent,
+									StopLossPercent = StopLossPercent
+								});
+							}
 						}
 						else if (ticker.bid <= balance.Orders[i].StopLossPrice)
 						{
@@ -281,16 +283,18 @@ namespace TradingDemoConsole
 						{
 							balance.Update(ticker);
 							if (buyBTC(ref balance, balance.Orders[i].Amount, balance.Orders[i].CalcCurrProfit(ticker.ask)))
+							{
 								balance.Orders.RemoveAt(i);
 
-							balance.Orders.Add(new Order
-							{
-								Side = "sel",
-								OpenPrice = ticker.bid,
-								Amount = TradBTC * 1,
-								ProfitPercent = ProfitPercent,
-								StopLossPercent = StopLossPercent
-							});
+								balance.Orders.Add(new Order
+								{
+									Side = "sel",
+									OpenPrice = ticker.bid,
+									Amount = TradBTC * 1,
+									ProfitPercent = ProfitPercent,
+									StopLossPercent = StopLossPercent
+								});
+							}
 						}
 						else if (ticker.ask >= balance.Orders[i].StopLossPrice)
 						{
@@ -332,10 +336,12 @@ namespace TradingDemoConsole
 
 		public bool buyBTC(ref Balance balance, float amount, float profit = 0.0f)
 		{
-			if ((balance.USD - (amount * ticker.ask)) >= 0.0f)
+			float fee = (amount * ticker.ask).Percent(0.2f);
+
+			if ((balance.USD - ((amount * ticker.ask) + fee)) >= 0.0f)
 			{
 				balance.BTC += amount;
-				balance.USD -= amount * ticker.ask;
+				balance.USD -= ((amount * ticker.ask) + fee);
 				balance.Deals.Push(new Dealing("buy", ticker.ask, amount, profit));
 				return true;
 			}
@@ -345,10 +351,12 @@ namespace TradingDemoConsole
 
 		public bool selBTC(ref Balance balance, float amount, float profit = 0.0f)
 		{
+			float fee = (amount * ticker.ask).Percent(0.2f);
+
 			if ((balance.BTC - amount) >= 0.0f)
 			{
 				balance.BTC -= amount;
-				balance.USD += amount * ticker.bid;
+				balance.USD += ((amount * ticker.bid) - fee);
 				balance.Deals.Push(new Dealing("sel", ticker.bid, amount, profit));
 				return true;
 			}
@@ -377,18 +385,7 @@ namespace TradingDemoConsole
 			int column_5 = column_4 + 14;   // Orders Profit
 			int column_6 = column_5 + 15;   // Trad balance / Dealing
 			int column_7 = column_6 + 16;   // Estim balance
-
-			if (balance.BTC == BTC)
-			{
-				if (beep)
-				{
-					Console.Beep(400, 100);
-					beep = false;
-				}
-			}
-			else beep = true;
-
-
+						
 			Console.CursorVisible = false;
 
 			// Сортировка OpenOrder в порядке удаления от текущей цены
@@ -495,6 +492,22 @@ namespace TradingDemoConsole
 						
 				}
 			}
+
+			if (balance.BTC == BTC)
+			{
+				if (beep)
+				{
+					Console.Beep(400, 100);
+					beep = false;
+
+					Console.SetCursorPosition(0, 22);
+					Console.CursorVisible = true;
+					Console.Write("waiting...");
+					Console.ReadKey();
+					Console.CursorVisible = false;
+				}
+			}
+			else beep = true;
 		}
 	}
 
@@ -509,7 +522,7 @@ namespace TradingDemoConsole
 				balance.Deals = new Stack<Dealing>();
 				balance.Orders = new Orders();		
 
-				balance.USD = 10.0f;
+				balance.USD = 11.0f;
 				balance.BTC = 0.005f;
 			}
 
@@ -521,9 +534,8 @@ namespace TradingDemoConsole
 			Screen Screen = new Screen(balance);
 
 
-			float profitPercent = 0.2f;
-			float stopLossPercent = 0.01f;
-
+			float profitPercent = 0.4f;
+			float stopLossPercent = 0.03f;
 			float tradUSD = 1.0f;
 			float tradBTC = 0.001f;
 
@@ -552,7 +564,7 @@ namespace TradingDemoConsole
 				//balance.Save("balance.dat");
 				lastPrice = price;
 
-				Thread.Sleep(500);
+			Thread.Sleep(500);
 			}
 
 			Console.ReadKey();
