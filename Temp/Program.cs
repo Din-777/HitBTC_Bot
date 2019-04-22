@@ -1,32 +1,20 @@
 ﻿using System;
-
-using System.Text;
-using System.Net;
-using System.IO;
-using Newtonsoft;
-using Newtonsoft.Json;
-
-
-using HitBTC;
-
-using System.Runtime.Serialization;
-using System.Runtime.Serialization.Json;
-using System.Net.Http;
+using System.Security.Cryptography;
 using RestSharp;
-using RestSharp.Authenticators;
-using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+
+using System.Threading.Tasks;
+
+using System.Threading;
 
 namespace Temp
 {
-	
 	class Program
-	{		
+	{
 		static void Main(string[] args)
 		{
-			List<Balance> balance = new List<Balance>();
-			
 
-			Console.ReadLine();
 		}
 	}
 

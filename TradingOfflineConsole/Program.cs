@@ -532,7 +532,7 @@ namespace TradingOfflineConsole
 
 			Screen Screen = new Screen(balance);
 
-			hitBtc.Request(Pair.BTCUSD, Period.M1, 300);
+			hitBtc.Request(Pair.BTCUSD, Period.M1, 100);
 			Candle[] candles = hitBtc.candles;
 
 			Ticker[] tickers = (from candel in candles
@@ -560,7 +560,7 @@ namespace TradingOfflineConsole
 			float stopLossPercent = 0.001f;
 
 			float tradUSD = 5.0f;
-			float tradBTC = 0.002f;
+			float tradBTC = 0.00001f;
 
 			trading.ProfitPercent = profitPercent;
 			trading.StopLossPercent = stopLossPercent;
