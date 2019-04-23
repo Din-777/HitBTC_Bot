@@ -10,19 +10,28 @@ namespace Temp2
 {
 	class Temp2
 	{
+		static HitBTCSocketAPI hitBTCSocketApi;
+
 		static void Main(string[] args)
 		{
-			var hitBTCSocketApi = new HitBTCSocketAPI();
+			hitBTCSocketApi = new HitBTCSocketAPI();
 			hitBTCSocketApi.Opened += HitBTCSocketApi_Opened;
 
-
+			hitBTCSocketApi.SubscribeTicker("BTCUSD");
+			hitBTCSocketApi.MessageReceived += HitBTCSocketApi_MessageReceived;
 
 			Console.ReadKey();
 		}
 
-		private static void HitBTCSocketApi_Opened()
+		private static void HitBTCSocketApi_MessageReceived(string s)
 		{
-			Console.WriteLine("Socket_Opened");
+			if(hitBTCSocketApi.Ticker != null)
+				Console.WriteLine("Ask {0}	Bid {1}", hitBTCSocketApi.Ticker.Ask, hitBTCSocketApi.Ticker.Bid);
+		}
+
+		private static void HitBTCSocketApi_Opened(string s)
+		{
+			Console.WriteLine("SocketApi_Opened");
 		}
 	}
 }
