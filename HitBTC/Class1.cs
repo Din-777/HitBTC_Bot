@@ -200,8 +200,7 @@ namespace HitBTC
 		public string side { get; set; }
 		public DateTime timestamp { get; set; }
 	}
-
-
+	
 	public class Orderbook
 	{
 		/*	"ask": 
