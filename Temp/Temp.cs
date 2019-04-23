@@ -66,7 +66,7 @@ namespace Temp
 		public Error Error;
 	}
 
-	class Program
+	class Temp
 	{
 		static void Main(string[] args)
 		{

@@ -48,11 +48,5 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\HitBTC\HitBTC.csproj">
-      <Project>{88ce0c74-eece-4787-b726-ad4c3185735b}</Project>
-      <Name>HitBTC</Name>
-    </ProjectReference>
-  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
