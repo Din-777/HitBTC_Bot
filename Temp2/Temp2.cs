@@ -19,18 +19,26 @@ namespace Temp2
 		static void Main(string[] args)
 		{
 			hitBTCSocketApi = new HitBTCSocketAPI();
-			hitBTCSocketApi.Opened += HitBTCSocketApi_Opened;			
+			//hitBTCSocketApi.Opened += HitBTCSocketApi_Opened;			
 
-			hitBTCSocketApi.Auth(pKey, sKey);
+			//hitBTCSocketApi.Auth(pKey, sKey);
 
-			hitBTCSocketApi.GetTradingBalance();
+			//hitBTCSocketApi.GetTradingBalance();
 
-			hitBTCSocketApi.SubscribeTicker("BTCUSD");
-			hitBTCSocketApi.MessageReceived += HitBTCSocketApi_MessageReceived;
+			//hitBTCSocketApi.SubscribeTicker("BTCUSD");
+			//hitBTCSocketApi.MessageReceived += HitBTCSocketApi_MessageReceived;
 
-			Thread.Sleep(10000);
+			for(int i = 0; i < 20; i++)
+			{
+				Console.WriteLine(Guid.NewGuid().ToString()
+									.TrimEnd('=')
+									.Replace("+", "")
+									.Replace(@"\", "")
+									.Replace(@"/", "")
+									.Replace("-", ""));
+		}
 
-			hitBTCSocketApi.UnSubscribeTicker("BTCUSD");
+			//hitBTCSocketApi.UnSubscribeTicker("BTCUSD");
 
 			Console.ReadKey();
 		}

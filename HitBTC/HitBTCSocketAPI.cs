@@ -74,18 +74,7 @@ namespace HitBTC
 			socket.MessageReceived += Socket_MessageReceived;
 		}
 		
-
-		private void Socket_DataReceived(object sender, DataReceivedEventArgs e)
-		{
-			Console.WriteLine("Socket_DataReceived");
-		}
-
-		internal void Socket_Opened(object sender, EventArgs e)
-		{
-			if (Opened != null) Opened(e.ToString());
-		}
 		
-
 		internal void Socket_MessageReceived(object sender, MessageReceivedEventArgs e)
 		{
 			var jo = JObject.Parse(e.Message);
@@ -110,16 +99,14 @@ namespace HitBTC
 			if (MessageReceived != null) MessageReceived(e.Message);
 		}
 
-		public abstract class Class
+		internal void Socket_DataReceived(object sender, DataReceivedEventArgs e)
 		{
-			[JsonProperty("jsonrpc")]
-			string jsonrpc;
+			Console.WriteLine("Socket_DataReceived");
+		}
 
-			[JsonProperty("result")]
-			string result;
-
-			[JsonProperty("id")]
-			string id;
+		internal void Socket_Opened(object sender, EventArgs e)
+		{
+			if (Opened != null) Opened(e.ToString());
 		}
 	}
 }

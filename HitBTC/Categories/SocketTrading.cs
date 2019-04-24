@@ -19,4 +19,31 @@ namespace HitBTC.Categories
 		[JsonProperty("id")]
 		string Id = "balance";
 	}
+
+	class PlaceNewOrder
+	{
+		[JsonProperty("method")]
+		string Method = "newOrder";
+
+		[JsonProperty("params")]
+		ParamsPlaceNewOrder Params;
+
+		[JsonProperty("id")]
+		string id = "placeNewOrder";
+
+		public PlaceNewOrder()
+		{
+			Params = new ParamsPlaceNewOrder
+			{
+				clientOrderId = GenerateId()
+			};
+		}
+
+		private static string GenerateId() => Guid.NewGuid().ToString()
+									.TrimEnd('=')
+									.Replace("+", "")
+									.Replace(@"\", "")
+									.Replace(@"/", "")
+									.Replace("-", "");
+	}
 }
