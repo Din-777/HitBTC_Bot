@@ -7,7 +7,7 @@ using HitBTC.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace HitBTC
+namespace HitBTC.Categories
 {
 	public class NotificationTicker
 	{
@@ -23,15 +23,14 @@ namespace HitBTC
 		[JsonProperty("params")]
 		public Ticker Ticker { get; private set; }
 	}
-
-
-	public class SubscribeTicker: HitBTCSocketAPI
+	
+	public class SubscribeTicker
 	{
 		[JsonProperty("method")]
 		string Method = "subscribeTicker";
 
 		[JsonProperty("params")]
-		public Params param = new Params { Symbol = "symbol" };
+		public ParamsTicker param = new ParamsTicker { Symbol = "symbol" };
 
 		public SubscribeTicker(string symbol)
 		{
@@ -39,7 +38,7 @@ namespace HitBTC
 		}
 
 		[JsonProperty("id")]
-		string id = "123";
+		string id = "ticker";
 	}
 
 	public class UnSubscribeTicker
@@ -48,7 +47,7 @@ namespace HitBTC
 		string Method = "unsubscribeTicker";
 
 		[JsonProperty("params")]
-		public Params param = new Params { Symbol = "symbol" };
+		public ParamsTicker param = new ParamsTicker { Symbol = "symbol" };
 
 		public UnSubscribeTicker(string symbol)
 		{
@@ -56,6 +55,6 @@ namespace HitBTC
 		}
 
 		[JsonProperty("id")]
-		string id = "123";
+		string id = "ticker";
 	}
 }
