@@ -15,13 +15,13 @@ namespace HitBTC.Categories
 		public string JsonRpc { get; private set; }
 
 		[JsonProperty("method")]
-		public string Method { get; private set; }
-
-		[JsonProperty("id")]
-		public string Id { get; private set; }
+		public string Method { get; private set; }		
 
 		[JsonProperty("params")]
 		public Ticker Ticker { get; private set; }
+
+		[JsonProperty("id")]
+		public string Id { get; private set; }
 	}
 	
 	public class SubscribeTicker
@@ -55,6 +55,6 @@ namespace HitBTC.Categories
 		}
 
 		[JsonProperty("id")]
-		string id = "ticker";
+		string id = "unsubscribeTicker";
 	}
 }

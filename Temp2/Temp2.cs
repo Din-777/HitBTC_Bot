@@ -19,15 +19,18 @@ namespace Temp2
 		static void Main(string[] args)
 		{
 			hitBTCSocketApi = new HitBTCSocketAPI();
-			hitBTCSocketApi.Opened += HitBTCSocketApi_Opened;
-
-			hitBTCSocketApi.SubscribeTicker("BTCUSD");
-			//hitBTCSocketApi.MessageReceived += HitBTCSocketApi_MessageReceived;
+			hitBTCSocketApi.Opened += HitBTCSocketApi_Opened;			
 
 			hitBTCSocketApi.Auth(pKey, sKey);
 
-			Thread.Sleep(5000);
 			hitBTCSocketApi.GetTradingBalance();
+
+			hitBTCSocketApi.SubscribeTicker("BTCUSD");
+			hitBTCSocketApi.MessageReceived += HitBTCSocketApi_MessageReceived;
+
+			Thread.Sleep(10000);
+
+			hitBTCSocketApi.UnSubscribeTicker("BTCUSD");
 
 			Console.ReadKey();
 		}
@@ -36,6 +39,15 @@ namespace Temp2
 		{
 			if(hitBTCSocketApi.Ticker != null)
 				Console.WriteLine("Ask {0}	Bid {1}", hitBTCSocketApi.Ticker.Ask, hitBTCSocketApi.Ticker.Bid);
+
+
+			if (hitBTCSocketApi.Balance != null)
+			{
+				Console.SetCursorPosition(30, 0);
+				Console.WriteLine("Balance BTC = {0}", hitBTCSocketApi.Balance["BTC"].Available);
+			}
+
+
 		}
 
 		private static void HitBTCSocketApi_Opened(string s)

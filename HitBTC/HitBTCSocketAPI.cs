@@ -84,22 +84,27 @@ namespace HitBTC
 		{
 			if (Opened != null) Opened(e.ToString());
 		}
-
-
+		
 
 		internal void Socket_MessageReceived(object sender, MessageReceivedEventArgs e)
 		{
-			var Object = JsonConvert.DeserializeObject<dynamic>(e.Message);
+			var jo = JObject.Parse(e.Message);
 
-			if (Object.id == "balance")
+			var Params = jo["params"];
+			var id = (string)jo["id"];
+			var method = (string)jo["method"];
+			var result = jo["result"];
+
+			if (id == "balance")
 			{
-				List<Balance> ListBalance = JsonConvert.DeserializeObject<List<Balance>>(Object.result.ToString());
+				List<Balance> ListBalance = JsonConvert.DeserializeObject<List<Balance>>(result.ToString());
 				Balance = ListBalance.ToDictionary(b => b.Currency);
-			}
+			}			
 
-			if (Object.id == "ticker" && Object.params != null)
+
+			if (method == "ticker" && Params != null)
 			{
-				Ticker = JsonConvert.DeserializeObject<Ticker>(e.Message);
+				Ticker = JsonConvert.DeserializeObject<Ticker>(Params.ToString());
 			}
 
 			if (MessageReceived != null) MessageReceived(e.Message);
