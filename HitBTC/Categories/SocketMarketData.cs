@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using HitBTC.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using WebSocket4Net;
 
 namespace HitBTC.Categories
 {
@@ -56,5 +57,30 @@ namespace HitBTC.Categories
 
 		[JsonProperty("id")]
 		string id = "unsubscribeTicker";
+	}
+
+	public class SocketMarketData
+	{
+		WebSocket socket;
+
+		public SocketMarketData(ref WebSocket socket)
+		{
+			this.socket = socket;
+		}
+
+
+		public async void SubscribeTicker(string symbol)
+		{
+			var s = new Categories.SubscribeTicker(symbol);
+			var jsonStr = JsonConvert.SerializeObject(s);
+			await Task.Run(() => socket.Send(jsonStr));
+		}
+
+		public async void UnSubscribeTicker(string symbol)
+		{
+			var s = new Categories.UnSubscribeTicker(symbol);
+			var jsonStr = JsonConvert.SerializeObject(s);
+			await Task.Run(() => socket.Send(jsonStr));
+		}
 	}
 }

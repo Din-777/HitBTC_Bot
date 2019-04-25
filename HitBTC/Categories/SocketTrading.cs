@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using HitBTC.Models;
 using Newtonsoft.Json;
+using WebSocket4Net;
 
 namespace HitBTC.Categories
 {
@@ -35,15 +36,25 @@ namespace HitBTC.Categories
 		{
 			Params = new ParamsPlaceNewOrder
 			{
-				clientOrderId = GenerateId()
+				clientOrderId = Utils.GenerateId()
 			};
 		}
+	}
 
-		private static string GenerateId() => Guid.NewGuid().ToString()
-									.TrimEnd('=')
-									.Replace("+", "")
-									.Replace(@"\", "")
-									.Replace(@"/", "")
-									.Replace("-", "");
+	public class SocketTrading
+	{
+		WebSocket socket;
+
+		public SocketTrading(ref WebSocket socket)
+		{
+			this.socket = socket;
+		}
+
+		public async void GetTradingBalance()
+		{
+			var s = new Categories.GetTradingBalance();
+			var jsonStr = JsonConvert.SerializeObject(s);
+			await Task.Run(() => socket.Send(jsonStr));
+		}
 	}
 }

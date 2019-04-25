@@ -19,24 +19,15 @@ namespace Temp2
 		static void Main(string[] args)
 		{
 			hitBTCSocketApi = new HitBTCSocketAPI();
-			//hitBTCSocketApi.Opened += HitBTCSocketApi_Opened;			
+			hitBTCSocketApi.Opened += HitBTCSocketApi_Opened;			
 
-			//hitBTCSocketApi.Auth(pKey, sKey);
+			hitBTCSocketApi.SocketAuth.Auth(pKey, sKey);
 
-			//hitBTCSocketApi.GetTradingBalance();
+			hitBTCSocketApi.SocketTrading.GetTradingBalance();
 
-			//hitBTCSocketApi.SubscribeTicker("BTCUSD");
-			//hitBTCSocketApi.MessageReceived += HitBTCSocketApi_MessageReceived;
+			hitBTCSocketApi.SocketMarketData.SubscribeTicker("BTCUSD");
+			hitBTCSocketApi.MessageReceived += HitBTCSocketApi_MessageReceived;
 
-			for(int i = 0; i < 20; i++)
-			{
-				Console.WriteLine(Guid.NewGuid().ToString()
-									.TrimEnd('=')
-									.Replace("+", "")
-									.Replace(@"\", "")
-									.Replace(@"/", "")
-									.Replace("-", ""));
-		}
 
 			//hitBTCSocketApi.UnSubscribeTicker("BTCUSD");
 
@@ -45,16 +36,15 @@ namespace Temp2
 
 		private static void HitBTCSocketApi_MessageReceived(string s)
 		{
-			if(hitBTCSocketApi.Ticker != null)
+			if(s == "ticker")
 				Console.WriteLine("Ask {0}	Bid {1}", hitBTCSocketApi.Ticker.Ask, hitBTCSocketApi.Ticker.Bid);
 
 
-			if (hitBTCSocketApi.Balance != null)
+			if (s == "balance")
 			{
 				Console.SetCursorPosition(30, 0);
 				Console.WriteLine("Balance BTC = {0}", hitBTCSocketApi.Balance["BTC"].Available);
 			}
-
 
 		}
 

@@ -22,48 +22,26 @@ namespace HitBTC
 
 		public Ticker Ticker;
 		public Dictionary<string, Balance> Balance;
-
-		public async void SubscribeTicker(string symbol)
-		{
-			var s = new Categories.SubscribeTicker(symbol);
-			var jsonStr = JsonConvert.SerializeObject(s);
-			await Task.Run(() => socket.Send(jsonStr));
-
-			socket.MessageReceived += Socket_MessageReceived;
-		}
 		
-		public async void UnSubscribeTicker(string symbol)
-		{
-			var s = new Categories.UnSubscribeTicker(symbol);
-			var jsonStr = JsonConvert.SerializeObject(s);
-			await Task.Run(() => socket.Send(jsonStr));
-
-			socket.MessageReceived += Socket_MessageReceived;
-		}
 
 		static async void ConnectAsync(WebSocket socket)
 		{
 			await Task.Run(() => socket.Open());
 		}
+		
 
-		public async void Auth(string pKey, string sKey)
-		{
-			var s = new Categories.SocketAuth(pKey, sKey);
-			var jsonStr = JsonConvert.SerializeObject(s);
-			await Task.Run(() => socket.Send(jsonStr));
-		}
-
-		public async void GetTradingBalance()
-		{
-			var s = new Categories.GetTradingBalance();
-			var jsonStr = JsonConvert.SerializeObject(s);
-			await Task.Run(() => socket.Send(jsonStr));
-		}
+		public SocketTrading SocketTrading;
+		public SocketMarketData SocketMarketData;
+		public SocketAuth SocketAuth;
 
 		public HitBTCSocketAPI()
 		{
 			string uri = "wss://api.hitbtc.com/api/2/ws";
 			socket = new WebSocket(uri);
+
+			SocketAuth = new SocketAuth(ref socket);
+			SocketTrading = new SocketTrading(ref socket);
+			SocketMarketData = new SocketMarketData(ref socket);
 
 			ConnectAsync(socket);
 
@@ -78,6 +56,7 @@ namespace HitBTC
 		internal void Socket_MessageReceived(object sender, MessageReceivedEventArgs e)
 		{
 			var jo = JObject.Parse(e.Message);
+			string str = null;
 
 			var Params = jo["params"];
 			var id = (string)jo["id"];
@@ -88,15 +67,18 @@ namespace HitBTC
 			{
 				List<Balance> ListBalance = JsonConvert.DeserializeObject<List<Balance>>(result.ToString());
 				Balance = ListBalance.ToDictionary(b => b.Currency);
+
+				str = "balance";
 			}			
-
-
+			
 			if (method == "ticker" && Params != null)
 			{
 				Ticker = JsonConvert.DeserializeObject<Ticker>(Params.ToString());
+
+				str = "ticker";
 			}
 
-			if (MessageReceived != null) MessageReceived(e.Message);
+			if (MessageReceived != null) MessageReceived(str);
 		}
 
 		internal void Socket_DataReceived(object sender, DataReceivedEventArgs e)
