@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 using HitBTC;
 using System.Threading;
+using HitBTC.Models;
 
 namespace Temp2
 {
@@ -13,23 +14,37 @@ namespace Temp2
 	{
 		static HitBTCSocketAPI hitBTCSocketApi;
 
-		static string pKey = "YGzq3GQP9vIybW8CcT6+e3pBqX8Tgbr6";
-		static string sKey = "B37LaDlfa70YM9gorzpjYGQAZVRNXDj3";
+		static string pKey = "h";
+		static string sKey = "B";
+
+		//static string pKey = "p";
+		//static string sKey = "M";
 
 		static void Main(string[] args)
 		{
 			hitBTCSocketApi = new HitBTCSocketAPI();
-			hitBTCSocketApi.Opened += HitBTCSocketApi_Opened;			
+			hitBTCSocketApi.Opened += HitBTCSocketApi_Opened;
+			
 
 			hitBTCSocketApi.SocketAuth.Auth(pKey, sKey);
+			hitBTCSocketApi.MessageReceived += HitBTCSocketApi_MessageReceived;
 
 			hitBTCSocketApi.SocketTrading.GetTradingBalance();
 
+			Thread.Sleep(2000);
+
 			hitBTCSocketApi.SocketMarketData.SubscribeTicker("BTCUSD");
-			hitBTCSocketApi.MessageReceived += HitBTCSocketApi_MessageReceived;
+			hitBTCSocketApi.SocketMarketData.SubscribeTicker("ETHUSD");
+			//hitBTCSocketApi.SocketMarketData.UnSubscribeTicker("BTCUSD");
+
+			//hitBTCSocketApi.SocketTrading.PlaceNewOrder("BTCUSD", "sell", 0.00001f);
+			//hitBTCSocketApi.SocketTrading.PlaceNewOrder("ETHUSD", "buy", 0.0001f);
+			//hitBTCSocketApi.SocketTrading.PlaceNewOrder("ETHUSD", "sell", 0.0001f);
+
+			hitBTCSocketApi.SocketTrading.SubscribeReports();
 
 
-			//hitBTCSocketApi.UnSubscribeTicker("BTCUSD");
+
 
 			Console.ReadKey();
 		}
@@ -37,7 +52,7 @@ namespace Temp2
 		private static void HitBTCSocketApi_MessageReceived(string s)
 		{
 			if(s == "ticker")
-				Console.WriteLine("Ask {0}	Bid {1}", hitBTCSocketApi.Ticker.Ask, hitBTCSocketApi.Ticker.Bid);
+				//Console.WriteLine("Ask {0}	Bid {1}", hitBTCSocketApi.Ticker.Ask, hitBTCSocketApi.Ticker.Bid);
 
 
 			if (s == "balance")

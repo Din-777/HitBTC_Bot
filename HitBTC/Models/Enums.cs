@@ -5,7 +5,7 @@ using System.Runtime.Serialization;
 namespace HitBTC.Models
 {
     [JsonConverter(typeof(StringEnumConverter))]
-    public enum HitSide
+    public enum Side
     {
         [EnumMember(Value = "buy")]
         Buy,
@@ -14,7 +14,7 @@ namespace HitBTC.Models
     }
 
     [JsonConverter(typeof(StringEnumConverter))]
-    public enum HitSort
+    public enum Sort
     {
         [EnumMember(Value = "DESC")]
         Desc,
@@ -23,32 +23,32 @@ namespace HitBTC.Models
     }
 
     [JsonConverter(typeof(StringEnumConverter))]
-    public enum HitPeriod
+    public enum Period
     {
         [EnumMember(Value = "M1")]
-        Minute1,
+        M1,
         [EnumMember(Value = "M3")]
-        Minute3,
+        M3,
         [EnumMember(Value = "M5")]
-        Minute5,
+        M5,
         [EnumMember(Value = "M15")]
-        Minute15,
+        M15,
         [EnumMember(Value = "M30")]
-        Minute30,
+        M30,
         [EnumMember(Value = "H1")]
-        Hour1,
+        H1,
         [EnumMember(Value = "H4")]
-        Hour4,
+        H4,
         [EnumMember(Value = "D1")]
-        Day1,
+        D1,
         [EnumMember(Value = "D7")]
-        Day7,
+        D7,
         [EnumMember(Value = "1M")]
         Month1
     }
 
     [JsonConverter(typeof(StringEnumConverter))]
-    internal enum HitRequestMethod
+    internal enum RequestMethod
     {
         [EnumMember(Value = "getCurrency")]
         GetCurrency,
@@ -95,7 +95,7 @@ namespace HitBTC.Models
     }
 
     [JsonConverter(typeof(StringEnumConverter))]
-    public enum HitNotificationMethod
+    public enum NotificationMethod
     {
         [EnumMember(Value = "ticker")]
         Ticker,
@@ -117,7 +117,7 @@ namespace HitBTC.Models
         Report,
     }
 
-    public enum HitConnectionState
+    public enum ConnectionState
     {
         PrepareToConnect,
         Connecting,
@@ -128,7 +128,7 @@ namespace HitBTC.Models
     }
 
     [JsonConverter(typeof(StringEnumConverter))]
-    public enum HitOrderStatus
+    public enum OrderStatus
     {
         [EnumMember(Value = "new")]
         New,
@@ -145,7 +145,7 @@ namespace HitBTC.Models
     }
 
     [JsonConverter(typeof(StringEnumConverter))]
-    public enum HitOrderType
+    public enum OrderType
     {
         [EnumMember(Value = "limit")]
         Limit,
@@ -158,7 +158,7 @@ namespace HitBTC.Models
     }
 
     [JsonConverter(typeof(StringEnumConverter))]
-    public enum HitTimeInForce
+    public enum TimeInForce
     {
         [EnumMember(Value = "GTC")]
         GTC,
@@ -172,7 +172,7 @@ namespace HitBTC.Models
         GTD
     }
 
-    internal enum HitBy
+    internal enum By
     {
         [EnumMember(Value = "timestamp")]
         Timestamp,
@@ -181,7 +181,7 @@ namespace HitBTC.Models
     }
 
     [JsonConverter(typeof(StringEnumConverter))]
-    public enum HitTransactionStatus
+    public enum TransactionStatus
     {
         [EnumMember(Value = "pending")]
         Pending,
@@ -192,7 +192,7 @@ namespace HitBTC.Models
     }
 
     [JsonConverter(typeof(StringEnumConverter))]
-    public enum HitTransactionType
+    public enum TransactionType
     {
         [EnumMember(Value = "payout")]
         Payout,
@@ -209,7 +209,7 @@ namespace HitBTC.Models
     }
 
     [JsonConverter(typeof(StringEnumConverter))]
-    internal enum HitLoginAlgo
+    internal enum tLoginAlgo
     {
         [EnumMember(Value = "BASIC")]
         Basic,
@@ -218,7 +218,7 @@ namespace HitBTC.Models
     }
 
     [JsonConverter(typeof(StringEnumConverter))]
-    public enum HitReportType
+    public enum ReportType
     {
         [EnumMember(Value = "status")]
         Status,

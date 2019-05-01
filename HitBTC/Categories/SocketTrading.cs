@@ -24,10 +24,10 @@ namespace HitBTC.Categories
 	class PlaceNewOrder
 	{
 		[JsonProperty("method")]
-		string Method = "newOrder";
+		public string Method = "newOrder";
 
 		[JsonProperty("params")]
-		ParamsPlaceNewOrder Params;
+		public ParamsPlaceNewOrder Params;
 
 		[JsonProperty("id")]
 		string id = "placeNewOrder";
@@ -41,6 +41,18 @@ namespace HitBTC.Categories
 		}
 	}
 
+	class SubscribeReports
+	{
+		[JsonProperty("method")]
+		string Method = "subscribeReports";
+
+		[JsonProperty("params")]
+		ParamsNull Params = new ParamsNull();
+
+		[JsonProperty("id")]
+		string Id = "subscribeReports";
+	}
+
 	public class SocketTrading
 	{
 		WebSocket socket;
@@ -52,9 +64,41 @@ namespace HitBTC.Categories
 
 		public async void GetTradingBalance()
 		{
-			var s = new Categories.GetTradingBalance();
-			var jsonStr = JsonConvert.SerializeObject(s);
-			await Task.Run(() => socket.Send(jsonStr));
+			var gtb = new Categories.GetTradingBalance();
+			var jsonGtb = JsonConvert.SerializeObject(gtb);
+			await Task.Run(() => socket.Send(jsonGtb));
 		}
+
+		public async void PlaceNewOrder(string symbol, string side, float quantity, string clientOrderId = null, bool strictValidate = true)
+		{
+			OrderType orderType = OrderType.Market;
+
+			if (clientOrderId == null)
+				clientOrderId = Utils.GenerateId();
+
+			var parameters = new ParamsPlaceNewOrder
+			{
+				clientOrderId = clientOrderId,
+				symbol = symbol,
+				side = side,
+				type = "market",
+				quantity = quantity,
+				strictValidate = strictValidate
+			};
+
+			PlaceNewOrder pno = new Categories.PlaceNewOrder();
+			pno.Params = parameters;
+
+			var jsonPno = JsonConvert.SerializeObject(pno);
+			await Task.Run(() => socket.Send(jsonPno));
+		}
+
+		public async void SubscribeReports()
+		{
+			var sr = new SubscribeReports();
+			var jsonSr = JsonConvert.SerializeObject(sr);
+			await Task.Run(() => socket.Send(jsonSr));
+		}
+
 	}
 }
