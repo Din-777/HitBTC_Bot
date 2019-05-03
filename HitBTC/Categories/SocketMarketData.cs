@@ -59,6 +59,19 @@ namespace HitBTC.Categories
 		string id = "unsubscribeTicker";
 	}
 
+	public class GetSymmols
+	{
+		[JsonProperty("method")]
+		string Method = "getSymbols";
+
+		[JsonProperty("params")]
+		public ParamsNull param = new ParamsNull();
+
+		[JsonProperty("id")]
+		string id = "getSymbol";
+	}
+
+
 	public class SocketMarketData
 	{
 		WebSocket socket;
@@ -79,6 +92,13 @@ namespace HitBTC.Categories
 		public async void UnSubscribeTicker(string symbol)
 		{
 			var s = new Categories.UnSubscribeTicker(symbol);
+			var jsonStr = JsonConvert.SerializeObject(s);
+			await Task.Run(() => socket.Send(jsonStr));
+		}
+
+		public async void GetSymbols()
+		{
+			var s = new Categories.GetSymmols();
 			var jsonStr = JsonConvert.SerializeObject(s);
 			await Task.Run(() => socket.Send(jsonStr));
 		}

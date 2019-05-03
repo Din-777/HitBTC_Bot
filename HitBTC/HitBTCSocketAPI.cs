@@ -23,9 +23,10 @@ namespace HitBTC
 		public bool Authorized = false;
 		public Error Error;
 		public Ticker Ticker;
-		public Dictionary<string, Stack<Ticker>> Tickers = new Dictionary<string, Stack<Ticker>>();
+		public Dictionary<string, Ticker> Tickers = new Dictionary<string, Ticker>();
 		public Dictionary<string, Balance> Balance;
 		public Stack<SocketOrederResult> stackPlaceNewOrderResults;
+		public Dictionary<string, Symbol> Symbols;
 
 		public Stack<ParamsActiveOrders> ActiveOrders;
 
@@ -95,6 +96,11 @@ namespace HitBTC
 					stackPlaceNewOrderResults.Push(JsonConvert.DeserializeObject<SocketOrederResult>(result.ToString()));
 					str = "placeNewOrder";
 				}
+				else if (id == "getSymbol")
+				{
+					Symbols = (JsonConvert.DeserializeObject<List<Symbol>>(result.ToString())).ToDictionary(t=> t.Id);
+					str = "getSymbol";
+				}
 				else if (method == "activeOrders")
 				{
 					this.ActiveOrders = JsonConvert.DeserializeObject<Stack<ParamsActiveOrders>>(Params.ToString());
@@ -104,13 +110,11 @@ namespace HitBTC
 					Ticker = JsonConvert.DeserializeObject<Ticker>(Params.ToString());
 					if (Tickers.ContainsKey(Ticker.Symbol))
 					{
-						Tickers[Ticker.Symbol].Push(Ticker);
+						Tickers[Ticker.Symbol] = Ticker;
 					}
 					else
 					{
-						Stack<Ticker> st = new Stack<Ticker>();
-						st.Push(Ticker);
-						Tickers.Add(Ticker.Symbol, st);
+						Tickers.Add(Ticker.Symbol, Ticker);
 					}
 
 					str = "ticker";

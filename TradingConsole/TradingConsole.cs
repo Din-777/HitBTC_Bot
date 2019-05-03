@@ -61,7 +61,7 @@ namespace TradingConsole
 		}
 	}
 
-	class PendingOrders: List<PendingOrder>
+	public class PendingOrders: List<PendingOrder>
 	{
 
 
@@ -83,12 +83,14 @@ namespace TradingConsole
 
 		private HitBTCSocketAPI HitBTC;
 
-		private List<PendingOrder> PendingOrders;
+		private Dictionary<string, List<PendingOrder>> PendingOrders;
+		private List<PendingOrder> ClosedgOrders;
 
-		public Trading(ref HitBTCSocketAPI hitBTC, ref List<PendingOrder> pendingOrders)
+		public Trading(ref HitBTCSocketAPI hitBTC, ref Dictionary<string, List<PendingOrder>> pendingOrders, ref List<PendingOrder> closedgOrders)
 		{
 			this.HitBTC = hitBTC;
 			this.PendingOrders = pendingOrders;
+			ClosedgOrders = closedgOrders;
 			this.StopPercent = 0.01f;
 			this.ClosePercent = 0.1f;
 		}
@@ -99,108 +101,103 @@ namespace TradingConsole
 			this.ClosePercent = closePercent;
 			this.Ticker = HitBTC.Ticker;
 
-
-
-			if (oldTicker == null)
+			foreach(var ticker in HitBTC.Tickers)
 			{
-				PendingOrders.Add(new PendingOrder
+				if (oldTicker == null)
 				{
-					Symbol = "BTCUSD",
-					Side = "sell",
-					Quantity = Quantity,
-					OpenPrice = Ticker.Bid,					
-					ClosePercent = ClosePercent,
-					StopPercent = StopPercent
-				});
-
-				PendingOrders.Add(new PendingOrder
-				{
-					Symbol = "BTCUSD",
-					Side = "buy",
-					Quantity = Quantity,
-					OpenPrice = Ticker.Ask,
-					ClosePercent = ClosePercent,
-					StopPercent = StopPercent
-				});
-			}
-			else
-			{
-				for (int i = 0; i < PendingOrders.Count; i++)
-				{
-					if (PendingOrders[i].Side == "sell")
-					{						
-						if (Ticker.Bid >= PendingOrders[i].ClosePrice)
-						{
-							PendingOrders.RemoveAt(i);
-							PendingOrders.Add(new PendingOrder
-							{
-								Symbol = "BTCUSD",
-								Side = "buy",
-								Quantity = Quantity,
-								OpenPrice = Ticker.Ask,
-								ClosePercent = ClosePercent,
-								StopPercent = StopPercent
-							});
-						}
-						else if (Ticker.Bid <= PendingOrders[i].StopPrice)
-						{
-							PendingOrders.RemoveAt(i);
-						}
-					}
+					OrderAdd("sell", ticker.Key, ticker.Value);
+					OrderAdd("buy", ticker.Key, ticker.Value);
 				}
-
-				for (int i = 0; i < PendingOrders.Count; i++)
+				else
 				{
-					if (PendingOrders[i].Side == "buy")
+					for (int i = 0; i < PendingOrders[ticker.Key].Count; i++)
 					{
-						if (Ticker.Ask <= PendingOrders[i].ClosePrice)
+						if (PendingOrders[ticker.Key][i].Side == "sell")
 						{
-							PendingOrders.RemoveAt(i);
-							PendingOrders.Add(new PendingOrder
+							if (PendingOrders[ticker.Key][i].Symbol == ticker.Key)
 							{
-								Symbol = "BTCUSD",
-								Side = "sell",
-								Quantity = Quantity,
-								OpenPrice = Ticker.Bid,
-								ClosePercent = ClosePercent,
-								StopPercent = StopPercent
-							});
-						}
-						else if (Ticker.Ask >= PendingOrders[i].StopPrice)
-						{
-							PendingOrders.RemoveAt(i);
+								if (Ticker.Bid >= PendingOrders[ticker.Key][i].ClosePrice)
+								{
+									ClosedgOrders.Add(PendingOrders[ticker.Key].ElementAtOrDefault(i));
+
+									PendingOrders[ticker.Key].RemoveAt(i);
+
+									OrderAdd("buy", ticker.Key, ticker.Value);
+								}
+								else if (Ticker.Bid <= PendingOrders[ticker.Key][i].StopPrice)
+								{
+									PendingOrders[ticker.Key].RemoveAt(i);
+								}
+
+							}
 						}
 					}
+
+					for (int i = 0; i < PendingOrders[ticker.Key].Count; i++)
+					{
+						if (PendingOrders[ticker.Key][i].Side == "buy")
+						{
+							if (PendingOrders[ticker.Key][i].Symbol == ticker.Key)
+							{
+								if (Ticker.Bid >= PendingOrders[ticker.Key][i].ClosePrice)
+								{
+									ClosedgOrders.Add(PendingOrders[ticker.Key].ElementAtOrDefault(i));
+
+									PendingOrders[ticker.Key].RemoveAt(i);
+
+									OrderAdd("sell", ticker.Key, ticker.Value);
+								}
+								else if (Ticker.Bid <= PendingOrders[ticker.Key][i].StopPrice)
+								{
+									PendingOrders[ticker.Key].RemoveAt(i);
+								}
+
+							}
+						}
+					}
+
+					if (!PendingOrders[ticker.Key].Any(t => t.Side == "sell"))
+					{
+						OrderAdd("sell", ticker.Key, ticker.Value);
+					}
+
+					if (!PendingOrders[ticker.Key].Any(t => t.Side == "buy"))
+					{
+						OrderAdd("buy", ticker.Key, ticker.Value);
+					}
 				}
-			}
-
-			if (!PendingOrders.Any(t => t.Side == "sell"))
-			{
-				PendingOrders.Add(new PendingOrder
-				{
-					Symbol = "BTCUSD",
-					Side = "sell",
-					Quantity = Quantity,
-					OpenPrice = Ticker.Bid,
-					ClosePercent = ClosePercent,
-					StopPercent = StopPercent
-				});
-			}
-
-			if (!PendingOrders.Any(t => t.Side == "buy"))
-			{
-				PendingOrders.Add(new PendingOrder
-				{
-					Symbol = "BTCUSD",
-					Side = "buy",
-					Quantity = Quantity,
-					OpenPrice = Ticker.Ask,
-					ClosePercent = ClosePercent,
-					StopPercent = StopPercent
-				});
-			}
+			}			
 
 			oldTicker = Ticker;
+		}
+
+		public void OrderAdd(string side, string symbol, Ticker ticker)
+		{
+			if (side == "sell")
+			{
+				PendingOrders[symbol].Add(new PendingOrder
+				{
+					Symbol = symbol,
+					Side = "sell",
+					Quantity = Quantity,
+					OpenPrice = ticker.Bid,
+					ClosePercent = ClosePercent,
+					StopPercent = StopPercent
+				});
+			}
+
+			else if (side == "buy")
+			{
+				PendingOrders[symbol].Add(new PendingOrder
+				{
+					Symbol = symbol,
+					Side = "buy",
+					Quantity = Quantity,
+					OpenPrice = Ticker.Ask,
+					ClosePercent = ClosePercent,
+					StopPercent = StopPercent
+				});
+			}
 		}
 
 		public bool buyBTC(ref Balance balance, float amount, float profit = 0.0f)
@@ -221,23 +218,25 @@ namespace TradingConsole
 		static HitBTCSocketAPI hitBTC;
 		static Screen screen;
 
-		static string pKey = "Y";
-		static string sKey = "B";
 
-		//static string pKey = "p";
-		//static string sKey = "M";
+		static string pKey = "";
+		static string sKey = "";
 
-		public static List<PendingOrder> PendingOrders;
+		public static Dictionary<string, List<PendingOrder>> PendingOrders;
+		public static List<PendingOrder> ClosedOrders;
 
 		public static Trading Trading;
 
 		static void Main(string[] args)
 		{
 			hitBTC = new HitBTCSocketAPI();
-			screen = new Screen(ref hitBTC, ref PendingOrders);
 
-			PendingOrders = new List<PendingOrder>();
-			Trading = new Trading(ref hitBTC, ref PendingOrders);
+			PendingOrders = new Dictionary<string, List<PendingOrder>>();
+			ClosedOrders = new List<PendingOrder>();
+
+			screen = new Screen(ref hitBTC, ref PendingOrders, ref ClosedOrders);
+			
+			Trading = new Trading(ref hitBTC, ref PendingOrders, ref ClosedOrders);
 
 			hitBTC.SocketAuth.Auth(pKey, sKey);
 			hitBTC.MessageReceived += HitBTCSocket_MessageReceived;
@@ -246,20 +245,27 @@ namespace TradingConsole
 
 			Thread.Sleep(2000);
 
+			hitBTC.SocketMarketData.GetSymbols();
+
 			hitBTC.SocketMarketData.SubscribeTicker("BTCUSD");
-			//hitBTC.SocketMarketData.SubscribeTicker("ETHUSD");
+			hitBTC.SocketMarketData.SubscribeTicker("ETHUSD");
 
 
 			Console.ReadKey();
 		}
 
+		static List<Ticker> Tickers = new List<Ticker>();
+
 		private static void HitBTCSocket_MessageReceived(string s)
 		{
 			if (s == "ticker")
 			{
-				Trading.trading_0(0.01f, 0.1f, 0.00001f);
+				Tickers.Add(hitBTC.Ticker);
+				if (Tickers.Count > 20) Tickers.RemoveAt(0);
 
-				screen.Print(hitBTC, PendingOrders);
+				Trading.trading_0(0.01f, 0.1f, 1.0f);
+
+				screen.Print(hitBTC, Tickers, PendingOrders, ClosedOrders);
 			}			
 		}
 	}
