@@ -23,7 +23,8 @@ namespace HitBTC
 		public bool Authorized = false;
 		public Error Error;
 		public Ticker Ticker;
-		public Dictionary<string, Ticker> Tickers = new Dictionary<string, Ticker>();
+		public List<Ticker> L_Tickers = new List<Ticker>();
+		public Dictionary<string, Ticker> D_Tickers = new Dictionary<string, Ticker>();
 		public Dictionary<string, Balance> Balance;
 		public Stack<SocketOrederResult> stackPlaceNewOrderResults;
 		public Dictionary<string, Symbol> Symbols;
@@ -108,14 +109,17 @@ namespace HitBTC
 				else if (method == "ticker" && Params != null)
 				{
 					Ticker = JsonConvert.DeserializeObject<Ticker>(Params.ToString());
-					if (Tickers.ContainsKey(Ticker.Symbol))
+					if (D_Tickers.ContainsKey(Ticker.Symbol))
 					{
-						Tickers[Ticker.Symbol] = Ticker;
+						D_Tickers[Ticker.Symbol] = Ticker;
 					}
 					else
 					{
-						Tickers.Add(Ticker.Symbol, Ticker);
+						D_Tickers.Add(Ticker.Symbol, Ticker);
 					}
+
+					L_Tickers.Add(Ticker);
+					if (L_Tickers.Count > 20) L_Tickers.RemoveAt(0);
 
 					str = "ticker";
 				}
