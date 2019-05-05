@@ -33,16 +33,11 @@ namespace TradingConsole
 			int column_7 = column_6 + 16;   // Estim balance
 
 			Console.CursorVisible = false;
-
 			
-
-			//var t = pendingOrders.OrderBy(pair => pair.Value).ToDictionary(pair => pair.Key, pair => pair.Value);
-			//var tempPendingOrders = t.SelectMany(kvp => kvp.Value).ToList();
-
 			var t = pendingOrders.SelectMany(kvp => kvp.Value).ToList();
 			var tempPendingOrders = t.OrderByDescending(o => o.CurrProfitPercent).ToList();
 
-			Console.Clear();
+			//Console.Clear();
 
 			Console.SetCursorPosition(column_1, 0);
 			Console.Write("Tickers");
