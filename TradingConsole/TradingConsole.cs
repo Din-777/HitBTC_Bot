@@ -268,10 +268,10 @@ namespace TradingConsole
 
 			Trading = new Trading(ref hitBTC, ref PendingOrders, ref ClosedOrders);
 
-			hitBTC.SocketAuth.Auth(pKey, sKey);
+			//hitBTC.SocketAuth.Auth(pKey, sKey);
 			hitBTC.MessageReceived += HitBTCSocket_MessageReceived;
 
-			hitBTC.SocketTrading.GetTradingBalance();
+			//hitBTC.SocketTrading.GetTradingBalance();
 
 			Thread.Sleep(2000);
 
@@ -281,7 +281,7 @@ namespace TradingConsole
 			hitBTC.SocketMarketData.SubscribeTicker("ETHUSD");
 			hitBTC.SocketMarketData.SubscribeTicker("ETCUSD");
 			hitBTC.SocketMarketData.SubscribeTicker("LTCUSD");
-			hitBTC.SocketMarketData.SubscribeTicker("REPUSD");
+			hitBTC.SocketMarketData.SubscribeTicker("BNTUSD");
 
 
 			Console.ReadKey();
@@ -291,7 +291,7 @@ namespace TradingConsole
 		{
 			if (s == "ticker")
 			{
-				Trading.trading_0(0.01f, 0.2f, 1.0f);
+				Trading.trading_0(0.01f, 0.3f, 1.0f);
 
 				screen.Print(hitBTC, PendingOrders, ClosedOrders);
 			}

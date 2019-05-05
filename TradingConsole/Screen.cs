@@ -26,11 +26,11 @@ namespace TradingConsole
 		{
 			int column_1 = 0;               // Tickers
 			int column_2 = 30;              // Pending orders
-			int column_3 = column_2 + 45;   // Closed orders
-			int column_4 = column_3 + 20;   // 
-			int column_5 = column_4 + 0;   // Orders Profit
-			int column_6 = column_5 + 0;   // Trad balance / Dealing
-			int column_7 = column_6 + 16;   // Estim balance
+			int column_3 = column_2 + 45;	// Closed orders
+			int column_4 = column_3 + 20;	// 
+			int column_5 = column_4 + 0;	// Orders Profit
+			int column_6 = column_5 + 0;	// Trad balance / Dealing
+			int column_7 = column_6 + 16;	// Estim balance
 
 			Console.CursorVisible = false;
 			
