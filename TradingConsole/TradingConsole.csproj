@@ -42,6 +42,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Trading.cs" />
     <Compile Include="Screen.cs" />
     <Compile Include="TradingConsole.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

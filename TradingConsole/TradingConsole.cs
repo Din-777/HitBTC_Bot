@@ -70,180 +70,7 @@ namespace TradingConsole
 				return 0;
 		}
 	}
-
-	public class Trading
-	{
-		private static Ticker oldTicker;
-
-		public float StopPercent { get; set; }
-		public float ClosePercent { get; set; }
-
-		public float StopPrice { get; set; }
-		public float ClosePrice { get; set; }
-
-		public Ticker Ticker { get; set; }
-
-		public float Quantity = 0.0f;
-
-		private HitBTCSocketAPI HitBTC;
-
-		private Dictionary<string, List<PendingOrder>> PendingOrders;
-		private List<PendingOrder> ClosedgOrders;
-
-		public Trading(ref HitBTCSocketAPI hitBTC, ref Dictionary<string, List<PendingOrder>> pendingOrders, ref List<PendingOrder> closedgOrders)
-		{
-			this.HitBTC = hitBTC;
-			this.PendingOrders = pendingOrders;
-			ClosedgOrders = closedgOrders;
-			this.StopPercent = 0.01f;
-			this.ClosePercent = 0.2f;
-		}
-
-		public void trading_0(float stopPercent, float closePercent, float quantity)
-		{
-			this.StopPercent = stopPercent;
-			this.ClosePercent = closePercent;
-			this.Ticker = HitBTC.Ticker;
-			this.Quantity = quantity;
-			
-
-			if (!PendingOrders.ContainsKey(Ticker.Symbol))
-			{
-				OrderAdd("sell", Ticker);
-				OrderAdd("buy", Ticker);
-			}
-			else
-			{
-				foreach (var pO in PendingOrders[HitBTC.Ticker.Symbol])
-				{
-					pO.CalcCurrProfitPercent(HitBTC.Ticker);
-				}
-
-				for (int i = 0; i < PendingOrders[Ticker.Symbol].Count; i++)
-				{
-					if (PendingOrders[Ticker.Symbol][i].Side == "sell")
-					{
-						if (Ticker.Bid >= PendingOrders[Ticker.Symbol][i].ClosePrice)
-						{
-							ClosedgOrders.Add(PendingOrders[Ticker.Symbol].ElementAtOrDefault(i));
-
-							PendingOrders[Ticker.Symbol].RemoveAt(i);
-
-							OrderAdd("buy", Ticker);
-						}
-						else if (Ticker.Bid <= PendingOrders[Ticker.Symbol][i].StopPrice)
-						{
-							PendingOrders[Ticker.Symbol].RemoveAt(i);
-						}
-					}
-				}
-
-				for (int i = 0; i < PendingOrders[Ticker.Symbol].Count; i++)
-				{
-					if (PendingOrders[Ticker.Symbol][i].Side == "buy")
-					{
-						if (Ticker.Ask <= PendingOrders[Ticker.Symbol][i].ClosePrice)
-						{
-							ClosedgOrders.Add(PendingOrders[Ticker.Symbol].ElementAtOrDefault(i));
-
-							PendingOrders[Ticker.Symbol].RemoveAt(i);
-
-							OrderAdd("sell", Ticker);
-						}
-						else if (Ticker.Ask >= PendingOrders[Ticker.Symbol][i].StopPrice)
-						{
-							PendingOrders[Ticker.Symbol].RemoveAt(i);
-						}
-					}
-				}
-
-				if (!PendingOrders[Ticker.Symbol].Any(t => t.Side == "sell"))
-				{
-					OrderAdd("sell", Ticker);
-				}
-
-				if (!PendingOrders[Ticker.Symbol].Any(t => t.Side == "buy"))
-				{
-					OrderAdd("buy", Ticker);
-				}
-			}
-
-
-			oldTicker = Ticker;
-		}
-
-		public void OrderAdd(string side, Ticker ticker)
-		{
-			if (side == "sell")
-			{
-				if (PendingOrders.ContainsKey(Ticker.Symbol))
-				{
-					PendingOrders[ticker.Symbol].Add(new PendingOrder
-					{
-						Symbol = ticker.Symbol,
-						Side = "sell",
-						Quantity = Quantity,
-						OpenPrice = ticker.Bid,
-						ClosePercent = ClosePercent,
-						StopPercent = StopPercent
-					});
-				}
-				else
-				{
-					PendingOrders.Add(Ticker.Symbol, new List<PendingOrder>());
-					PendingOrders[Ticker.Symbol].Add(new PendingOrder{
-														Symbol = ticker.Symbol,
-														Side = "sell",
-														Quantity = Quantity,
-														OpenPrice = ticker.Bid,
-														ClosePercent = ClosePercent,
-														StopPercent = StopPercent });
-				}
-			}
-
-			else if (side == "buy")
-			{
-				if (PendingOrders.ContainsKey(Ticker.Symbol))
-				{
-					PendingOrders[ticker.Symbol].Add(new PendingOrder
-					{
-						Symbol = ticker.Symbol,
-						Side = "buy",
-						Quantity = Quantity,
-						OpenPrice = ticker.Bid,
-						ClosePercent = ClosePercent,
-						StopPercent = StopPercent
-					});
-				}
-				else
-				{
-					PendingOrders.Add(Ticker.Symbol, new List<PendingOrder>());
-					PendingOrders[Ticker.Symbol].Add(new PendingOrder
-					{
-						Symbol = ticker.Symbol,
-						Side = "buy",
-						Quantity = Quantity,
-						OpenPrice = ticker.Bid,
-						ClosePercent = ClosePercent,
-						StopPercent = StopPercent
-					});
-				}
-			}
-		}
-
-		public bool buyBTC(ref Balance balance, float amount, float profit = 0.0f)
-		{
-			return false;
-		}
-
-		public bool selBTC(ref Balance balance, float amount, float profit = 0.0f)
-		{
-			return false;
-		}
-
-	}
-
-
+		
 	class TradingConsole
 	{
 		static HitBTCSocketAPI hitBTC;
@@ -277,11 +104,11 @@ namespace TradingConsole
 
 			hitBTC.SocketMarketData.GetSymbols();
 
-			hitBTC.SocketMarketData.SubscribeTicker("BTCUSD");
-			hitBTC.SocketMarketData.SubscribeTicker("ETHUSD");
-			hitBTC.SocketMarketData.SubscribeTicker("ETCUSD");
-			hitBTC.SocketMarketData.SubscribeTicker("LTCUSD");
-			hitBTC.SocketMarketData.SubscribeTicker("BNTUSD");
+			Trading.Add("BTCUSD", 1.0f, 0.01f, 0.3f );
+			Trading.Add("ETHUSD", 1.0f, 0.01f, 0.2f);
+			Trading.Add("ETCUSD", 1.0f, 0.01f, 0.3f);
+			Trading.Add("LTCUSD", 1.0f, 0.01f, 0.2f);
+			Trading.Add("NANOUSD", 1.0f, 0.01f, 0.3f);
 
 
 			Console.ReadKey();
@@ -291,7 +118,7 @@ namespace TradingConsole
 		{
 			if (s == "ticker")
 			{
-				Trading.trading_0(0.01f, 0.3f, 1.0f);
+				Trading.Run(hitBTC.Ticker.Symbol);
 
 				screen.Print(hitBTC, PendingOrders, ClosedOrders);
 			}
