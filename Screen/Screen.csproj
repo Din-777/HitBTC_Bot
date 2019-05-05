@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{41C987D2-E7F2-4CB2-8929-06E7E5D1122A}</ProjectGuid>
+    <ProjectGuid>{2E0CB91F-FCF7-4F49-BDD9-8C05E9A90132}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Screen</RootNamespace>
@@ -47,6 +47,10 @@
     <ProjectReference Include="..\HitBTC\HitBTC.csproj">
       <Project>{db31c129-2d33-4f37-a767-6ab8ae0b324c}</Project>
       <Name>HitBTC</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Trading\Trading.csproj">
+      <Project>{E55BA61D-00D7-4556-9887-52AB104C888B}</Project>
+      <Name>Trading</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

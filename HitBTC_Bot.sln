@@ -15,6 +15,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Temp2", "Temp2\Temp2.csproj
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingConsole", "TradingConsole\TradingConsole.csproj", "{BF72A7FD-630A-4BE1-8C94-9EBD5909AA85}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Screen", "Screen\Screen.csproj", "{2E0CB91F-FCF7-4F49-BDD9-8C05E9A90132}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trading", "Trading\Trading.csproj", "{E55BA61D-00D7-4556-9887-52AB104C888B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,6 +49,14 @@ Global
 		{BF72A7FD-630A-4BE1-8C94-9EBD5909AA85}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BF72A7FD-630A-4BE1-8C94-9EBD5909AA85}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BF72A7FD-630A-4BE1-8C94-9EBD5909AA85}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2E0CB91F-FCF7-4F49-BDD9-8C05E9A90132}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2E0CB91F-FCF7-4F49-BDD9-8C05E9A90132}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2E0CB91F-FCF7-4F49-BDD9-8C05E9A90132}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2E0CB91F-FCF7-4F49-BDD9-8C05E9A90132}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E55BA61D-00D7-4556-9887-52AB104C888B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E55BA61D-00D7-4556-9887-52AB104C888B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E55BA61D-00D7-4556-9887-52AB104C888B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E55BA61D-00D7-4556-9887-52AB104C888B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

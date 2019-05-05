@@ -5,111 +5,43 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using System.Threading;
 using HitBTC;
 using HitBTC.Models;
-using System.Threading;
+using Trading;
+using Screen;
 
 namespace TradingConsole
 {
-	public class PendingOrder: IComparable<PendingOrder>
-	{
-		public string Symbol;
-		public string Side;
-		public float Quantity;
-		public float OpenPrice;
-		public float StopPrice;
-		public float ClosePrice;
-
-		private float stopPercent;
-		private float closePercent;
-
-		public float StopPercent
-		{
-			get { return stopPercent; }
-			set
-			{
-				stopPercent = value;
-				StopPrice = Side == "sell" ? OpenPrice - OpenPrice.Percent(stopPercent) : OpenPrice + OpenPrice.Percent(stopPercent);
-			}
-		}
-
-		public float ClosePercent
-		{
-			get { return closePercent; }
-			set
-			{
-				closePercent = value;
-				ClosePrice = Side == "sell" ? OpenPrice + OpenPrice.Percent(closePercent) : OpenPrice - OpenPrice.Percent(closePercent);
-			}
-		}
-
-		public DateTime CreatedAt;
-
-		public float CurrProfitPercent;
-
-		public float CalcCurrProfitPercent(Ticker ticker)
-		{
-			CurrProfitPercent = ((100.0f / (OpenPrice / (Side == "sell" ? ticker.Bid : ticker.Ask))) - 100.0f) * (Side == "sell" ? 1.0f : (-1.0f));
-			return CurrProfitPercent;
-		}
-
-		public PendingOrder() { }
-
-		public PendingOrder(string Symbol, string Side, float OpenPrice, float stopPercent, float closePercent)
-		{
-
-		}
-
-		public int CompareTo(PendingOrder obj)
-		{
-			if (this.CurrProfitPercent > obj.CurrProfitPercent)
-				return 1;
-			if (this.CurrProfitPercent < obj.CurrProfitPercent)
-				return -1;
-			else
-				return 0;
-		}
-	}
-		
 	class TradingConsole
 	{
-		static HitBTCSocketAPI hitBTC;
-		static Screen screen;
+		static HitBTCSocketAPI HitBTC;
+		static Screen.Screen Screen;
 
 		static string pKey = "";
 		static string sKey = "";
 
-		public static Dictionary<string, List<PendingOrder>> PendingOrders;
-		public static List<PendingOrder> ClosedOrders;
-
-		public static Trading Trading;
+		public static Trading.Trading Trading;
 
 		static void Main(string[] args)
 		{
-			hitBTC = new HitBTCSocketAPI();
+			HitBTC = new HitBTCSocketAPI();
+			Trading = new Trading.Trading(ref HitBTC);
+			Screen = new Screen.Screen(ref HitBTC, ref Trading.PendingOrders, ref Trading.ClosedOrders);
 
-			PendingOrders = new Dictionary<string, List<PendingOrder>>();
-			ClosedOrders = new List<PendingOrder>();
+			HitBTC.MessageReceived += HitBTCSocket_MessageReceived;
 
-			screen = new Screen(ref hitBTC, ref PendingOrders, ref ClosedOrders);
-
-			Trading = new Trading(ref hitBTC, ref PendingOrders, ref ClosedOrders);
-
-			//hitBTC.SocketAuth.Auth(pKey, sKey);
-			hitBTC.MessageReceived += HitBTCSocket_MessageReceived;
-
-			//hitBTC.SocketTrading.GetTradingBalance();
+			HitBTC.SocketAuth.Auth(pKey, sKey);
+			HitBTC.SocketTrading.GetTradingBalance();
 
 			Thread.Sleep(2000);
 
-			hitBTC.SocketMarketData.GetSymbols();
+			HitBTC.SocketMarketData.GetSymbols();
 
 			Trading.Add("BTCUSD", 1.0f, 0.01f, 0.3f );
-			Trading.Add("ETHUSD", 1.0f, 0.01f, 0.2f);
+			Trading.Add("ETHUSD", 1.0f, 0.01f, 0.3f);
 			Trading.Add("ETCUSD", 1.0f, 0.01f, 0.3f);
-			Trading.Add("LTCUSD", 1.0f, 0.01f, 0.2f);
-			Trading.Add("NANOUSD", 1.0f, 0.01f, 0.3f);
-
+			Trading.Add("LTCUSD", 1.0f, 0.01f, 0.3f);
 
 			Console.ReadKey();
 		}
@@ -118,9 +50,9 @@ namespace TradingConsole
 		{
 			if (s == "ticker")
 			{
-				Trading.Run(hitBTC.Ticker.Symbol);
+				Trading.Run(HitBTC.Ticker.Symbol);				
 
-				screen.Print(hitBTC, PendingOrders, ClosedOrders);
+				Screen.Print();
 			}
 		}
 	}

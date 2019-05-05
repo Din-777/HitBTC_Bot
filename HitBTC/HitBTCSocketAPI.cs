@@ -26,6 +26,7 @@ namespace HitBTC
 		public List<Ticker> L_Tickers = new List<Ticker>();
 		public Dictionary<string, Ticker> D_Tickers = new Dictionary<string, Ticker>();
 		public Dictionary<string, Balance> Balance;
+		public SocketOrederResult NewOrederResult;
 		public Stack<SocketOrederResult> stackPlaceNewOrderResults;
 		public Dictionary<string, Symbol> Symbols;
 
@@ -50,6 +51,7 @@ namespace HitBTC
 			SocketAuth = new SocketAuth(ref socket);
 			SocketTrading = new SocketTrading(ref socket);
 			SocketMarketData = new SocketMarketData(ref socket);
+			stackPlaceNewOrderResults = new Stack<SocketOrederResult>();
 
 			ConnectAsync(socket);
 
@@ -67,6 +69,7 @@ namespace HitBTC
 			this.Error = null;
 
 			var jObject = JObject.Parse(e.Message);
+
 
 			var Params = jObject["params"];
 			var Error = jObject["error"];
@@ -94,7 +97,8 @@ namespace HitBTC
 				}
 				else if (id == "placeNewOrder")
 				{
-					stackPlaceNewOrderResults.Push(JsonConvert.DeserializeObject<SocketOrederResult>(result.ToString()));
+					NewOrederResult = JsonConvert.DeserializeObject<SocketOrederResult>(result.ToString());
+					stackPlaceNewOrderResults.Push(NewOrederResult);
 					str = "placeNewOrder";
 				}
 				else if (id == "getSymbol")

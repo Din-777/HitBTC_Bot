@@ -5,151 +5,88 @@ using System.Text;
 using System.Threading.Tasks;
 
 using HitBTC;
+using HitBTC.Models;
+using Trading;
 
 namespace Screen
 {
 	public class Screen
 	{
 		HitBTCSocketAPI HitBTC;
+		Dictionary<string, List<PendingOrder>> PendingOrders;
+		List<PendingOrder> ClosedOrders;
 
-		public Screen(ref HitBTCSocketAPI hitBTC, ref List<PendingOrder> PendingOrders)
+		public Screen(ref HitBTCSocketAPI hitBTC, ref Dictionary<string, List<Trading.PendingOrder>> pendingOrders, ref List<Trading.PendingOrder> closedOrders)
 		{
-			this.HitBTC = hitBTC;
+			HitBTC = hitBTC;
+			PendingOrders = pendingOrders;
+			ClosedOrders = closedOrders;
 		}
 
 		public void Print()
 		{
-			int column_1 = 0;               // 
-			int column_2 = 12;              // 
-			int column_3 = column_2 + 14;   // Dealings Profit
-			int column_4 = column_3 + 15;   // Open orders
-			int column_5 = column_4 + 14;   // Orders Profit
-			int column_6 = column_5 + 15;   // Trad balance / Dealing
+			int column_1 = 0;               // Tickers
+			int column_2 = 30;              // Pending orders
+			int column_3 = column_2 + 50;   // Closed orders
+			int column_4 = column_3 + 20;   // 
+			int column_5 = column_4 + 0;    // Orders Profit
+			int column_6 = column_5 + 0;    // Trad balance / Dealing
 			int column_7 = column_6 + 16;   // Estim balance
 
 			Console.CursorVisible = false;
 
-			// Сортировка OpenOrder в порядке удаления от текущей цены
-			var tempOrders = (from Order in balance.Orders
-							  let l = new
-							  {
-								  Side = Order.Side,
-								  OpenPrice = Order.OpenPrice,
-								  Amount = Order.Amount,
-								  StopLossPercent = Order.StopLossPercent,
-								  ProfitPercent = Order.ProfitPercent,
-								  ClosePrice = Order.ClosePrice,
-								  Diff = Math.Abs(Order.ClosePrice - prices.Peek()),
-								  CurrProfit = Order.CurrProfit,
-								  CurrProfitPercent = Order.CurrProfitPercent
-							  }
-							  orderby l.Diff descending
-							  select new Order
-							  {
-								  Side = l.Side,
-								  OpenPrice = l.OpenPrice,
-								  Amount = l.Amount,
-								  StopLossPercent = l.StopLossPercent,
-								  ProfitPercent = l.ProfitPercent,
-								  ClosePrice = l.ClosePrice,
-								  CurrProfit = l.CurrProfit,
-								  CurrProfitPercent = l.CurrProfitPercent
-							  }).ToList<Order>();
+			var t = PendingOrders.SelectMany(kvp => kvp.Value).ToList();
+			var tempPendingOrders = t.OrderByDescending(o => o.CurrProfitPercent).ToList();
 
-
-			Console.Clear();
-			Console.Title = string.Format("BTC/USD {0:0000.000}     Initial estimated USD {1:000.000000}",
-				prices.Peek(), 100.0f + (0.01f * prices.Last<float>()));
-
+			//Console.Clear();
 
 			Console.SetCursorPosition(column_1, 0);
-			Console.Write("Prices {0}", prices.Count);
-
-			Console.SetCursorPosition(column_6, 7);
-			Console.Write("Dealings {0}", balance.Deals.Count);
-
-			Console.SetCursorPosition(column_7, 7);
-			Console.Write("Profit");
+			Console.Write("Tickers");
+			Console.SetCursorPosition(column_1, 1);
+			Console.Write("Symbol  Ask       Bid");
 
 			Console.SetCursorPosition(column_2, 0);
-			Console.Write("Open order {0}", balance.Orders.Count);
+			Console.Write("Pending orders {0}", tempPendingOrders.Count);
+			Console.SetCursorPosition(column_2, 1);
+			Console.Write("Symbol  Side	Close     Profit        Closed");
 
 			Console.SetCursorPosition(column_3, 0);
-			Console.Write("Profit");
-
-			Console.SetCursorPosition(column_6, 0);
-			Console.WriteLine("Trad balance");
-
-			Console.SetCursorPosition(column_7, 0);
-			Console.WriteLine("Estim balance");
-
-			Console.SetCursorPosition(column_6, 1);
-			Console.WriteLine("USD {0:000.000000}", balance.USD);
-			Console.SetCursorPosition(column_6, 2);
-			Console.WriteLine("BTC {0:0.00000000}", balance.BTC);
-
-			Console.SetCursorPosition(column_7, 1);
-			Console.WriteLine("USD {0:000.000000}", balance.estimatedUSD);
-			Console.SetCursorPosition(column_7, 2);
-			Console.WriteLine("BTC {0:0.00000000}", balance.estimatedBTC);
-
-			Console.SetCursorPosition(column_6, 4);
-			Console.WriteLine("Prof in orders USD {0:0.00000000}", balance.Prof);
-
-
-			float profitDeals = 0.0f;
-			foreach (Dealing d in balance.Deals)
-				profitDeals += d.Profit;
-			Console.SetCursorPosition(column_6, 5);
-			Console.WriteLine("Prof in dealin USD {0:0.00000000}", profitDeals);
-
-
-			tempOrders.Reverse();
+			Console.Write("Closed orders {0}", ClosedOrders.Count);
+			Console.SetCursorPosition(column_3, 1);
+			Console.Write("Symbol  Open      Close     Profit");
 
 			for (int i = 0; i < 20; i++)
 			{
-				Console.SetCursorPosition(column_1, i + 1); //Price
-				Console.Write("{0:0000.000}", prices.ElementAtOrDefault<float>(i));
-
-				if (i < balance.Deals.Count)
+				if (i < HitBTC.L_Tickers.Count)
 				{
-					Console.SetCursorPosition(column_6, i + 8);   //Dealings
-					Console.Write(balance.Deals.ElementAtOrDefault<Dealing>(i).Side + " {0:0000.000}", balance.Deals.ElementAtOrDefault<Dealing>(i).Price);
+					Console.SetCursorPosition(column_1, i + 2); //Price
 
-					Console.SetCursorPosition(column_7, i + 8);   //Profit
-					Console.Write("{0:0.00000000}", balance.Deals.ElementAtOrDefault<Dealing>(i).Profit);
+					int j = HitBTC.L_Tickers.Count - i - 1;
+					Console.Write("{0}  {1:0000.000}  {2:0000.000}", HitBTC.L_Tickers.ElementAtOrDefault(j).Symbol,
+						HitBTC.L_Tickers.ElementAtOrDefault(j).Ask,
+						HitBTC.L_Tickers.ElementAtOrDefault(j).Bid);
 				}
 
-				if (i < tempOrders.Count)
+				if (i < tempPendingOrders.Count)
 				{
-					Console.SetCursorPosition(column_2, i + 1);   //Open order
-					Console.Write(tempOrders.ElementAtOrDefault<Order>(i).Side + " {0:0000.000}", tempOrders.ElementAtOrDefault<Order>(i).ClosePrice);
-
-					Console.SetCursorPosition(column_3, i + 1);   //Order Profit
-					Console.Write("{0:0.00000000}", tempOrders.ElementAtOrDefault<Order>(i).CurrProfit);
-
-					Console.SetCursorPosition(column_3 + 12, i + 1);   //Order Profit Percent
-					Console.Write("{0:0.00000000}%", tempOrders.ElementAtOrDefault<Order>(i).CurrProfitPercent);
-
+					Console.SetCursorPosition(column_2, i + 2);   //Open order
+					Console.Write("{0}  {1}	{2:0000.000}  {3:0.00000000}%   {4} ", tempPendingOrders.ElementAtOrDefault(i).Symbol,
+																				tempPendingOrders.ElementAtOrDefault(i).Side,
+																				tempPendingOrders.ElementAtOrDefault(i).ClosePrice,
+																				tempPendingOrders.ElementAtOrDefault(i).CurrProfitPercent,
+																				tempPendingOrders.ElementAtOrDefault(i).Closed);
 				}
-			}
 
-			if (balance.BTC == BTC)
-			{
-				if (beep)
+				if (i < ClosedOrders.Count)
 				{
-					Console.Beep(400, 100);
-					beep = false;
-
-					Console.SetCursorPosition(0, 22);
-					Console.CursorVisible = true;
-					Console.Write("waiting...");
-					Console.ReadKey();
-					Console.CursorVisible = false;
+					int j = ClosedOrders.Count - i - 1;
+					Console.SetCursorPosition(column_3, i + 2); //Price
+					Console.Write("{0}  {1:0000.000}  {2:0000.000}  {3:0.00000000}%", ClosedOrders.ElementAtOrDefault(j).Symbol,
+																					ClosedOrders.ElementAtOrDefault(j).OpenPrice,
+																					ClosedOrders.ElementAtOrDefault(j).ClosePrice,
+																					ClosedOrders.ElementAtOrDefault(j).CurrProfitPercent);
 				}
 			}
-			else beep = true;
 		}
 	}
-    }
 }

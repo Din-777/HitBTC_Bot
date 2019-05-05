@@ -18,7 +18,11 @@ namespace Temp
 
 			dict.Add("a", 1);
 			dict.Add("b", 2);
-			dict.Add("a", 3);
+			//dict.Add("a", 3);
+
+			string s = "ETHUSD";
+			string n = s.Substring(0, 3);
+			string k = s.Substring(3);
 
 
 			Console.ReadKey();

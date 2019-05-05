@@ -4,16 +4,15 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{BF72A7FD-630A-4BE1-8C94-9EBD5909AA85}</ProjectGuid>
-    <OutputType>Exe</OutputType>
-    <RootNamespace>TradingConsole</RootNamespace>
-    <AssemblyName>TradingConsole</AssemblyName>
+    <ProjectGuid>{E55BA61D-00D7-4556-9887-52AB104C888B}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Trading</RootNamespace>
+    <AssemblyName>Trading</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -23,7 +22,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
@@ -42,24 +40,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="TradingConsole.cs" />
+    <Compile Include="Trading.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\HitBTC\HitBTC.csproj">
       <Project>{db31c129-2d33-4f37-a767-6ab8ae0b324c}</Project>
       <Name>HitBTC</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Screen\Screen.csproj">
-      <Project>{2e0cb91f-fcf7-4f49-bdd9-8c05e9a90132}</Project>
-      <Name>Screen</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Trading\Trading.csproj">
-      <Project>{e55ba61d-00d7-4556-9887-52ab104c888b}</Project>
-      <Name>Trading</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
