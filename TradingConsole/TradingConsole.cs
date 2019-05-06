@@ -18,8 +18,8 @@ namespace TradingConsole
 		static HitBTCSocketAPI HitBTC;
 		static Screen.Screen Screen;
 
-		static string pKey = "";
-		static string sKey = "";
+		static string pKey = "YGzq3GQP9vIybW8CcT6+e3pBqX8Tgbr6";
+		static string sKey = "B37LaDlfa70YM9gorzpjYGQAZVRNXDj3";
 
 		public static Trading.Trading Trading;
 
@@ -27,16 +27,23 @@ namespace TradingConsole
 		{
 			HitBTC = new HitBTCSocketAPI();
 			Trading = new Trading.Trading(ref HitBTC);
-			Screen = new Screen.Screen(ref HitBTC, ref Trading.PendingOrders, ref Trading.ClosedOrders);
+			Screen = new Screen.Screen(ref HitBTC, ref Trading);
 
 			HitBTC.MessageReceived += HitBTCSocket_MessageReceived;
 
 			HitBTC.SocketAuth.Auth(pKey, sKey);
 			HitBTC.SocketTrading.GetTradingBalance();
+			HitBTC.SocketMarketData.GetSymbols();
 
 			Thread.Sleep(2000);
+			
 
-			HitBTC.SocketMarketData.GetSymbols();
+			Trading.DemoBalance.Add("USD", 20.0f);
+			Trading.DemoBalance.Add("BTC", 0.001f);
+			Trading.DemoBalance.Add("ETH", 0.01f);
+			Trading.DemoBalance.Add("ETC", 0.10f);
+			Trading.DemoBalance.Add("LTC", 0.01f);
+
 
 			Trading.Add("BTCUSD", 1.0f, 0.01f, 0.3f );
 			Trading.Add("ETHUSD", 1.0f, 0.01f, 0.3f);

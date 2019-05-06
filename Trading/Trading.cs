@@ -73,7 +73,7 @@ namespace Trading
 
 	public class Trading
 	{
-		public Ticker Ticker { get; set; }
+		public Ticker Ticker { get; set; }		
 
 		public float Quantity = 0.0f;
 
@@ -84,12 +84,15 @@ namespace Trading
 
 		private Dictionary<string, OrderOption> OrderOptions;
 
+		public Dictionary<string, float> DemoBalance;
+
 		public Trading(ref HitBTCSocketAPI hitBTC)
 		{
 			this.HitBTC = hitBTC;
 			this.PendingOrders = new Dictionary<string, List<PendingOrder>>();
 			this.ClosedOrders = new List<PendingOrder>();
 			this.OrderOptions = new Dictionary<string, OrderOption>();
+			this.DemoBalance = new Dictionary<string, float>();
 		}
 
 		private class OrderOption
@@ -102,7 +105,8 @@ namespace Trading
 
 		public void Add(string symbol, float quantity, float stopPercent, float closePercent)
 		{
-			OrderOptions.Add(symbol, new OrderOption { quantity = quantity, stopPercent = stopPercent, closePercent = closePercent });
+			OrderOptions.Add(symbol, new OrderOption { quantity = quantity * HitBTC.Symbols[symbol].QuantityIncrement,
+														stopPercent = stopPercent, closePercent = closePercent });
 			HitBTC.SocketMarketData.SubscribeTicker(symbol);
 		}
 
@@ -128,19 +132,17 @@ namespace Trading
 					{
 						if (Ticker.Bid >= PendingOrders[symbol][i].ClosePrice)
 						{
-							//if (HitBTC.Balance[symbol.Substring(0, 3)].Available > PendingOrders[symbol][i].Quantity)
-							//{
-								Sell(symbol, PendingOrders[symbol][i].Quantity);
-								HitBTC.SocketTrading.GetTradingBalance();
+							if (Sell(symbol, PendingOrders[symbol][i].Quantity))
+							{
+								//HitBTC.SocketTrading.GetTradingBalance();
 
 								ClosedOrders.Add(PendingOrders[symbol].ElementAtOrDefault(i));
 
 								PendingOrders[symbol].RemoveAt(i);
 
 								OrderAdd(symbol, "buy", Ticker);
-							//}
-							//else PendingOrders[symbol].ElementAtOrDefault(i).Closed = true;
-
+							}
+							else PendingOrders[symbol].ElementAtOrDefault(i).Closed = true;
 						}
 						else if (Ticker.Bid <= PendingOrders[symbol][i].StopPrice)
 						{
@@ -156,9 +158,8 @@ namespace Trading
 					{
 						if (Ticker.Ask <= PendingOrders[symbol][i].ClosePrice)
 						{
-							//if (HitBTC.Balance[symbol.Substring(3)].Available > PendingOrders[symbol][i].Quantity)
-							//{
-								Buy(symbol, PendingOrders[symbol][i].Quantity);
+							if (Buy(symbol, PendingOrders[symbol][i].Quantity))
+							{								
 								HitBTC.SocketTrading.GetTradingBalance();
 
 								ClosedOrders.Add(PendingOrders[symbol].ElementAtOrDefault(i));
@@ -166,8 +167,8 @@ namespace Trading
 								PendingOrders[symbol].RemoveAt(i);
 
 								OrderAdd(symbol, "sel", Ticker);
-							//}
-							//else PendingOrders[symbol].ElementAtOrDefault(i).Closed = true;
+							}
+							else PendingOrders[symbol].ElementAtOrDefault(i).Closed = true;
 						}
 						else if (Ticker.Ask >= PendingOrders[symbol][i].StopPrice)
 						{
@@ -196,7 +197,7 @@ namespace Trading
 						Side = "sell",
 						Symbol = symbol,
 						OpenPrice = ticker.Bid,
-						Quantity = OrderOptions[symbol].quantity * OrderOptions[symbol].quantity,
+						Quantity = OrderOptions[symbol].quantity * HitBTC.Symbols[symbol].QuantityIncrement,
 						StopPercent = OrderOptions[symbol].stopPercent,
 						ClosePercent = OrderOptions[symbol].closePercent
 					});
@@ -246,23 +247,44 @@ namespace Trading
 			}
 		}
 
-
 		public bool Sell(string symbol, float quantity)
 		{
 			//HitBTC.SocketTrading.PlaceNewOrder(symbol, "sell", quantity);
-			return false;
+
+			float fee = (quantity * Ticker.Ask).Percent(0.2f);
+
+			if ((DemoBalance[symbol.Substring(0, 3)] - quantity) >= 0.0f)
+			{
+				DemoBalance[symbol.Substring(0, 3)] -= quantity;
+				DemoBalance["USD"] += ((quantity * Ticker.Bid) - fee);
+				return true;
+			}
+			else return false;
 		}
 
 		public bool Buy(string symbol, float quantity)
 		{
 			//HitBTC.SocketTrading.PlaceNewOrder(symbol, "buy", quantity);
-			return false;
-		}
 
-		
+			float fee = (quantity * Ticker.Ask).Percent(0.2f);
+
+			if ((DemoBalance["USD"] - ((quantity * Ticker.Ask) + fee)) >= 0.0f)
+			{
+				DemoBalance[symbol.Substring(0, 3)] += quantity;
+				DemoBalance["USD"] -= ((quantity * Ticker.Ask) + fee);
+				return true;
+			}
+			else return false;
+		}
 	}
 
-	public static class FloatExtension
+	public class DemoBalance
+	{
+		public string Currency { get; set; }
+		public float Available { get; set; }
+
+	}
+		public static class FloatExtension
 	{
 		public static float Percent(this float number, float percent)
 		{

@@ -13,14 +13,13 @@ namespace Screen
 	public class Screen
 	{
 		HitBTCSocketAPI HitBTC;
-		Dictionary<string, List<PendingOrder>> PendingOrders;
-		List<PendingOrder> ClosedOrders;
 
-		public Screen(ref HitBTCSocketAPI hitBTC, ref Dictionary<string, List<Trading.PendingOrder>> pendingOrders, ref List<Trading.PendingOrder> closedOrders)
+		Trading.Trading Trading;
+
+		public Screen(ref HitBTCSocketAPI hitBTC, ref Trading.Trading trading)
 		{
 			HitBTC = hitBTC;
-			PendingOrders = pendingOrders;
-			ClosedOrders = closedOrders;
+			Trading = trading;
 		}
 
 		public void Print()
@@ -35,7 +34,7 @@ namespace Screen
 
 			Console.CursorVisible = false;
 
-			var t = PendingOrders.SelectMany(kvp => kvp.Value).ToList();
+			var t = Trading.PendingOrders.SelectMany(kvp => kvp.Value).ToList();
 			var tempPendingOrders = t.OrderByDescending(o => o.CurrProfitPercent).ToList();
 
 			//Console.Clear();
@@ -51,9 +50,12 @@ namespace Screen
 			Console.Write("Symbol  Side	Close     Profit        Closed");
 
 			Console.SetCursorPosition(column_3, 0);
-			Console.Write("Closed orders {0}", ClosedOrders.Count);
+			Console.Write("Closed orders {0}", Trading.ClosedOrders.Count);
 			Console.SetCursorPosition(column_3, 1);
 			Console.Write("Symbol  Open      Close     Profit");
+
+			Console.SetCursorPosition(column_2, 14);
+			Console.Write("Balance");
 
 			for (int i = 0; i < 20; i++)
 			{
@@ -77,14 +79,21 @@ namespace Screen
 																				tempPendingOrders.ElementAtOrDefault(i).Closed);
 				}
 
-				if (i < ClosedOrders.Count)
+				if (i < Trading.ClosedOrders.Count)
 				{
-					int j = ClosedOrders.Count - i - 1;
+					int j = Trading.ClosedOrders.Count - i - 1;
 					Console.SetCursorPosition(column_3, i + 2); //Price
-					Console.Write("{0}  {1:0000.000}  {2:0000.000}  {3:0.00000000}%", ClosedOrders.ElementAtOrDefault(j).Symbol,
-																					ClosedOrders.ElementAtOrDefault(j).OpenPrice,
-																					ClosedOrders.ElementAtOrDefault(j).ClosePrice,
-																					ClosedOrders.ElementAtOrDefault(j).CurrProfitPercent);
+					Console.Write("{0}  {1:0000.000}  {2:0000.000}  {3:0.00000000}%", Trading.ClosedOrders.ElementAtOrDefault(j).Symbol,
+																					Trading.ClosedOrders.ElementAtOrDefault(j).OpenPrice,
+																					Trading.ClosedOrders.ElementAtOrDefault(j).ClosePrice,
+																					Trading.ClosedOrders.ElementAtOrDefault(j).CurrProfitPercent);
+				}
+
+				if(i < Trading.DemoBalance.Count)
+				{
+					Console.SetCursorPosition(column_2, i + 15); //Price
+					Console.Write("{0}  {1:00.000000}", Trading.DemoBalance.ElementAtOrDefault(i).Key,
+														Trading.DemoBalance.ElementAtOrDefault(i).Value);
 				}
 			}
 		}
