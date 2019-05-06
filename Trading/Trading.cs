@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -9,6 +12,7 @@ using HitBTC.Models;
 
 namespace Trading
 {
+	[Serializable]
 	public class PendingOrder : IComparable<PendingOrder>
 	{
 		public string Symbol;
@@ -70,21 +74,33 @@ namespace Trading
 				return 0;
 		}
 	}
+	[Serializable]
+	public class OrderOption
+	{
+		public float quantity = 0.00f;
+		public float stopPercent = 0.01f;
+		public float closePercent = 0.20f;
+	}
+
+	[Serializable]
+	class SaveObject
+	{
+		public List<PendingOrder> ClosedOrders;
+		public Dictionary<string, float> DemoBalance;
+		public Dictionary<string, OrderOption> OrderOptions;
+		public Dictionary<string, List<PendingOrder>> PendingOrders;		
+	}
 
 	public class Trading
 	{
-		public Ticker Ticker { get; set; }		
-
-		public float Quantity = 0.0f;
+		public Ticker Ticker;
 
 		private HitBTCSocketAPI HitBTC;
-
+		
 		public Dictionary<string, List<PendingOrder>> PendingOrders;
 		public List<PendingOrder> ClosedOrders;
-
 		private Dictionary<string, OrderOption> OrderOptions;
-
-		public Dictionary<string, float> DemoBalance;
+		public Dictionary<string, float> DemoBalance;			
 
 		public Trading(ref HitBTCSocketAPI hitBTC)
 		{
@@ -93,14 +109,13 @@ namespace Trading
 			this.ClosedOrders = new List<PendingOrder>();
 			this.OrderOptions = new Dictionary<string, OrderOption>();
 			this.DemoBalance = new Dictionary<string, float>();
+
+			HitBTC.Closed += HitBTC_Closed;
 		}
 
-		private class OrderOption
+		private void HitBTC_Closed(string s)
 		{
-			public float quantity = 0.00f;
-			public float stopPercent = 0.01f;
-			public float closePercent = 0.20f;
-
+			Save("tr.dat");
 		}
 
 		public void Add(string symbol, float quantity, float stopPercent, float closePercent)
@@ -225,7 +240,7 @@ namespace Trading
 					{
 						Side = "buy",
 						Symbol = symbol,
-						OpenPrice = ticker.Bid,
+						OpenPrice = ticker.Ask,
 						Quantity = OrderOptions[symbol].quantity,
 						StopPercent = OrderOptions[symbol].stopPercent,
 						ClosePercent = OrderOptions[symbol].closePercent
@@ -238,7 +253,7 @@ namespace Trading
 					{
 						Side = "buy",
 						Symbol = symbol,
-						OpenPrice = ticker.Bid,
+						OpenPrice = ticker.Ask,
 						Quantity = OrderOptions[symbol].quantity,
 						StopPercent = OrderOptions[symbol].stopPercent,
 						ClosePercent = OrderOptions[symbol].closePercent
@@ -251,7 +266,7 @@ namespace Trading
 		{
 			//HitBTC.SocketTrading.PlaceNewOrder(symbol, "sell", quantity);
 
-			float fee = (quantity * Ticker.Ask).Percent(0.2f);
+			float fee = (quantity * Ticker.Bid).Percent(0.2f);
 
 			if ((DemoBalance[symbol.Substring(0, 3)] - quantity) >= 0.0f)
 			{
@@ -268,13 +283,50 @@ namespace Trading
 
 			float fee = (quantity * Ticker.Ask).Percent(0.2f);
 
-			if ((DemoBalance["USD"] - ((quantity * Ticker.Ask) + fee)) >= 0.0f)
+			if ( (DemoBalance["USD"] - ( (quantity * Ticker.Ask) + fee) ) >= 0.0f)
 			{
 				DemoBalance[symbol.Substring(0, 3)] += quantity;
 				DemoBalance["USD"] -= ((quantity * Ticker.Ask) + fee);
 				return true;
 			}
 			else return false;
+		}
+
+
+		public void Save(string fileNeme)
+		{
+			BinaryFormatter formatter = new BinaryFormatter();
+
+			using (FileStream fs = new FileStream(fileNeme, FileMode.OpenOrCreate))
+			{
+				formatter.Serialize(fs, new SaveObject {DemoBalance = DemoBalance,
+														ClosedOrders = ClosedOrders,
+														OrderOptions = OrderOptions,
+														PendingOrders = PendingOrders});
+			}
+		}
+
+		public bool Load(string fileNeme)
+		{
+			BinaryFormatter formatter = new BinaryFormatter();
+			try
+			{
+				using (FileStream fs = new FileStream(fileNeme, FileMode.OpenOrCreate))
+				{
+					SaveObject saveObject = (SaveObject)formatter.Deserialize(fs);
+
+					DemoBalance = saveObject.DemoBalance;
+					ClosedOrders = saveObject.ClosedOrders;
+					OrderOptions = saveObject.OrderOptions;
+					PendingOrders = saveObject.PendingOrders;
+
+					return true;
+				}
+			}
+			catch
+			{
+				return false;
+			}
 		}
 	}
 

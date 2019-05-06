@@ -35,8 +35,7 @@ namespace TradingConsole
 			HitBTC.SocketTrading.GetTradingBalance();
 			HitBTC.SocketMarketData.GetSymbols();
 
-			Thread.Sleep(2000);
-			
+			Thread.Sleep(2000);		
 
 			Trading.DemoBalance.Add("USD", 20.0f);
 			Trading.DemoBalance.Add("BTC", 0.001f);
@@ -45,12 +44,15 @@ namespace TradingConsole
 			Trading.DemoBalance.Add("LTC", 0.01f);
 
 
-			Trading.Add("BTCUSD", 1.0f, 0.01f, 0.3f );
-			Trading.Add("ETHUSD", 1.0f, 0.01f, 0.3f);
-			Trading.Add("ETCUSD", 1.0f, 0.01f, 0.3f);
-			Trading.Add("LTCUSD", 1.0f, 0.01f, 0.3f);
+			Trading.Add("BTCUSD", 1.0f, 0.01f, 0.1f);
+			Trading.Add("ETHUSD", 1.0f, 0.01f, 0.1f);
+			Trading.Add("ETCUSD", 1.0f, 0.01f, 0.1f);
+			Trading.Add("LTCUSD", 1.0f, 0.01f, 0.1f);
 
-			Console.ReadKey();
+			Trading.Load("tr.dat");
+
+
+			Console.ReadLine();
 		}
 
 		private static void HitBTCSocket_MessageReceived(string s)

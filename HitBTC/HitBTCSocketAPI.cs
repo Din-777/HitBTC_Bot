@@ -19,6 +19,7 @@ namespace HitBTC
 		public delegate void SocketHandler(string s);
 		public event SocketHandler Opened;
 		public event SocketHandler MessageReceived;
+		public event SocketHandler Closed;
 
 		public bool Authorized = false;
 		public Error Error;
@@ -34,17 +35,20 @@ namespace HitBTC
 
 		static async void ConnectAsync(WebSocket socket)
 		{
-			await Task.Run(() => socket.Open());
+			try { await Task.Run(() => socket.Open()); }
+			catch { Console.WriteLine("......................"); }						
 		}
-		
+
+		public SocketAuth SocketAuth;
 		public SocketTrading SocketTrading;
 		public SocketMarketData SocketMarketData;
-		public SocketAuth SocketAuth;
 
 		public HitBTCSocketAPI()
 		{
 			string uri = "wss://api.hitbtc.com/api/2/ws";
 			socket = new WebSocket(uri);
+			socket.AutoSendPingInterval = 10;
+			socket.EnableAutoSendPing = true;
 
 			Error = null;
 
@@ -53,23 +57,30 @@ namespace HitBTC
 			SocketMarketData = new SocketMarketData(ref socket);
 			stackPlaceNewOrderResults = new Stack<SocketOrederResult>();
 
-			ConnectAsync(socket);
+			while (socket.State != WebSocketState.Open)
+			{				
+				ConnectAsync(socket);
+				Thread.Sleep(1000);
+			}
 
-			while (socket.State != WebSocketState.Open) { Thread.Sleep(100); }
 
 			socket.Opened += Socket_Opened;
+			socket.Closed += Socket_Closed;
 			socket.DataReceived += Socket_DataReceived;
 			socket.MessageReceived += Socket_MessageReceived;
 		}
-		
-		
+
+		private void Socket_Closed(object sender, EventArgs e)
+		{
+			if (Closed != null) Closed(e.ToString());
+		}
+
 		internal void Socket_MessageReceived(object sender, MessageReceivedEventArgs e)
 		{
 			string str = null;
 			this.Error = null;
 
 			var jObject = JObject.Parse(e.Message);
-
 
 			var Params = jObject["params"];
 			var Error = jObject["error"];

@@ -1,9 +1,10 @@
-﻿using System.Text;
+﻿using System;
+using System.Text;
 using Newtonsoft.Json;
 
 namespace HitBTC.Models
 {
-    public class Ticker
+	public class Ticker
     {
         [JsonProperty("symbol")]
         public string Symbol { get; set; }
