@@ -38,6 +38,14 @@ namespace HitBTC
 			try { await Task.Run(() => socket.Open()); }
 			catch { Console.WriteLine("......................"); }						
 		}
+		public void SocketDisconect()
+		{
+			socket.Close();
+		}
+		public void SocketConect()
+		{
+			socket.Open();
+		}
 
 		public SocketAuth SocketAuth;
 		public SocketTrading SocketTrading;

@@ -54,7 +54,33 @@ namespace TradingConsole
 
 			Console.ReadLine();
 
+			HitBTC.SocketDisconect();
+			Thread.Sleep(10000);
+			HitBTC.SocketConect();
+
+
 			Trading.Save("tr.dat");
+
+
+
+			if (Trading.DemoBalance["BTC"] > 0.001f) Trading.Sell("BTCUSD", Trading.DemoBalance["BTC"] - 0.001f);
+			if (Trading.DemoBalance["BTC"] < 0.001f) Trading.Buy("BTCUSD", 0.001f - Trading.DemoBalance["BTC"]);
+			if (Trading.DemoBalance["ETH"] > 0.01f) Trading.Sell("ETHUSD", Trading.DemoBalance["ETH"] - 0.01f);
+			if (Trading.DemoBalance["ETH"] < 0.01f) Trading.Buy("ETHUSD", 0.01f - Trading.DemoBalance["ETH"]);
+			if (Trading.DemoBalance["ETC"] > 0.10f) Trading.Sell("ETCUSD", Trading.DemoBalance["ETC"] - 0.10f);
+			if (Trading.DemoBalance["ETC"] < 0.10f) Trading.Buy("ETCUSD", 0.10f - Trading.DemoBalance["ETC"]);
+			if (Trading.DemoBalance["LTC"] > 0.01f) Trading.Sell("LTCUSD", Trading.DemoBalance["LTC"] - 0.01f);
+			if (Trading.DemoBalance["LTC"] < 0.01f) Trading.Buy("LTCUSD", 0.01f - Trading.DemoBalance["LTC"]);
+
+			
+			for(int i = 0; i < Trading.DemoBalance.Count; i++)
+			{
+				Console.SetCursorPosition(45, 15+i);
+				Console.WriteLine("{0}  {1:000.000000}", Trading.DemoBalance.ElementAtOrDefault(i).Key, Trading.DemoBalance.ElementAt(i).Value);
+			}
+
+			Console.ReadLine();
+
 		}
 
 		private static void HitBTCSocket_MessageReceived(string s)
