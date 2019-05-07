@@ -11,7 +11,7 @@ namespace HitBTC.Models
         public string BaseCurrency { get; set; }
 
         [JsonProperty("quoteCurrency")]
-        public float QuoteCurrency { get; set; }
+        public string QuoteCurrency { get; set; }
 
         [JsonProperty("quantityIncrement")]
         public float QuantityIncrement { get; set; }

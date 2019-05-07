@@ -50,7 +50,7 @@ namespace TradingConsole
 			Trading.Add("LTCUSD", 1.0f, 0.03f, 0.22f);
 
 
-			Trading.Load("tr.dat");
+			//Trading.Load("tr.dat");
 
 			Console.ReadLine();
 
