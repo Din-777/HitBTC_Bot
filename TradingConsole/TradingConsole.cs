@@ -44,15 +44,17 @@ namespace TradingConsole
 			Trading.DemoBalance.Add("LTC", 0.01f);
 
 
-			Trading.Add("BTCUSD", 1.0f, 0.01f, 0.1f);
-			Trading.Add("ETHUSD", 1.0f, 0.01f, 0.1f);
-			Trading.Add("ETCUSD", 1.0f, 0.01f, 0.1f);
-			Trading.Add("LTCUSD", 1.0f, 0.01f, 0.1f);
+			Trading.Add("BTCUSD", 1.0f, 0.03f, 0.22f);
+			Trading.Add("ETHUSD", 1.0f, 0.03f, 0.22f);
+			Trading.Add("ETCUSD", 1.0f, 0.03f, 0.22f);
+			Trading.Add("LTCUSD", 1.0f, 0.03f, 0.22f);
 
 			Trading.Load("tr.dat");
 
 
 			Console.ReadLine();
+
+			Trading.Save("tr.dat");
 		}
 
 		private static void HitBTCSocket_MessageReceived(string s)

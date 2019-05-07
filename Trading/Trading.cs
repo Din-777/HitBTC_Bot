@@ -53,7 +53,8 @@ namespace Trading
 
 		public float CalcCurrProfitPercent(Ticker ticker)
 		{
-			CurrProfitPercent = ((100.0f / (OpenPrice / (Side == "sell" ? ticker.Bid : ticker.Ask))) - 100.0f) * (Side == "sell" ? 1.0f : (-1.0f));
+			CurrProfitPercent = ((100.0f / (OpenPrice / (Side == "sell" ? ticker.Bid : ticker.Ask))) - 100.0f) *
+				(Side == "sell" ? 1.0f : (-1.0f));
 			return CurrProfitPercent;
 		}
 
@@ -74,6 +75,7 @@ namespace Trading
 				return 0;
 		}
 	}
+
 	[Serializable]
 	public class OrderOption
 	{
@@ -212,7 +214,7 @@ namespace Trading
 						Side = "sell",
 						Symbol = symbol,
 						OpenPrice = ticker.Bid,
-						Quantity = OrderOptions[symbol].quantity * HitBTC.Symbols[symbol].QuantityIncrement,
+						Quantity = OrderOptions[symbol].quantity,
 						StopPercent = OrderOptions[symbol].stopPercent,
 						ClosePercent = OrderOptions[symbol].closePercent
 					});
@@ -220,7 +222,7 @@ namespace Trading
 				else
 				{
 					PendingOrders.Add(Ticker.Symbol, new List<PendingOrder>());
-					PendingOrders[Ticker.Symbol].Add(new PendingOrder
+					PendingOrders[symbol].Add(new PendingOrder
 					{
 						Side = "sell",
 						Symbol = symbol,
@@ -236,11 +238,11 @@ namespace Trading
 			{
 				if (PendingOrders.ContainsKey(Ticker.Symbol))
 				{
-					PendingOrders[ticker.Symbol].Add(new PendingOrder
+					PendingOrders[symbol].Add(new PendingOrder
 					{
 						Side = "buy",
 						Symbol = symbol,
-						OpenPrice = ticker.Ask,
+						OpenPrice = ticker.Bid,
 						Quantity = OrderOptions[symbol].quantity,
 						StopPercent = OrderOptions[symbol].stopPercent,
 						ClosePercent = OrderOptions[symbol].closePercent
@@ -249,11 +251,11 @@ namespace Trading
 				else
 				{
 					PendingOrders.Add(Ticker.Symbol, new List<PendingOrder>());
-					PendingOrders[Ticker.Symbol].Add(new PendingOrder
+					PendingOrders[symbol].Add(new PendingOrder
 					{
 						Side = "buy",
 						Symbol = symbol,
-						OpenPrice = ticker.Ask,
+						OpenPrice = ticker.Bid,
 						Quantity = OrderOptions[symbol].quantity,
 						StopPercent = OrderOptions[symbol].stopPercent,
 						ClosePercent = OrderOptions[symbol].closePercent
@@ -272,6 +274,8 @@ namespace Trading
 			{
 				DemoBalance[symbol.Substring(0, 3)] -= quantity;
 				DemoBalance["USD"] += ((quantity * Ticker.Bid) - fee);
+
+				Console.Beep(1000, 500);
 				return true;
 			}
 			else return false;
@@ -287,6 +291,8 @@ namespace Trading
 			{
 				DemoBalance[symbol.Substring(0, 3)] += quantity;
 				DemoBalance["USD"] -= ((quantity * Ticker.Ask) + fee);
+
+				Console.Beep(1000, 500);
 				return true;
 			}
 			else return false;
@@ -336,7 +342,8 @@ namespace Trading
 		public float Available { get; set; }
 
 	}
-		public static class FloatExtension
+
+	public static class FloatExtension
 	{
 		public static float Percent(this float number, float percent)
 		{
