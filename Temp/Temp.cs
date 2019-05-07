@@ -14,17 +14,7 @@ namespace Temp
 	{
 		static void Main(string[] args)
 		{
-			Dictionary<string, int> dict = new Dictionary<string, int>();
-
-			dict.Add("a", 1);
-			dict.Add("b", 2);
-			//dict.Add("a", 3);
-
-			string s = "ETHUSD";
-			string n = s.Substring(0, 3);
-			string k = s.Substring(3);
-
-
+			
 			Console.ReadKey();
 		}
 

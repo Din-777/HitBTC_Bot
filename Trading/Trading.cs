@@ -47,8 +47,6 @@ namespace Trading
 			}
 		}
 
-		public DateTime CreatedAt;
-
 		public float CurrProfitPercent;
 
 		public float CalcCurrProfitPercent(Ticker ticker)
@@ -93,6 +91,12 @@ namespace Trading
 		public Dictionary<string, List<PendingOrder>> PendingOrders;
 	}
 
+	public class DemoBalance
+	{
+		public string Currency { get; set; }
+		public float Available { get; set; }
+	}
+	
 	public class Trading
 	{
 		public Ticker Ticker;
@@ -245,7 +249,7 @@ namespace Trading
 		{
 			//HitBTC.SocketTrading.PlaceNewOrder(symbol, "sell", quantity);
 
-			float fee = (quantity * Ticker.Bid).Percent(0.2f);
+			float fee = quantity * Ticker.Bid * HitBTC.Symbols[symbol].TakeLiquidityRate;
 
 			if ((DemoBalance[symbol.Substring(0, 3)] - quantity) >= 0.0f)
 			{
@@ -262,7 +266,7 @@ namespace Trading
 		{
 			//HitBTC.SocketTrading.PlaceNewOrder(symbol, "buy", quantity);
 
-			float fee = (quantity * Ticker.Ask).Percent(0.2f);
+			float fee = quantity * Ticker.Ask * HitBTC.Symbols[symbol].TakeLiquidityRate; ;
 
 			if ((DemoBalance["USD"] - ((quantity * Ticker.Ask) + fee)) >= 0.0f)
 			{
@@ -316,12 +320,7 @@ namespace Trading
 		}
 	}
 
-	public class DemoBalance
-	{
-		public string Currency { get; set; }
-		public float Available { get; set; }
-	}
-
+	
 	public static class FloatExtension
 	{
 		public static float Percent(this float number, float percent)

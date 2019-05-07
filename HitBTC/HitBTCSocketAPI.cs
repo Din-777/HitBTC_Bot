@@ -25,7 +25,6 @@ namespace HitBTC
 		public Error Error;
 		public Ticker Ticker;
 		public List<Ticker> L_Tickers = new List<Ticker>();
-		public Dictionary<string, Ticker> D_Tickers = new Dictionary<string, Ticker>();
 		public Dictionary<string, Balance> Balance;
 		public SocketOrederResult NewOrederResult;
 		public Stack<SocketOrederResult> stackPlaceNewOrderResults;
@@ -77,12 +76,7 @@ namespace HitBTC
 			socket.DataReceived += Socket_DataReceived;
 			socket.MessageReceived += Socket_MessageReceived;
 		}
-
-		private void Socket_Closed(object sender, EventArgs e)
-		{
-			if (Closed != null) Closed(e.ToString());
-		}
-
+				
 		internal void Socket_MessageReceived(object sender, MessageReceivedEventArgs e)
 		{
 			string str = null;
@@ -132,14 +126,6 @@ namespace HitBTC
 				else if (method == "ticker" && Params != null)
 				{
 					Ticker = JsonConvert.DeserializeObject<Ticker>(Params.ToString());
-					if (D_Tickers.ContainsKey(Ticker.Symbol))
-					{
-						D_Tickers[Ticker.Symbol] = Ticker;
-					}
-					else
-					{
-						D_Tickers.Add(Ticker.Symbol, Ticker);
-					}
 
 					L_Tickers.Add(Ticker);
 					if (L_Tickers.Count > 20) L_Tickers.RemoveAt(0);
@@ -164,6 +150,11 @@ namespace HitBTC
 		internal void Socket_Opened(object sender, EventArgs e)
 		{
 			if (Opened != null) Opened(e.ToString());
+		}
+
+		private void Socket_Closed(object sender, EventArgs e)
+		{
+			if (Closed != null) Closed(e.ToString());
 		}
 	}
 }
