@@ -33,7 +33,17 @@ namespace HitBTC.Categories
 		[JsonProperty("id")]
 		string id = "auth";
 
+		private string pKey, sKey;
+
 		public async void Auth(string pKey, string sKey)
+		{
+			this.pKey = pKey; this.sKey = sKey;
+			var s = new Categories.SocketAuth(pKey, sKey);
+			var jsonStr = JsonConvert.SerializeObject(s);
+			await Task.Run(() => socket.Send(jsonStr));
+		}
+
+		public async void Auth()
 		{
 			var s = new Categories.SocketAuth(pKey, sKey);
 			var jsonStr = JsonConvert.SerializeObject(s);

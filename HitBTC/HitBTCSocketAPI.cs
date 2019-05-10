@@ -24,6 +24,7 @@ namespace HitBTC
 		public bool Authorized = false;
 		public Error Error;
 		public Ticker Ticker;
+		public Dictionary<string, Ticker> d_Tickers = new Dictionary<string, Ticker>();
 		public List<Ticker> L_Tickers = new List<Ticker>();
 		public Dictionary<string, Balance> Balance;
 		public SocketOrederResult NewOrederResult;
@@ -32,19 +33,28 @@ namespace HitBTC
 
 		public Stack<ParamsActiveOrders> ActiveOrders;
 
-		static async void ConnectAsync(WebSocket socket)
+		public async void ConnectAsync(WebSocket socket)
 		{
 			try { await Task.Run(() => socket.Open()); }
-			catch { Console.WriteLine("......................"); }						
+			catch {
+				Console.SetCursorPosition(0, 0);
+				Console.Clear();
+				Console.WriteLine("Connecting...");
+			}						
+		}
+		public void SocketConnect()
+		{
+			while (socket.State != WebSocketState.Connecting)
+			{
+				ConnectAsync(socket);
+				Thread.Sleep(5000);
+			}
 		}
 		public void SocketDisconect()
 		{
 			socket.Close();
 		}
-		public void SocketConect()
-		{
-			socket.Open();
-		}
+		
 
 		public SocketAuth SocketAuth;
 		public SocketTrading SocketTrading;
@@ -64,12 +74,11 @@ namespace HitBTC
 			SocketMarketData = new SocketMarketData(ref socket);
 			stackPlaceNewOrderResults = new Stack<SocketOrederResult>();
 
-			while (socket.State != WebSocketState.Open)
+			while (socket.State != WebSocketState.Connecting)
 			{				
 				ConnectAsync(socket);
-				Thread.Sleep(1000);
+				Thread.Sleep(2000);
 			}
-
 
 			socket.Opened += Socket_Opened;
 			socket.Closed += Socket_Closed;
@@ -116,7 +125,7 @@ namespace HitBTC
 				}
 				else if (id == "getSymbol")
 				{
-					Symbols = (JsonConvert.DeserializeObject<List<Symbol>>(result.ToString())).ToDictionary(t=> t.Id);
+					Symbols = (JsonConvert.DeserializeObject<List<Symbol>>(result.ToString())).ToDictionary(t => t.Id);
 					str = "getSymbol";
 				}
 				else if (method == "activeOrders")
@@ -129,6 +138,11 @@ namespace HitBTC
 
 					L_Tickers.Add(Ticker);
 					if (L_Tickers.Count > 20) L_Tickers.RemoveAt(0);
+
+					if (!d_Tickers.ContainsKey(Ticker.Symbol))
+						d_Tickers.Add(Ticker.Symbol, new Ticker());
+
+					d_Tickers[Ticker.Symbol] = (Ticker);
 
 					str = "ticker";
 				}
