@@ -26,7 +26,7 @@ namespace Screen
 		{
 			int column_1 = 0;               // Tickers
 			int column_2 = 0;              // Pending orders
-			int column_3 = column_2 + 57;   // Closed orders
+			int column_3 = column_2 + 78;   // Closed orders
 			int column_4 = column_3 + 20;   // 
 			int column_5 = column_4 + 0;    // Orders Profit
 			int column_6 = column_5 + 0;    // Trad balance / Dealing
@@ -43,14 +43,14 @@ namespace Screen
 			Console.Write("Sym Ask       Bid");*/
 
 			Console.SetCursorPosition(column_2, 0);
-			Console.Write("Pending orders {0} ", tempPendingOrders.Count);
+			Console.Write("Pending orders {0}   {1:0000} ", tempPendingOrders.Count, PendingOrder.StaticId);
 			Console.SetCursorPosition(column_2, 1);
-			Console.Write("Sym  Side  Close     Profit       MaxProfit    Closed");
+			Console.Write("Id    Sym  Side  Close      Profit       ProfitSMA   MaxProfit   Type");
 
 			Console.SetCursorPosition(column_3, 0);
 			Console.Write("Closed orders {0}", Trading.ClosedOrders.Count);
 			Console.SetCursorPosition(column_3, 1);
-			Console.Write("Sym  Side  Open      Close     Profit");
+			Console.Write("Id    Sym  Side  Open      Close     Profit");
 
 			Console.SetCursorPosition(column_2, 23);
 			Console.Write("Balance");
@@ -70,19 +70,28 @@ namespace Screen
 				if (i < tempPendingOrders.Count)
 				{
 					Console.SetCursorPosition(column_2, i + 2);   //Open order
-					Console.Write("{0}  {1}  {2:0000.000}  {3:0.00000000}%  {4:0.00000000}%  {5} ", tempPendingOrders.ElementAtOrDefault(i).Symbol.Substring(0, 3),
+					Console.Write("{0:0000}  {1}  {2}  {3:0000.000}  {4,11:0.00000000}  {5,11:0.00000000}  {6:0.00000000}  {7} ", 
+																				tempPendingOrders.ElementAtOrDefault(i).Id,
+																				tempPendingOrders.ElementAtOrDefault(i).Symbol.Substring(0, 3),
 																				tempPendingOrders.ElementAtOrDefault(i).Side.PadRight(4),
 																				tempPendingOrders.ElementAtOrDefault(i).ClosePrice,
 																				tempPendingOrders.ElementAtOrDefault(i).CurrProfitPercent,
-																				tempPendingOrders.ElementAtOrDefault(i).MaxProfitPercent,
-																				tempPendingOrders.ElementAtOrDefault(i).Closed);
+																				tempPendingOrders.ElementAtOrDefault(i).CurrProfitPercentSma,
+																				tempPendingOrders.ElementAtOrDefault(i).MaxProfitPercentSma,
+																				tempPendingOrders.ElementAtOrDefault(i).Type.ToString().PadRight(9));
+				}
+				else
+				{
+					Console.SetCursorPosition(column_2, i + 2);
+					Console.Write("\t\t\t\t\t\t\t\t\t\t\t");
 				}
 
 				if (i < Trading.ClosedOrders.Count)
 				{
 					int j = Trading.ClosedOrders.Count - i - 1;
 					Console.SetCursorPosition(column_3, i + 2);
-					Console.Write("{0}  {1}  {2:0000.000}  {3:0000.000}  {4:0.00000000}%", Trading.ClosedOrders.ElementAtOrDefault(j).Symbol.Substring(0, 3),
+					Console.Write("{0:0000}  {1}  {2}  {3:0000.000}  {4:0000.000}  {5:0.00000000}%", Trading.ClosedOrders.ElementAtOrDefault(j).Id,
+																					Trading.ClosedOrders.ElementAtOrDefault(j).Symbol.Substring(0, 3),
 																					Trading.ClosedOrders.ElementAtOrDefault(j).Side.PadRight(4),
 																					Trading.ClosedOrders.ElementAtOrDefault(j).OpenPrice,
 																					Trading.ClosedOrders.ElementAtOrDefault(j).ClosePrice,
