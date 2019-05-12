@@ -58,6 +58,42 @@ namespace HitBTC.Categories
 		[JsonProperty("id")]
 		string id = "unsubscribeTicker";
 	}
+	
+	public class SubscribeCandles
+	{
+		[JsonProperty("method")]
+		string Method = "subscribeCandles";
+
+		[JsonProperty("params")]
+		public ParamsSubscribeCandles param = new ParamsSubscribeCandles();
+
+		public SubscribeCandles(string symbol, Period period, int limit)
+		{
+			param.symbol = symbol;
+			param.period = period;
+			param.limit = limit;
+		}
+
+		[JsonProperty("id")]
+		string id = "subscribeCandles";
+	}
+
+	public class UnSubscribeCandles
+	{
+		[JsonProperty("method")]
+		string Method = "unsubscribeCandles";
+
+		[JsonProperty("params")]
+		public Params param = new Params { symbol = "symbol" };
+
+		public UnSubscribeCandles(string symbol)
+		{
+			param.symbol = symbol;
+		}
+
+		[JsonProperty("id")]
+		string id = "unsubscribeCandles";
+	}
 
 	public class GetSymmols
 	{
@@ -95,6 +131,21 @@ namespace HitBTC.Categories
 			var jsonStr = JsonConvert.SerializeObject(s);
 			await Task.Run(() => socket.Send(jsonStr));
 		}
+
+		public async void SubscribeCandles(string symbol, Period period, int limit)
+		{
+			var s = new Categories.SubscribeCandles(symbol, period, limit);
+			var jsonStr = JsonConvert.SerializeObject(s);
+			await Task.Run(() => socket.Send(jsonStr));
+		}
+
+		public async void UnSubscribeCandles(string symbol)
+		{
+			var s = new Categories.UnSubscribeCandles(symbol);
+			var jsonStr = JsonConvert.SerializeObject(s);
+			await Task.Run(() => socket.Send(jsonStr));
+		}
+
 
 		public async void GetSymbols()
 		{

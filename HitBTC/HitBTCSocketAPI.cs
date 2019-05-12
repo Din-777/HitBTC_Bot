@@ -30,6 +30,7 @@ namespace HitBTC
 		public SocketOrederResult NewOrederResult;
 		public Stack<SocketOrederResult> stackPlaceNewOrderResults;
 		public Dictionary<string, Symbol> Symbols;
+		public Dictionary<string, List<Candle>> Candles;
 
 		public Stack<ParamsActiveOrders> ActiveOrders;
 
@@ -73,12 +74,14 @@ namespace HitBTC
 			SocketTrading = new SocketTrading(ref socket);
 			SocketMarketData = new SocketMarketData(ref socket);
 			stackPlaceNewOrderResults = new Stack<SocketOrederResult>();
+			Candles = new Dictionary<string, List<Candle>>();
 
 			while (socket.State != WebSocketState.Connecting)
 			{				
 				ConnectAsync(socket);
 				Thread.Sleep(2000);
 			}
+			Console.Clear();
 
 			socket.Opened += Socket_Opened;
 			socket.Closed += Socket_Closed;
@@ -93,7 +96,7 @@ namespace HitBTC
 
 			var jObject = JObject.Parse(e.Message);
 
-			var Params = jObject["params"];
+			var Params = jObject["params"];			
 			var Error = jObject["error"];
 			var id = (string)jObject["id"];
 			var method = (string)jObject["method"];
@@ -116,6 +119,17 @@ namespace HitBTC
 				else if (id == "subscribeReports")
 				{
 					str = "subscribeReports";
+
+				}
+				else if (id == "subscribeCandles")
+				{
+					str = "subscribeCandles";
+
+				}
+				else if (id == "unsubscribeCandles")
+				{
+					str = "unsubscribeCandles";
+
 				}
 				else if (id == "placeNewOrder")
 				{
@@ -145,6 +159,22 @@ namespace HitBTC
 					d_Tickers[Ticker.Symbol] = (Ticker);
 
 					str = "ticker";
+				}
+				else if (method == "snapshotCandles" && Params != null)
+				{
+					var Data = jObject["params"]["data"];
+					string symbol = (string)jObject["params"]["symbol"];
+
+					List<Candle> lCandle = JsonConvert.DeserializeObject<List<Candle>>(Data.ToString());
+
+					if (!Candles.ContainsKey(symbol))
+						Candles.Add(symbol, new List<Candle>());
+
+					Candles[symbol] = lCandle;
+
+					SocketMarketData.UnSubscribeCandles(symbol);
+
+					str = "snapshotCandles";
 				}
 			}
 			else

@@ -8,6 +8,11 @@ using System.Threading.Tasks;
 
 namespace HitBTC.Models
 {
+	public class Params
+	{
+		public string symbol;
+	}
+
 	public class ParamsNull
 	{
 	}
@@ -67,5 +72,12 @@ namespace HitBTC.Models
 		public DateTime createdAt;
 		public DateTime updatedAt;
 		public string  reportType;
+	}
+
+	public class ParamsSubscribeCandles
+	{
+		public string symbol;
+		public Period period;
+		public int limit;
 	}
 }
