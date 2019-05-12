@@ -37,27 +37,27 @@ namespace TradingConsole
 
 			Thread.Sleep(2000);
 
-			Trading.DemoBalance.Add("USD", 2.0f);
+			Trading.DemoBalance.Add("USD", 10.0f);
 			Trading.DemoBalance.Add("BTC", 0.00f);
 			Trading.DemoBalance.Add("ETH", 0.00f);
-			Trading.DemoBalance.Add("ETC", 0.00f);
 			Trading.DemoBalance.Add("LTC", 0.00f);
+			Trading.DemoBalance.Add("ETC", 0.00f);			
 			//Trading.DemoBalance.Add("BCN", 0.00f);
 			//Trading.DemoBalance.Add("ETN", 0.00f);
 			//Trading.DemoBalance.Add("LSK", 0.00f);
 			//Trading.DemoBalance.Add("PPC", 0.00f);
 
 
-			Trading.Add("BTCUSD", 1.0f, 0.5f, 0.4f);
-			Trading.Add("ETHUSD", 1.0f, 0.5f, 0.4f);
-			Trading.Add("ETCUSD", 1.0f, 0.5f, 0.4f);
-			Trading.Add("LTCUSD", 1.0f, 0.5f, 0.4f);
+			Trading.Add("BTCUSD", 20.0f, 10.0f, 2.0f, 0.5f);
+			Trading.Add("ETHUSD", 20.0f, 10.0f, 2.0f, 0.5f);
+			Trading.Add("LTCUSD", 20.0f, 10.0f, 2.0f, 0.5f);
+			Trading.Add("ETCUSD", 20.0f, 10.0f, 2.0f, 0.5f);			
 			//Trading.Add("BCNUSD", 1.0f, 0.3f, 0.3f);
 			//Trading.Add("ETNUSD", 1.0f, 0.1f, 0.2f);
 			//Trading.Add("LSKUSD", 1.0f, 0.1f, 0.2f);
 			//Trading.Add("PPCUSD", 1.0f, 0.1f, 0.2f);
 
-			Trading.Load("tr.dat");
+			//Trading.Load("tr.dat");
 
 			Console.ReadLine();
 
@@ -87,7 +87,7 @@ namespace TradingConsole
 		{
 			if (s == "ticker")
 			{
-				Trading.Run_2();
+				Trading.Run_3();
 				Screen.Print();
 			}
 		}
