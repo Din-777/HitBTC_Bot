@@ -57,7 +57,7 @@ namespace TradingConsole
 			//Trading.Add("LSKUSD", 1.0f, 0.1f, 0.2f);
 			//Trading.Add("PPCUSD", 1.0f, 0.1f, 0.2f);
 
-			//Trading.Load("tr.dat");
+			Trading.Load("tr.dat");
 
 			Console.ReadLine();
 

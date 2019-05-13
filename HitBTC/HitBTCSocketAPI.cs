@@ -70,9 +70,11 @@ namespace HitBTC
 		public HitBTCSocketAPI()
 		{
 			string uri = "wss://api.hitbtc.com/api/2/ws";
-			socket = new WebSocket(uri);
-			socket.AutoSendPingInterval = 10;
-			socket.EnableAutoSendPing = true;
+			socket = new WebSocket(uri)
+			{
+				AutoSendPingInterval = 10,
+				EnableAutoSendPing = true
+			};
 
 			Error = null;
 
@@ -216,7 +218,7 @@ namespace HitBTC
 				this.Error.Id = id;				
 			}
 
-			if (MessageReceived != null) MessageReceived(str);
+			MessageReceived?.Invoke(str);
 		}
 
 		internal void Socket_DataReceived(object sender, DataReceivedEventArgs e)
@@ -226,12 +228,12 @@ namespace HitBTC
 
 		internal void Socket_Opened(object sender, EventArgs e)
 		{
-			if (Opened != null) Opened(e.ToString());
+			Opened?.Invoke(e.ToString());
 		}
 
 		private void Socket_Closed(object sender, EventArgs e)
 		{
-			if (Closed != null) Closed(e.ToString());
+			Closed?.Invoke(e.ToString());
 		}
 	}
 }

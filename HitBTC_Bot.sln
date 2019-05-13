@@ -17,6 +17,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Screen", "Screen\Screen.csp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trading", "Trading\Trading.csproj", "{E55BA61D-00D7-4556-9887-52AB104C888B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chart", "Chart\Chart.csproj", "{748CC530-A564-4F4B-BBB9-5B7BA6F4384F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -51,6 +53,10 @@ Global
 		{E55BA61D-00D7-4556-9887-52AB104C888B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E55BA61D-00D7-4556-9887-52AB104C888B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E55BA61D-00D7-4556-9887-52AB104C888B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{748CC530-A564-4F4B-BBB9-5B7BA6F4384F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{748CC530-A564-4F4B-BBB9-5B7BA6F4384F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{748CC530-A564-4F4B-BBB9-5B7BA6F4384F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{748CC530-A564-4F4B-BBB9-5B7BA6F4384F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

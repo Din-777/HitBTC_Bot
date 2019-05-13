@@ -395,8 +395,7 @@ namespace Trading
 
 			if (!PendingOrders.ContainsKey(symbol))
 			{
-				if (Buy(symbol, Ticker.Ask, OrdersParameter[symbol].StartingQuantity))
-					PendingOrderAdd("sell", Ticker).Type = Type.New;
+				PendingOrderAdd("buy", Ticker).Type = Type.New;
 			}
 			else
 			{
@@ -433,13 +432,13 @@ namespace Trading
 						}
 						else if (Ticker.Bid < PendingOrders[symbol][i].StopPrice)
 						{
-							if (Sell(symbol, Ticker.Bid, PendingOrders[symbol][i].Quantity))
-							{
+							//if (Sell(symbol, Ticker.Bid, PendingOrders[symbol][i].Quantity))
+							//{
 								ClosedOrders.Add(PendingOrders[symbol].ElementAt(i));
 								ClosedOrders.Last().ClosePrice = Ticker.Bid;
 								PendingOrders[symbol].ElementAt(i).Type = Type.Closed;
 								PendingOrderAdd("buy", Ticker).Type = Type.New;
-							}
+							//}
 						}
 						else if (Ticker.Bid < PendingOrders[symbol].ElementAt(i).ClosePrice)
 							PendingOrders[symbol].ElementAtOrDefault(i).MaxProfitPercent = 0.0f;
@@ -460,6 +459,7 @@ namespace Trading
 									ClosedOrders.Add(PendingOrders[symbol].ElementAt(i));
 									ClosedOrders.Last().ClosePrice = Ticker.Ask;
 									PendingOrders[symbol].ElementAt(i).Type = Type.Closed;
+								if (PendingOrders[symbol].ElementAt(i).Type != Type.Additional)
 									PendingOrderAdd("sell", Ticker).Type = Type.New;
 								}
 								else if (PendingOrders[symbol].ElementAt(i).Type == Type.Additional)
@@ -472,7 +472,7 @@ namespace Trading
 								PendingOrderAdd("buy", Ticker).Type = Type.Additional;
 							}
 						}
-						else if (Ticker.Ask > PendingOrders[symbol][i].StopPrice)
+						if (Ticker.Ask > PendingOrders[symbol][i].StopPrice)
 						{
 							if (PendingOrders[symbol].ElementAt(i).Type == Type.Additional)
 								PendingOrders[symbol].ElementAt(i).Type = Type.Deleted;
@@ -493,10 +493,10 @@ namespace Trading
 					}
 				}
 
-				if (!PendingOrders[symbol].Any(t => t.Side == "sell"))
+				/*if (!PendingOrders[symbol].Any(t => t.Side == "sell"))
 					PendingOrderAdd("sell", Ticker).Type = Type.Additional;
 				if (!PendingOrders[symbol].Any(t => t.Side == "buy"))
-					PendingOrderAdd("buy", Ticker).Type = Type.Additional;
+					PendingOrderAdd("buy", Ticker).Type = Type.Additional;*/
 			}
 		}
 
