@@ -95,6 +95,43 @@ namespace HitBTC.Categories
 		string id = "unsubscribeCandles";
 	}
 
+
+	public class SubscribeTrades
+	{
+		[JsonProperty("method")]
+		string Method = "subscribeTrades";
+
+		[JsonProperty("params")]
+		public ParamsSubscribeTrades param = new ParamsSubscribeTrades();
+
+		public SubscribeTrades(string symbol, int limit)
+		{
+			param.symbol = symbol;
+			param.limit = limit;
+		}
+
+		[JsonProperty("id")]
+		string id = "subscribeTrades";
+	}
+
+	public class UnsubscribeTrades
+	{
+		[JsonProperty("method")]
+		string Method = "unsubscribeTrades";
+
+		[JsonProperty("params")]
+		public Params param = new Params { symbol = "symbol" };
+
+		public UnsubscribeTrades(string symbol)
+		{
+			param.symbol = symbol;
+		}
+
+		[JsonProperty("id")]
+		string id = "unsubscribeTrades";
+	}
+
+
 	public class GetSymmols
 	{
 		[JsonProperty("method")]
@@ -116,8 +153,7 @@ namespace HitBTC.Categories
 		{
 			this.socket = socket;
 		}
-
-
+		
 		public async void SubscribeTicker(string symbol)
 		{
 			var s = new Categories.SubscribeTicker(symbol);
@@ -146,6 +182,19 @@ namespace HitBTC.Categories
 			await Task.Run(() => socket.Send(jsonStr));
 		}
 
+		public async void SubscribeTrades(string symbol, int limit)
+		{
+			var s = new Categories.SubscribeTrades(symbol, limit);
+			var jsonStr = JsonConvert.SerializeObject(s);
+			await Task.Run(() => socket.Send(jsonStr));
+		}
+
+		public async void UnsubscribeTrades(string symbol)
+		{
+			var s = new Categories.UnsubscribeTrades(symbol);
+			var jsonStr = JsonConvert.SerializeObject(s);
+			await Task.Run(() => socket.Send(jsonStr));
+		}
 
 		public async void GetSymbols()
 		{

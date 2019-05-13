@@ -17,10 +17,7 @@ namespace Temp
 		{
 			HitBTCSocketAPI HitBTC = new HitBTCSocketAPI();
 
-			HitBTC.SocketMarketData.SubscribeCandles("BTCUSD", Period.M1, 10);
-			HitBTC.SocketMarketData.SubscribeCandles("ETHUSD", Period.M1, 10);
-			HitBTC.SocketMarketData.SubscribeCandles("LTCUSD", Period.M1, 10);
-			HitBTC.SocketMarketData.SubscribeCandles("ETCUSD", Period.M1, 10);
+			HitBTC.SocketMarketData.SubscribeTrades("BTCUSD", 10);
 
 			Console.ReadKey();
 		}		

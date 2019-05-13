@@ -89,15 +89,13 @@ namespace Trading
 		}
 
 		public float CurrProfitPercent;
-		public float MaxProfitPercent = 0.0f;
-
+		public float MaxProfitPercent = 0.0f;	   
 
 		public Sma SmaCurrProfitPercent = new Sma();
 		public Sma SmaMaxProfitPercent = new Sma();
 
 		public float CurrProfitPercentSma = 0.0f;
-		public float MaxProfitPercentSma = 0.0f;
-
+		public float MaxProfitPercentSma = 0.0f;   
 
 		public float CalcCurrProfitPercent(Ticker ticker)
 		{
@@ -420,7 +418,8 @@ namespace Trading
 									ClosedOrders.Add(PendingOrders[symbol].ElementAt(i));
 									ClosedOrders.Last().ClosePrice = Ticker.Bid;
 									PendingOrders[symbol].ElementAt(i).Type = Type.Closed;
-									PendingOrderAdd("buy", Ticker).Type = Type.New;
+									if(PendingOrders[symbol].ElementAt(i).Type != Type.Additional)
+										PendingOrderAdd("buy", Ticker).Type = Type.New;	
 								}
 								else if (PendingOrders[symbol].ElementAt(i).Type == Type.Additional)
 									PendingOrders[symbol].ElementAt(i).Type = Type.Deleted;

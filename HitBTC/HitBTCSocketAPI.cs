@@ -31,21 +31,27 @@ namespace HitBTC
 		public Stack<SocketOrederResult> stackPlaceNewOrderResults;
 		public Dictionary<string, Symbol> Symbols;
 		public Dictionary<string, List<Candle>> Candles;
+		public SocketTrade SocketTrade;
+		public Dictionary<string, List<SocketTrade>> TradesData;
 
 		public Stack<ParamsActiveOrders> ActiveOrders;
 
 		public async void ConnectAsync(WebSocket socket)
 		{
-			try { await Task.Run(() => socket.Open()); }
-			catch {
+			try
+			{
+				await Task.Run(() => socket.Open());
+			}
+			catch
+			{
 				Console.SetCursorPosition(0, 0);
 				Console.Clear();
 				Console.WriteLine("Connecting...");
-			}						
+			}
 		}
 		public void SocketConnect()
 		{
-			while (socket.State != WebSocketState.Connecting)
+			while (socket.State != WebSocketState.Open)
 			{
 				ConnectAsync(socket);
 				Thread.Sleep(5000);
@@ -75,11 +81,12 @@ namespace HitBTC
 			SocketMarketData = new SocketMarketData(ref socket);
 			stackPlaceNewOrderResults = new Stack<SocketOrederResult>();
 			Candles = new Dictionary<string, List<Candle>>();
+			TradesData = new Dictionary<string, List<SocketTrade>>();
 
 			while (socket.State != WebSocketState.Connecting)
 			{				
 				ConnectAsync(socket);
-				Thread.Sleep(2000);
+				Thread.Sleep(5000);
 			}
 			Console.Clear();
 
@@ -96,7 +103,7 @@ namespace HitBTC
 
 			var jObject = JObject.Parse(e.Message);
 
-			var Params = jObject["params"];			
+			var Params = jObject["params"];	
 			var Error = jObject["error"];
 			var id = (string)jObject["id"];
 			var method = (string)jObject["method"];
@@ -119,17 +126,22 @@ namespace HitBTC
 				else if (id == "subscribeReports")
 				{
 					str = "subscribeReports";
-
 				}
 				else if (id == "subscribeCandles")
 				{
 					str = "subscribeCandles";
-
 				}
 				else if (id == "unsubscribeCandles")
 				{
 					str = "unsubscribeCandles";
-
+				}
+				else if (id == "subscribeTrades")
+				{
+					str = "subscribeTrades";
+				}
+				else if (id == "unsubscribeTrades")
+				{
+					str = "unsubscribeTrades";
 				}
 				else if (id == "placeNewOrder")
 				{
@@ -175,6 +187,27 @@ namespace HitBTC
 					SocketMarketData.UnSubscribeCandles(symbol);
 
 					str = "snapshotCandles";
+				}
+				else if (method == "snapshotTrades" && Params != null)
+				{
+					var Data = jObject["params"]["data"];
+					string symbol = (string)jObject["params"]["symbol"];
+
+					List<SocketTrade> ListSocketTradeData = JsonConvert.DeserializeObject<List<SocketTrade>>(Data.ToString());
+					if (!TradesData.ContainsKey(symbol))
+						TradesData.Add(symbol, new List<SocketTrade>());
+
+					TradesData[symbol] = ListSocketTradeData;
+					str = "snapshotCandles";
+				}
+				else if (method == "updateTrades" && Params != null)
+				{
+					var Data = jObject["params"]["data"];
+					string symbol = (string)jObject["params"]["symbol"];
+					SocketTrade = JsonConvert.DeserializeObject<SocketTrade>(Data[0].ToString());
+					TradesData[symbol].Add(SocketTrade);
+
+					str = "updateTrades";
 				}
 			}
 			else

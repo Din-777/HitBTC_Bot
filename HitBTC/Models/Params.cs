@@ -80,4 +80,10 @@ namespace HitBTC.Models
 		public Period period;
 		public int limit;
 	}
+
+	public class ParamsSubscribeTrades
+	{
+		public string symbol;
+		public int limit;
+	}
 }
