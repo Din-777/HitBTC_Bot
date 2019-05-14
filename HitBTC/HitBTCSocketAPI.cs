@@ -31,8 +31,8 @@ namespace HitBTC
 		public Stack<SocketOrederResult> stackPlaceNewOrderResults;
 		public Dictionary<string, Symbol> Symbols;
 		public Dictionary<string, List<Candle>> Candles;
-		public SocketTrade SocketTrade;
-		public Dictionary<string, List<SocketTrade>> TradesData;
+		public SocketTrade Trade;
+		public Dictionary<string, List<SocketTrade>> Trades;
 
 		public Stack<ParamsActiveOrders> ActiveOrders;
 
@@ -44,9 +44,9 @@ namespace HitBTC
 			}
 			catch
 			{
-				Console.SetCursorPosition(0, 0);
-				Console.Clear();
-				Console.WriteLine("Connecting...");
+				//Console.SetCursorPosition(0, 0);
+				//Console.Clear();
+				//Console.WriteLine("Connecting...");
 			}
 		}
 		public void SocketConnect()
@@ -61,7 +61,7 @@ namespace HitBTC
 		{
 			socket.Close();
 		}
-		
+
 
 		public SocketAuth SocketAuth;
 		public SocketTrading SocketTrading;
@@ -83,21 +83,21 @@ namespace HitBTC
 			SocketMarketData = new SocketMarketData(ref socket);
 			stackPlaceNewOrderResults = new Stack<SocketOrederResult>();
 			Candles = new Dictionary<string, List<Candle>>();
-			TradesData = new Dictionary<string, List<SocketTrade>>();
+			Trades = new Dictionary<string, List<SocketTrade>>();
 
 			while (socket.State != WebSocketState.Connecting)
-			{				
+			{
 				ConnectAsync(socket);
 				Thread.Sleep(5000);
 			}
-			Console.Clear();
+			//Console.Clear();
 
 			socket.Opened += Socket_Opened;
 			socket.Closed += Socket_Closed;
 			socket.DataReceived += Socket_DataReceived;
 			socket.MessageReceived += Socket_MessageReceived;
 		}
-				
+
 		internal void Socket_MessageReceived(object sender, MessageReceivedEventArgs e)
 		{
 			string str = null;
@@ -105,7 +105,7 @@ namespace HitBTC
 
 			var jObject = JObject.Parse(e.Message);
 
-			var Params = jObject["params"];	
+			var Params = jObject["params"];
 			var Error = jObject["error"];
 			var id = (string)jObject["id"];
 			var method = (string)jObject["method"];
@@ -175,7 +175,7 @@ namespace HitBTC
 					str = "ticker";
 				}
 				else if (method == "snapshotCandles" && Params != null)
-				{
+				{ 
 					var Data = jObject["params"]["data"];
 					string symbol = (string)jObject["params"]["symbol"];
 
@@ -184,11 +184,21 @@ namespace HitBTC
 					if (!Candles.ContainsKey(symbol))
 						Candles.Add(symbol, new List<Candle>());
 
-					Candles[symbol] = lCandle;
-
-					SocketMarketData.UnSubscribeCandles(symbol);
-
+					Candles[symbol] = lCandle; 
 					str = "snapshotCandles";
+				}
+				else if (method == "updateCandles" && Params != null)
+				{
+					var Data = jObject["params"]["data"];
+					string symbol = (string)jObject["params"]["symbol"];
+
+					Candle Candle = JsonConvert.DeserializeObject<Candle>(Data[0].ToString());
+
+					if (!Candles.ContainsKey(symbol))
+						Candles.Add(symbol, new List<Candle>());
+
+					Candles[symbol].Add(Candle);
+					str = "updateCandles";
 				}
 				else if (method == "snapshotTrades" && Params != null)
 				{
@@ -196,18 +206,18 @@ namespace HitBTC
 					string symbol = (string)jObject["params"]["symbol"];
 
 					List<SocketTrade> ListSocketTradeData = JsonConvert.DeserializeObject<List<SocketTrade>>(Data.ToString());
-					if (!TradesData.ContainsKey(symbol))
-						TradesData.Add(symbol, new List<SocketTrade>());
+					if (!Trades.ContainsKey(symbol))
+						Trades.Add(symbol, new List<SocketTrade>());
 
-					TradesData[symbol] = ListSocketTradeData;
+					Trades[symbol] = ListSocketTradeData;
 					str = "snapshotCandles";
 				}
 				else if (method == "updateTrades" && Params != null)
 				{
 					var Data = jObject["params"]["data"];
 					string symbol = (string)jObject["params"]["symbol"];
-					SocketTrade = JsonConvert.DeserializeObject<SocketTrade>(Data[0].ToString());
-					TradesData[symbol].Add(SocketTrade);
+					Trade = JsonConvert.DeserializeObject<SocketTrade>(Data[0].ToString());
+					Trades[symbol].Add(Trade);
 
 					str = "updateTrades";
 				}
@@ -215,7 +225,7 @@ namespace HitBTC
 			else
 			{
 				this.Error = JsonConvert.DeserializeObject<Error>(Error.ToString());
-				this.Error.Id = id;				
+				this.Error.Id = id;
 			}
 
 			MessageReceived?.Invoke(str);

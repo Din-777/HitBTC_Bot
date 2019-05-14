@@ -30,10 +30,10 @@ namespace HitBTC.Models
         public int Id { get; set; }
 
         [JsonProperty("price")]
-        public string Price { get; set; }
+        public float Price { get; set; }
 
         [JsonProperty("quantity")]
-        public string Quantity { get; set; }
+        public float Quantity { get; set; }
 
         [JsonProperty("side")]
         public string Side { get; set; }
