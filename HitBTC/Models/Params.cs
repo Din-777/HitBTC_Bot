@@ -46,9 +46,9 @@ namespace HitBTC.Models
 		public string side;				// Trade side. Accepted values: sell, buy
 		public string type;				// Optional parameter: limit, market, stopLimit, stopMarket. Default value: limit
 		public string timeInForce;		// Optional parameter. GTC, IOC, FOK, Day. GTD Default value: GTC
-		public float quantity;			//Order quantity
-		public float price;				//Order price.Required for limit types
-		public float stopPrice;			// Required for stop-limit orders
+		public decimal quantity;			//Order quantity
+		public decimal price;				//Order price.Required for limit types
+		public decimal stopPrice;			// Required for stop-limit orders
 		public DateTime expireTime;		// Required for timeInForce = GTD
 		public bool strictValidate;		// Price and quantity will be checked for the incrementation within tick size and quantity step.
 										// See symbol's tickSize and quantityIncrement
@@ -65,9 +65,9 @@ namespace HitBTC.Models
 		public string status;
 		public string type;
 		public string timeInForce;
-		public float quantity;
-		public float price;
-		public float cumQuantity;
+		public decimal quantity;
+		public decimal price;
+		public decimal cumQuantity;
 		public bool postOnly;
 		public DateTime createdAt;
 		public DateTime updatedAt;

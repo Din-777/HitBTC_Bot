@@ -15,9 +15,12 @@ namespace Temp
 	{
 		static void Main(string[] args)
 		{
-			HitBTCSocketAPI HitBTC = new HitBTCSocketAPI();
+			decimal quantityIncrement = 0.002m;
+			decimal usd = 1.0m;
+			decimal price = 4.0m;
 
-			HitBTC.SocketMarketData.SubscribeTrades("BTCUSD", 10);
+			decimal quantityBuy = (usd / price) - ((usd / price) % quantityIncrement);
+
 
 			Console.ReadKey();
 		}		

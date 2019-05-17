@@ -36,6 +36,7 @@ namespace Screen
 			
 			var t = Trading.PendingOrders.SelectMany(kvp => kvp.Value).ToList();
 			var tempPendingOrders = t.OrderByDescending(o => o.CurrProfitPercent).ToList();
+			var tempDemoBalance = Trading.DemoBalance.OrderByDescending(o => o.Value);
 
 			/*Console.SetCursorPosition(column_1, 0);
 			Console.Write("Tickers      ");
@@ -101,8 +102,8 @@ namespace Screen
 				if(i < Trading.DemoBalance.Count)
 				{
 					Console.SetCursorPosition(column_2, i + 24);
-					Console.Write("{0}  {1:00.000000}", Trading.DemoBalance.ElementAtOrDefault(i).Key,
-														Trading.DemoBalance.ElementAtOrDefault(i).Value);
+					Console.Write("{0,5}  {1:00.000000}", tempDemoBalance.ElementAtOrDefault(i).Key,
+															tempDemoBalance.ElementAtOrDefault(i).Value);
 				}
 			}
 		}

@@ -35,23 +35,39 @@ namespace TradingConsole
 			HitBTC.SocketTrading.GetTradingBalance();
 			HitBTC.SocketMarketData.GetSymbols();
 
-			Thread.Sleep(2000);
+			Thread.Sleep(5000);
 
-			Trading.DemoBalance.Add("USD", 10.0f);
-			Trading.DemoBalance.Add("BTC", 0.00f);
-			Trading.DemoBalance.Add("ETH", 0.00f);
-			Trading.DemoBalance.Add("LTC", 0.00f);
-			Trading.DemoBalance.Add("ETC", 0.00f);			
+			Trading.DemoBalance.Add("USD", 100.0m);
+
+			for (int i =0; i < 100; i++)
+			{
+				string symbol = HitBTC.Symbols.ElementAt(i).Key;
+				string a = symbol.Substring(0, symbol.Length - 3);
+				string b = symbol.Substring(symbol.Length - 3, 3);
+
+				if (b != "USD")
+					if(!Trading.DemoBalance.ContainsKey(b))
+						Trading.DemoBalance.Add(b, 0);
+				if (!Trading.DemoBalance.ContainsKey(a))
+					Trading.DemoBalance.Add(a, 0);
+				Trading.Add(symbol, 20.0m, 10.0m, 2.0m, 0.5m);
+			}
+
+			//Trading.DemoBalance.Add("USD", 10.0f);
+			//Trading.DemoBalance.Add("BTC", 0.00f);
+			//Trading.DemoBalance.Add("ETH", 0.00f);
+			//Trading.DemoBalance.Add("LTC", 0.00f);
+			//Trading.DemoBalance.Add("ETC", 0.00f);			
 			//Trading.DemoBalance.Add("BCN", 0.00f);
 			//Trading.DemoBalance.Add("ETN", 0.00f);
 			//Trading.DemoBalance.Add("LSK", 0.00f);
 			//Trading.DemoBalance.Add("PPC", 0.00f);
 
 
-			Trading.Add("BTCUSD", 20.0f, 10.0f, 2.0f, 0.5f);
-			Trading.Add("ETHUSD", 20.0f, 10.0f, 2.0f, 0.5f);
-			Trading.Add("LTCUSD", 20.0f, 10.0f, 2.0f, 0.5f);
-			Trading.Add("ETCUSD", 20.0f, 10.0f, 2.0f, 0.5f);			
+			//Trading.Add("BTCUSD", 20.0f, 10.0f, 2.0f, 0.5f);
+			//Trading.Add("ETHUSD", 20.0f, 10.0f, 2.0f, 0.5f);
+			//Trading.Add("LTCUSD", 20.0f, 10.0f, 2.0f, 0.5f);
+			//Trading.Add("ETCUSD", 20.0f, 10.0f, 2.0f, 0.5f);			
 			//Trading.Add("BCNUSD", 1.0f, 0.3f, 0.3f);
 			//Trading.Add("ETNUSD", 1.0f, 0.1f, 0.2f);
 			//Trading.Add("LSKUSD", 1.0f, 0.1f, 0.2f);
@@ -68,17 +84,18 @@ namespace TradingConsole
 			for(int i = 0; i < Trading.DemoBalance.Keys.Count; i++)
 			{
 				if(Trading.DemoBalance.ElementAt(i).Key != "USD")
-					if(Trading.DemoBalance.ElementAt(i).Value > 0.0f)
+					if(Trading.DemoBalance.ElementAt(i).Value > 0.0m)
 						Trading.Sell(Trading.DemoBalance.ElementAt(i).Key.Insert(3, "USD"),
 							HitBTC.d_Tickers[Trading.DemoBalance.ElementAt(i).Key.Insert(3, "USD")].Bid,
 							Trading.DemoBalance.ElementAt(i).Value);
 			}
 
-			for (int i = 0; i < Trading.DemoBalance.Count; i++)
-			{
-				Console.SetCursorPosition(45, 24 + i);
-				Console.WriteLine("{0}  {1:00.000000}", Trading.DemoBalance.ElementAtOrDefault(i).Key, Trading.DemoBalance.ElementAt(i).Value);
-			}
+			Screen.Print();
+			//for (int i = 0; i < Trading.DemoBalance.Count; i++)
+			//{
+			//	Console.SetCursorPosition(45, 24 + i);
+			//	Console.WriteLine("{0}  {1:00.000000}", Trading.DemoBalance.ElementAtOrDefault(i).Key, Trading.DemoBalance.ElementAt(i).Value);
+			//}
 
 			Console.ReadLine();
 		}

@@ -13,11 +13,11 @@ namespace HitBTC.Models
         [JsonProperty("side")]
         public string Side { get; set; }
         [JsonProperty("quantity")]
-        public float Quantity { get; set; }
+        public decimal Quantity { get; set; }
         [JsonProperty("price")]
-        public float Price { get; set; }
+        public decimal Price { get; set; }
         [JsonProperty("fee")]
-        public float Fee { get; set; }
+        public decimal Fee { get; set; }
         [JsonProperty("timestamp")]
         public string Timestamp { get; set; }
     }
@@ -35,11 +35,11 @@ namespace HitBTC.Models
         [JsonProperty("side")]
         public string Side { get; set; }
         [JsonProperty("quantity")]
-        public float Quantity { get; set; }
+        public decimal Quantity { get; set; }
         [JsonProperty("price")]
-        public float Price { get; set; }
+        public decimal Price { get; set; }
         [JsonProperty("fee")]
-        public float Fee { get; set; }
+        public decimal Fee { get; set; }
         [JsonProperty("timestamp")]
         public string Timestamp { get; set; }
     }

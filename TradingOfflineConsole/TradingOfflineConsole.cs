@@ -35,13 +35,13 @@ namespace TradingOfflineConsole
 
 			Thread.Sleep(5000);
 
-			Trading.DemoBalance.Add("USD", 10.0f);
-			Trading.DemoBalance.Add("BTC", 0.00f);
+			Trading.DemoBalance.Add("USD", 10.0m);
+			Trading.DemoBalance.Add("BTC", 0.00m);
 			//Trading.DemoBalance.Add("ETH", 0.00f);
 			//Trading.DemoBalance.Add("LTC", 0.00f);
 			//Trading.DemoBalance.Add("ETC", 0.00f);
 
-			Trading.Add("BTCUSD", 20.0f, 5.0f, 0.5f, 0.5f);
+			Trading.Add("BTCUSD", 20.0m, 5.0m, 0.5m, 0.5m);
 			//Trading.Add("ETHUSD", 20.0f, 5.0f, 0.5f, 0.5f);
 			//Trading.Add("LTCUSD", 20.0f, 5.0f, 0.5f, 0.5f);
 			//Trading.Add("ETCUSD", 20.0f, 5.0f, 0.5f, 0.5f);
@@ -51,7 +51,7 @@ namespace TradingOfflineConsole
 						   select new Ticker
 						   {
 							   Ask = candel.Open,
-							   Bid = candel.Open * 0.999f,
+							   Bid = candel.Open * 0.999m,
 							   Symbol = candles.Key
 						   }).ToList();
 
@@ -63,7 +63,7 @@ namespace TradingOfflineConsole
 			for (int i = 0; i < Trading.DemoBalance.Keys.Count; i++)
 			{
 				if (Trading.DemoBalance.ElementAt(i).Key != "USD")
-					if (Trading.DemoBalance.ElementAt(i).Value > 0.0f)
+					if (Trading.DemoBalance.ElementAt(i).Value > 0.0m)
 					{
 						string symbol = Trading.DemoBalance.ElementAt(i).Key.Insert(3, "USD");
 						Trading.Sell(symbol,
@@ -82,12 +82,12 @@ namespace TradingOfflineConsole
 		}
 	}
 
-	public static class FloatExtension
+	public static class DecimalExtension
 	{
-		public static float Percent(this float number, float percent)
+		public static decimal Percent(this decimal number, decimal percent)
 		{
 			//return ((double) 80         *       25)/100;
-			return (number * percent) / 100.0f;
+			return (number * percent) / 100.0m;
 		}
 	}
 }

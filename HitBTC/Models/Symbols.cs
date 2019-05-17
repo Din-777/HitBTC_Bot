@@ -14,16 +14,16 @@ namespace HitBTC.Models
         public string QuoteCurrency { get; set; }
 
         [JsonProperty("quantityIncrement")]
-        public float QuantityIncrement { get; set; }
+        public decimal QuantityIncrement { get; set; }
 
         [JsonProperty("tickSize")]
-        public float TickSize { get; set; }
+        public decimal TickSize { get; set; }
 
         [JsonProperty("takeLiquidityRate")]
-        public float TakeLiquidityRate { get; set; }
+        public decimal TakeLiquidityRate { get; set; }
 
         [JsonProperty("provideLiquidityRate")]
-        public float ProvideLiquidityRate { get; set; }
+        public decimal ProvideLiquidityRate { get; set; }
 
         [JsonProperty("feeCurrency")]
         public string FeeCurrency { get; set; }

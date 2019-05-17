@@ -69,7 +69,7 @@ namespace HitBTC.Categories
 			await Task.Run(() => socket.Send(jsonGtb));
 		}
 
-		public async void PlaceNewOrder(string symbol, string side, float quantity, string clientOrderId = null, bool strictValidate = true)
+		public async void PlaceNewOrder(string symbol, string side, decimal quantity, string clientOrderId = null, bool strictValidate = true)
 		{
 			OrderType orderType = OrderType.Market;
 

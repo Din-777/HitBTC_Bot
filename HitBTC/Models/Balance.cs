@@ -8,10 +8,10 @@ namespace HitBTC.Models
         public string Currency { get; set; }
 
         [JsonProperty("available")]
-        public float Available { get; set; }
+        public decimal Available { get; set; }
 
         [JsonProperty("reserved")]
-        public float Reserved { get; set; }
+        public decimal Reserved { get; set; }
 
     }
 }

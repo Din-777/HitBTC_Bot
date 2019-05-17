@@ -95,7 +95,6 @@ namespace HitBTC.Categories
 		string id = "unsubscribeCandles";
 	}
 
-
 	public class SubscribeTrades
 	{
 		[JsonProperty("method")]
@@ -130,8 +129,7 @@ namespace HitBTC.Categories
 		[JsonProperty("id")]
 		string id = "unsubscribeTrades";
 	}
-
-
+	
 	public class GetSymmols
 	{
 		[JsonProperty("method")]
