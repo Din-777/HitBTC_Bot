@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.WebSockets;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
@@ -157,7 +158,7 @@ namespace Trading
 
 		public Dictionary<string, List<PendingOrder>> PendingOrders;
 		public List<PendingOrder> ClosedOrders;
-		private Dictionary<string, OrderParameter> OrdersParameter;
+		public Dictionary<string, OrderParameter> OrdersParameter;
 		public Dictionary<string, decimal> DemoBalance;
 
 		public Trading(ref HitBTCSocketAPI hitBTC)
@@ -193,7 +194,7 @@ namespace Trading
 			if (side == "sell")
 			{
 				if (!PendingOrders.ContainsKey(symbol))
-					PendingOrders.Add(Ticker.Symbol, new List<PendingOrder>());
+					PendingOrders.Add(symbol, new List<PendingOrder>());
 
 				PendingOrder = new PendingOrder
 				{
@@ -208,7 +209,7 @@ namespace Trading
 			else
 			{
 				if (!PendingOrders.ContainsKey(Ticker.Symbol))
-					PendingOrders.Add(Ticker.Symbol, new List<PendingOrder>());
+					PendingOrders.Add(symbol, new List<PendingOrder>());
 
 				PendingOrder = new PendingOrder
 				{
@@ -593,13 +594,17 @@ namespace Trading
 
 		private void HitBTC_Closed(string s)
 		{
-			Thread.Sleep(5000);
+			Thread.Sleep(5000);			
 			HitBTC.SocketConnect();
+			Thread.Sleep(5000);
+
+			Console.Clear();
 			HitBTC.SocketAuth.Auth();
 			HitBTC.SocketMarketData.GetSymbols();
 
 			foreach (var v in OrdersParameter)
 				HitBTC.SocketMarketData.SubscribeTicker(v.Key);
+
 		}
 	}
 	

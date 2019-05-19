@@ -14,12 +14,12 @@ namespace HitBTC
 {
 	public class HitBTCSocketAPI
 	{
-		internal WebSocket socket;
+		public WebSocket socket;
 
 		public delegate void SocketHandler(string s);
 		public event SocketHandler Opened;
-		public event SocketHandler MessageReceived;
 		public event SocketHandler Closed;
+		public event SocketHandler MessageReceived;		
 
 		public bool Authorized = false;
 		public Error Error;
@@ -44,12 +44,20 @@ namespace HitBTC
 			}
 			catch
 			{
-				//Console.SetCursorPosition(0, 0);
-				//Console.Clear();
-				//Console.WriteLine("Connecting...");
+				Console.SetCursorPosition(0, 0);
+				Console.Clear();
+				Console.WriteLine("Connecting...");
 			}
 		}
 		public void SocketConnect()
+		{
+			while (socket.State != WebSocketState.Open)
+			{
+				ConnectAsync(socket);
+				Thread.Sleep(5000);
+			}
+		}
+		public void SocketConnect(WebSocket socket)
 		{
 			while (socket.State != WebSocketState.Open)
 			{
@@ -70,11 +78,7 @@ namespace HitBTC
 		public HitBTCSocketAPI()
 		{
 			string uri = "wss://api.hitbtc.com/api/2/ws";
-			socket = new WebSocket(uri)
-			{
-				AutoSendPingInterval = 10,
-				EnableAutoSendPing = true
-			};
+			socket = new WebSocket(uri);
 
 			Error = null;
 
@@ -90,7 +94,7 @@ namespace HitBTC
 				ConnectAsync(socket);
 				Thread.Sleep(5000);
 			}
-			//Console.Clear();
+			Console.Clear();
 
 			socket.Opened += Socket_Opened;
 			socket.Closed += Socket_Closed;
@@ -162,17 +166,27 @@ namespace HitBTC
 				}
 				else if (method == "ticker" && Params != null)
 				{
-					Ticker = JsonConvert.DeserializeObject<Ticker>(Params.ToString());
+					try { Ticker = JsonConvert.DeserializeObject<Ticker>(Params.ToString()); }
+					catch { Ticker = null; }
+					finally
+					{
+						if (Ticker == null)
+						{
+							str = "null";							
+						}
+						else
+						{
+							L_Tickers.Add(Ticker);
+							if (L_Tickers.Count > 20) L_Tickers.RemoveAt(0);
 
-					L_Tickers.Add(Ticker);
-					if (L_Tickers.Count > 20) L_Tickers.RemoveAt(0);
+							if (!d_Tickers.ContainsKey(Ticker.Symbol))
+								d_Tickers.Add(Ticker.Symbol, new Ticker());
 
-					if (!d_Tickers.ContainsKey(Ticker.Symbol))
-						d_Tickers.Add(Ticker.Symbol, new Ticker());
+							d_Tickers[Ticker.Symbol] = (Ticker);
 
-					d_Tickers[Ticker.Symbol] = (Ticker);
-
-					str = "ticker";
+							str = "ticker";
+						}
+					}
 				}
 				else if (method == "snapshotCandles" && Params != null)
 				{ 
