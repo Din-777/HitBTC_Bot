@@ -55,7 +55,7 @@ namespace TradingConsole
 
 			//Trading.DemoBalance.Add("USD", 10.0m);
 			Trading.DemoBalance.Add("BTC", 0.00m);
-			//Trading.DemoBalance.Add("ETH", 0.00f);
+			Trading.DemoBalance.Add("ETH", 0.00f);
 			//Trading.DemoBalance.Add("LTC", 0.00f);
 			//Trading.DemoBalance.Add("ETC", 0.00f);			
 			//Trading.DemoBalance.Add("BCN", 0.00f);
@@ -65,7 +65,7 @@ namespace TradingConsole
 
 
 			Trading.Add("BTCUSD", 20.0m, 10.0m, 2.0m, 0.5m);
-			//Trading.Add("ETHUSD", 20.0f, 10.0f, 2.0f, 0.5f);
+			Trading.Add("ETHUSD", 20.0f, 10.0f, 2.0f, 0.5f);
 			//Trading.Add("LTCUSD", 20.0f, 10.0f, 2.0f, 0.5f);
 			//Trading.Add("ETCUSD", 20.0f, 10.0f, 2.0f, 0.5f);			
 			//Trading.Add("BCNUSD", 1.0f, 0.3f, 0.3f);
