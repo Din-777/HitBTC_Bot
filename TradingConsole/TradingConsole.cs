@@ -51,11 +51,25 @@ namespace TradingConsole
 					HitBTC.SocketMarketData.SubscribeTicker(symbol.Key);
 					Trading.Add(symbol.Key, 20.0m, 10.0m, 2.0m, 0.5m);
 				}
-			}		*/	
+			}*/
+
+			for(int i = 0; i < 100; i ++)
+			{
+				string baseCurrency = HitBTC.Symbols.ElementAt(i).Key.Substring(0, HitBTC.Symbols.ElementAt(i).Key.Length - 3);
+				string quoteCurrency = HitBTC.Symbols.ElementAt(i).Key.Substring(HitBTC.Symbols.ElementAt(i).Key.Length - 3, 3);
+
+				if (quoteCurrency == "USD" || quoteCurrency == "BTC" || quoteCurrency == "ETH")
+				{
+					if (!Trading.DemoBalance.ContainsKey(baseCurrency))
+						Trading.DemoBalance.Add(baseCurrency, 0);
+					HitBTC.SocketMarketData.SubscribeTicker(HitBTC.Symbols.ElementAt(i).Key);
+					Trading.Add(HitBTC.Symbols.ElementAt(i).Key, 20.0m, 10.0m, 2.0m, 0.5m);
+				}
+			}
 
 			//Trading.DemoBalance.Add("USD", 10.0m);
-			Trading.DemoBalance.Add("BTC", 0.00m);
-			Trading.DemoBalance.Add("ETH", 0.00m);
+			//Trading.DemoBalance.Add("BTC", 0.00m);
+			//Trading.DemoBalance.Add("ETH", 0.00m);
 			//Trading.DemoBalance.Add("LTC", 0.00f);
 			//Trading.DemoBalance.Add("ETC", 0.00f);			
 			//Trading.DemoBalance.Add("BCN", 0.00f);
@@ -64,8 +78,8 @@ namespace TradingConsole
 			//Trading.DemoBalance.Add("PPC", 0.00f);
 
 
-			Trading.Add("BTCUSD", 20.0m, 10.0m, 2.0m, 0.5m);
-			Trading.Add("ETHUSD", 20.0m, 10.0m, 2.0m, 0.5m);
+			//Trading.Add("BTCUSD", 20.0m, 10.0m, 2.0m, 0.5m);
+			//Trading.Add("ETHUSD", 20.0m, 10.0m, 2.0m, 0.5m);
 			//Trading.Add("LTCUSD", 20.0f, 10.0f, 2.0f, 0.5f);
 			//Trading.Add("ETCUSD", 20.0f, 10.0f, 2.0f, 0.5f);			
 			//Trading.Add("BCNUSD", 1.0f, 0.3f, 0.3f);
@@ -73,13 +87,13 @@ namespace TradingConsole
 			//Trading.Add("LSKUSD", 1.0f, 0.1f, 0.2f);
 			//Trading.Add("PPCUSD", 1.0f, 0.1f, 0.2f);
 
-			//Trading.Load("tr.dat");
+			Trading.Load("tr.dat");
 
 			Console.ReadLine();
 
 			HitBTC.MessageReceived -= HitBTCSocket_MessageReceived;	
 
-			//Trading.Save("tr.dat");
+			Trading.Save("tr.dat");
 
 			for (int i = 0; i < Trading.DemoBalance.Keys.Count; i++)
 			{

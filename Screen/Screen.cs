@@ -22,6 +22,8 @@ namespace Screen
 			Trading = trading;
 		}
 
+		private int ClosedOrdersCount = 0;
+
 		public void Print()
 		{
 			int column_1 = 0;               // Tickers
@@ -67,7 +69,7 @@ namespace Screen
 						HitBTC.L_Tickers.ElementAtOrDefault(j).Ask,
 						HitBTC.L_Tickers.ElementAtOrDefault(j).Bid);
 				}*/
-
+								
 				if (i < tempPendingOrders.Count)
 				{
 					Console.SetCursorPosition(column_2, i + 2);   //Open order
@@ -88,26 +90,31 @@ namespace Screen
 					Console.Write("\t\t\t\t\t\t\t\t\t\t\t");
 				}
 
-				if (i < Trading.ClosedOrders.Count)
+				if (ClosedOrdersCount != Trading.ClosedOrders.Count)
 				{
-					int j = Trading.ClosedOrders.Count - i - 1;
-					Console.SetCursorPosition(column_3, i + 2);
+					if (i < Trading.ClosedOrders.Count)
+					{
+						int j = Trading.ClosedOrders.Count - i - 1;
+						Console.SetCursorPosition(column_3, i + 2);
 
-					Console.Write("{0:0000}  {1,5}  {2}  {3:0000.000}  {4:0000.000}  {5,10:0.00000000}", Trading.ClosedOrders.ElementAtOrDefault(j).Id,
-																					Trading.ClosedOrders.ElementAtOrDefault(j).Symbol.Substring(0, Trading.ClosedOrders.ElementAtOrDefault(j).Symbol.Length - 3),
-																					Trading.ClosedOrders.ElementAtOrDefault(j).Side.PadRight(4),
-																					Trading.ClosedOrders.ElementAtOrDefault(j).OpenPrice,
-																					Trading.ClosedOrders.ElementAtOrDefault(j).ClosePrice,
-																					Trading.ClosedOrders.ElementAtOrDefault(j).CurrProfitPercent);
-				}
+						Console.Write("{0:0000}  {1,5}  {2}  {3:0000.000}  {4:0000.000}  {5,10:0.00000000}", Trading.ClosedOrders.ElementAtOrDefault(j).Id,
+																						Trading.ClosedOrders.ElementAtOrDefault(j).Symbol.Substring(0, Trading.ClosedOrders.ElementAtOrDefault(j).Symbol.Length - 3),
+																						Trading.ClosedOrders.ElementAtOrDefault(j).Side.PadRight(4),
+																						Trading.ClosedOrders.ElementAtOrDefault(j).OpenPrice,
+																						Trading.ClosedOrders.ElementAtOrDefault(j).ClosePrice,
+																						Trading.ClosedOrders.ElementAtOrDefault(j).CurrProfitPercent);
+					}
 
-				if(i < Trading.DemoBalance.Count)
-				{
-					Console.SetCursorPosition(column_2, i + 24);
-					Console.Write("{0,5}  {1:00.000000}", tempDemoBalance.ElementAtOrDefault(i).Key,
-															tempDemoBalance.ElementAtOrDefault(i).Value);
+					if (i < Trading.DemoBalance.Count)
+					{
+						Console.SetCursorPosition(column_2, i + 24);
+						Console.Write("{0,5}  {1:00.000000}", tempDemoBalance.ElementAtOrDefault(i).Key,
+																tempDemoBalance.ElementAtOrDefault(i).Value);
+					}
 				}
 			}
+
+			ClosedOrdersCount = Trading.ClosedOrders.Count;
 		}
 	}
 }
