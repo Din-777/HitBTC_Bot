@@ -153,9 +153,7 @@ namespace Trading
 	public class Trading
 	{
 		public Ticker Ticker;
-
 		private HitBTCSocketAPI HitBTC;
-
 		public Dictionary<string, List<PendingOrder>> PendingOrders;
 		public List<PendingOrder> ClosedOrders;
 		public Dictionary<string, OrderParameter> OrdersParameter;
@@ -428,8 +426,10 @@ namespace Trading
 							else if(PendingOrders[symbol].ElementAt(i).Type == Type.New)
 							{
 								PendingOrders[symbol].ElementAt(i).Type = Type.Processed;
-								PendingOrderAdd("sell", Ticker).Type = Type.Additional;
-							}
+                                //PendingOrderAdd("sell", Ticker).Type = Type.Additional;
+                                PendingOrders[symbol][i].Quantity *= 2;
+
+                            }
 						}
 						else if (Ticker.Bid < PendingOrders[symbol][i].StopPrice)
 						{
@@ -455,25 +455,26 @@ namespace Trading
 						{
 							if (PendingOrders[symbol][i].CurrProfitPercentSma < (PendingOrders[symbol][i].MaxProfitPercentSma * 0.8m))
 							{
-								if (Buy(symbol, Ticker.Ask, PendingOrders[symbol][i].Quantity))
-								{
-									ClosedOrders.Add(PendingOrders[symbol].ElementAt(i));
-									ClosedOrders.Last().ClosePrice = Ticker.Ask;
-									PendingOrders[symbol].ElementAt(i).Type = Type.Closed;
-								if (PendingOrders[symbol].ElementAt(i).Type != Type.Additional)
-									PendingOrderAdd("sell", Ticker).Type = Type.New;
-								}
-								else if (PendingOrders[symbol].ElementAt(i).Type == Type.Additional)
-									PendingOrders[symbol].ElementAt(i).Type = Type.Deleted;
-								else PendingOrders[symbol].ElementAtOrDefault(i).Closed = true;
-							}
-							else if (PendingOrders[symbol].ElementAt(i).Type == Type.New)
-							{
-								PendingOrders[symbol].ElementAt(i).Type = Type.Processed;
-								PendingOrderAdd("buy", Ticker).Type = Type.Additional;
-							}
-						}
-						if (Ticker.Ask > PendingOrders[symbol][i].StopPrice)
+                                if (Buy(symbol, Ticker.Ask, PendingOrders[symbol][i].Quantity))
+                                {
+                                    ClosedOrders.Add(PendingOrders[symbol].ElementAt(i));
+                                    ClosedOrders.Last().ClosePrice = Ticker.Ask;
+                                    PendingOrders[symbol].ElementAt(i).Type = Type.Closed;
+                                    if (PendingOrders[symbol].ElementAt(i).Type != Type.Additional)
+                                        PendingOrderAdd("sell", Ticker).Type = Type.New;
+                                }
+                                else if (PendingOrders[symbol].ElementAt(i).Type == Type.Additional)
+                                    PendingOrders[symbol].ElementAt(i).Type = Type.Deleted;
+                                else PendingOrders[symbol].ElementAtOrDefault(i).Closed = true;
+                            }
+                            else if (PendingOrders[symbol].ElementAt(i).Type == Type.New)
+                            {
+                                PendingOrders[symbol].ElementAt(i).Type = Type.Processed;
+                                //PendingOrderAdd("buy", Ticker).Type = Type.Additional;
+                                PendingOrders[symbol][i].Quantity *= 2;
+                            }
+                        }
+                        if (Ticker.Ask > PendingOrders[symbol][i].StopPrice)
 						{
 							if (PendingOrders[symbol].ElementAt(i).Type == Type.Additional)
 								PendingOrders[symbol].ElementAt(i).Type = Type.Deleted;
@@ -551,7 +552,6 @@ namespace Trading
 			}
 			return true;
 		}
-
 
 		public void Save(string fileNeme)
 		{
