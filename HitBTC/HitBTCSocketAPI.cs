@@ -182,7 +182,7 @@ namespace HitBTC
 							if (!d_Tickers.ContainsKey(Ticker.Symbol))
 								d_Tickers.Add(Ticker.Symbol, new Ticker());
 
-							d_Tickers[Ticker.Symbol] = (Ticker);
+							d_Tickers[Ticker.Symbol] = Ticker;
 
 							str = "ticker";
 						}

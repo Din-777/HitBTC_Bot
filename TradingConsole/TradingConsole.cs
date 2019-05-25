@@ -22,6 +22,7 @@ namespace TradingConsole
 		static string sKey = "B37LaDlfa70YM9gorzpjYGQAZVRNXDj3";
 
 		public static Trading.Trading Trading;
+        public static bool IsSymbol = false;		
 
 		static void Main(string[] args)
 		{
@@ -33,43 +34,37 @@ namespace TradingConsole
 
 			HitBTC.SocketAuth.Auth(pKey, sKey);
             HitBTC.SocketMarketData.GetSymbols();
-            HitBTC.SocketTrading.GetTradingBalance();			
+            HitBTC.SocketTrading.GetTradingBalance();
 
-			Thread.Sleep(5000);
+            while (!IsSymbol) Thread.Sleep(100);
 
-			Trading.DemoBalance.Add("USD", 100.0m);
+			Trading.DemoBalance.Add("USD", 10.0m);
+            Trading.DemoBalance.Add("BTC", 0.0m);
+            Trading.DemoBalance.Add("ETH", 0.0m);
 
-			foreach(var symbol in HitBTC.Symbols)
+            HitBTC.MessageReceived -= HitBTCSocket_MessageReceived;
+            HitBTC.SocketMarketData.SubscribeTicker("BTCUSD");
+            HitBTC.SocketMarketData.SubscribeTicker("ETHUSD");
+
+            for (int i = 0; i < HitBTC.Symbols.Count; i ++)
 			{
-				string baseCurrency = symbol.Key.Substring(0, symbol.Key.Length - 3);
-				string quoteCurrency = symbol.Key.Substring(symbol.Key.Length - 3, 3);
+                string symbol = HitBTC.Symbols.ElementAt(i).Key;
+                string baseCurrency = HitBTC.Symbols.ElementAt(i).Value.BaseCurrency;
+				string quoteCurrency = HitBTC.Symbols.ElementAt(i).Value.QuoteCurrency;
 
 				if (quoteCurrency == "USD" || quoteCurrency == "BTC" || quoteCurrency == "ETH")
 				{
 					if (!Trading.DemoBalance.ContainsKey(baseCurrency))
 						Trading.DemoBalance.Add(baseCurrency, 0);
-					HitBTC.SocketMarketData.SubscribeTicker(symbol.Key);
-					Trading.Add(symbol.Key, 20.0m, 10.0m, 2.0m, 0.5m);
-				}
+                    Trading.Add(symbol, startingQuantity: 0.2m, treadingQuantity: 0.2m, stopPercent: 1.0m, closePercent: 0.5m);
+                }
 			}
 
-			/*for(int i = 0; i < 300; i ++)
-			{
-				string baseCurrency = HitBTC.Symbols.ElementAt(i).Key.Substring(0, HitBTC.Symbols.ElementAt(i).Key.Length - 3);
-				string quoteCurrency = HitBTC.Symbols.ElementAt(i).Key.Substring(HitBTC.Symbols.ElementAt(i).Key.Length - 3, 3);
+            Trading.Load("tr.dat");
 
-				if (quoteCurrency == "USD" || quoteCurrency == "BTC" || quoteCurrency == "ETH")
-				{
-					if (!Trading.DemoBalance.ContainsKey(baseCurrency))
-						Trading.DemoBalance.Add(baseCurrency, 0);
-					HitBTC.SocketMarketData.SubscribeTicker(HitBTC.Symbols.ElementAt(i).Key);
-					Trading.Add(HitBTC.Symbols.ElementAt(i).Key, 20.0m, 10.0m, 2.0m, 0.5m);
-				}
-			}*/
+            HitBTC.MessageReceived += HitBTCSocket_MessageReceived;
 
-			//Trading.Load("tr.dat");
-
-			Console.ReadLine();
+            Console.ReadLine();
 
 			HitBTC.MessageReceived -= HitBTCSocket_MessageReceived;	
 
@@ -102,7 +97,7 @@ namespace TradingConsole
 			if (Trading.DemoBalance["BTC"] > 0.0m)
 				Trading.Sell("BTCUSD", HitBTC.d_Tickers["BTCUSD"].Bid, Trading.DemoBalance["BTC"]);
             if (Trading.DemoBalance["ETH"] > 0.0m)
-                Trading.Sell("ETHUSD", HitBTC.d_Tickers["BTCUSD"].Bid, Trading.DemoBalance["ETH"]);
+                Trading.Sell("ETHUSD", HitBTC.d_Tickers["ETHUSD"].Bid, Trading.DemoBalance["ETH"]);
 
             Screen.PrintBalance();
 
@@ -116,6 +111,11 @@ namespace TradingConsole
 				Trading.Run_3();
 				Screen.Print();
 			}
-		}
+
+            if (s == "getSymbol")
+            {
+                IsSymbol = true;
+            }
+        }
 	}
 }

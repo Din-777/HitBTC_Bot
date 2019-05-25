@@ -13,74 +13,73 @@ namespace Screen
     public class Screen
     {
         HitBTCSocketAPI HitBTC;
-
         Trading.Trading Trading;
 
         public Screen(ref HitBTCSocketAPI hitBTC, ref Trading.Trading trading)
         {
             HitBTC = hitBTC;
             Trading = trading;
+            Console.CursorVisible = false;
         }
 
-        private int ClosedOrdersCount = 0;
+        private int ClosedOrdersCount = 99999999;
+		private int StaticId = 99999999;
 
-        static int column_1 = 0;               // Tickers
+		static int column_1 = 0;               // Tickers
         static int column_2 = 0;              // Pending orders
-        static int column_3 = column_2 + 79;   // Closed orders
+        static int column_3 = column_2 + 25;   // Closed orders
         static int column_4 = column_3 + 20;   // 
         static int column_5 = column_4 + 0;    // Orders Profit
         static int column_6 = column_5 + 0;    // Trad balance / Dealing
         static int column_7 = column_6 + 16;   // Estim balance
 
         public void Print()
-        {
-            Console.CursorVisible = false;
+        {               
+            List<DemoBalance> tempDemoBalances = new List<DemoBalance>();
 
-            var t = Trading.PendingOrders.SelectMany(kvp => kvp.Value).ToList();
-            var tempPendingOrders = t.OrderByDescending(o => o.CurrProfitPercent).ToList();
+			if(StaticId != PendingOrder.StaticId)
+			{
+				Console.SetCursorPosition(column_3, 34);
+				Console.Write("Pending orders {0}   {1} ", Trading.PendingOrders.Count, PendingOrder.StaticId);
 
-            var tempDemoBalance = Trading.DemoBalance.OrderByDescending(o => o.Value);
+				StaticId = PendingOrder.StaticId;
 
-            Console.SetCursorPosition(column_2, 0);
-            Console.Write("Pending orders {0}   {1:0000} ", tempPendingOrders.Count, PendingOrder.StaticId);
+				Console.SetCursorPosition(column_3, 35);
+				Console.Write("{0:0000.000}  {1}", Trading.PendingOrders["BTCUSD"].ElementAt(0).ClosePrice,
+									Trading.PendingOrders["BTCUSD"].ElementAt(0).CurrProfitPercent );
+			}
 
             if (ClosedOrdersCount != Trading.ClosedOrders.Count)
             {
-                Console.SetCursorPosition(column_2, 1);
-                Console.Write("Id     Sym   Side  Close      Profit       ProfitSMA   MaxProfit   Type");
-
                 decimal sumPercent = Trading.ClosedOrders.Sum(x => x.Side == "sell" ? x.CurrProfitPercent : 0m);
                 Console.SetCursorPosition(column_3, 0);
                 Console.Write("Closed orders {0}    {1}", Trading.ClosedOrders.Count, sumPercent);
                 Console.SetCursorPosition(column_3, 1);
-                Console.Write("Id     Sym   Side  Open      Close     Profit");
+                Console.Write("Id      Symbol     Side  Open        Close       Profit %    Created");
 
-                Console.SetCursorPosition(column_2, 23);
+                Console.SetCursorPosition(column_2, 0);
                 Console.Write("Balance");
+
+                tempDemoBalances = Trading.DemoBalance.Select(k => new DemoBalance { Currency = k.Key, Available = k.Value })
+                    .OrderByDescending(v => v.Available).ToList();
+
+
+                Console.SetCursorPosition(column_2, 1);
+                var tempDemoBalance = tempDemoBalances.Find(b => b.Currency == "USD");
+                Console.Write("{0}  {1}", tempDemoBalance.Currency.PadRight(7).Substring(0, 7),
+                                              tempDemoBalance.Available.ToString().PadRight(10, '0').Substring(0, 10));
+                Console.SetCursorPosition(column_2, 2);
+                tempDemoBalance = tempDemoBalances.Find(b => b.Currency == "BTC");
+                Console.Write("{0}  {1}", tempDemoBalance.Currency.PadRight(7).Substring(0, 7),
+                                              tempDemoBalance.Available.ToString().PadRight(10, '0').Substring(0, 10));
+                Console.SetCursorPosition(column_2, 3);
+                tempDemoBalance = tempDemoBalances.Find(b => b.Currency == "ETH");
+                Console.Write("{0}  {1}", tempDemoBalance.Currency.PadRight(7).Substring(0, 7),
+                                              tempDemoBalance.Available.ToString().PadRight(10, '0').Substring(0, 10));
             }
 
-            for (int i = 0; i < 20; i++)
+            for (int i = 0; i < 30; i++)
             {
-                if (i < tempPendingOrders.Count)
-                {
-                    Console.SetCursorPosition(column_2, i + 2);   //Open order
-                    PendingOrder pendingOrder = tempPendingOrders.ElementAtOrDefault(i);
-                    Console.Write("{0:0000}  {1,5}  {2}  {3:0000.000}  {4,11:0.00000000}  {5,11:0.00000000}  {6:0.00000000}  {7} ",
-                                                                                pendingOrder.Id,
-                                                                                pendingOrder.Symbol.Substring(0, pendingOrder.Symbol.Length - 3),
-                                                                                pendingOrder.Side.PadRight(4),
-                                                                                pendingOrder.ClosePrice,
-                                                                                pendingOrder.CurrProfitPercent,
-                                                                                pendingOrder.CurrProfitPercentSma,
-                                                                                pendingOrder.MaxProfitPercentSma,
-                                                                                pendingOrder.Type.ToString().PadRight(9));
-                }
-                else
-                {
-                    Console.SetCursorPosition(column_2, i + 2);
-                    Console.Write("\t\t\t\t\t\t\t\t\t\t\t");
-                }
-
                 if (ClosedOrdersCount != Trading.ClosedOrders.Count)
                 {
                     if (i < Trading.ClosedOrders.Count)
@@ -88,20 +87,21 @@ namespace Screen
                         int j = Trading.ClosedOrders.Count - i - 1;
                         Console.SetCursorPosition(column_3, i + 2);
 
-                        Console.Write("{0:0000}  {1,5}  {2}  {3:0000.000}  {4:0000.000}  {5,10:0.00000000}",
-                                                                                        Trading.ClosedOrders.ElementAtOrDefault(j).Id,
-                                                                                        Trading.ClosedOrders.ElementAt(j).Symbol.Substring(0, Trading.ClosedOrders.ElementAtOrDefault(j).Symbol.Length - 3),
-                                                                                        Trading.ClosedOrders.ElementAt(j).Side.PadRight(4),
-                                                                                        Trading.ClosedOrders.ElementAt(j).OpenPrice,
-                                                                                        Trading.ClosedOrders.ElementAt(j).ClosePrice,
-                                                                                        Trading.ClosedOrders.ElementAt(j).CurrProfitPercent);
-                    }
+						Console.Write("{0:00000}   {1}  {2}  {3}  {4}  {5:0.000000}  {6:HH:mm:ss}",
+												  Trading.ClosedOrders.ElementAtOrDefault(j).Id,
+												  Trading.ClosedOrders.ElementAtOrDefault(j).Symbol.PadRight(9),
+												  Trading.ClosedOrders.ElementAt(j).Side.PadRight(4),
+												  Trading.ClosedOrders.ElementAt(j).OpenPrice.ToString().PadRight(10).Substring(0, 10),
+												  Trading.ClosedOrders.ElementAt(j).ClosePrice.ToString().PadRight(10).Substring(0, 10),
+												  Trading.ClosedOrders.ElementAt(j).CurrProfitPercent.ToString().PadRight(10).Substring(0, 10),
+												  Trading.ClosedOrders.ElementAt(j).DateTime);
+                    }                   
 
                     if (i < Trading.DemoBalance.Count)
                     {
-                        Console.SetCursorPosition(column_2, i + 24);
-                        Console.Write("{0,5}  {1:00.000000}", tempDemoBalance.ElementAt(i).Key,
-                                                                tempDemoBalance.ElementAt(i).Value);
+                        Console.SetCursorPosition(column_2, i + 5);
+                        Console.Write("{0}  {1}", tempDemoBalances.ElementAt(i).Currency.PadRight(7).Substring(0, 7),
+                                                  tempDemoBalances.ElementAt(i).Available.ToString().PadRight(10, '0').Substring(0, 10));
                     }
                 }                
             }
@@ -110,18 +110,24 @@ namespace Screen
 
         public void PrintBalance()
         {
-            var tempDemoBalance = Trading.DemoBalance.OrderByDescending(o => o.Value);
+            Trading.DemoBalance.OrderByDescending(o => o.Value);
 
-            Console.SetCursorPosition(column_2, 23);
-            Console.Write("Balance");
+            Console.SetCursorPosition(column_2, 1);
+            Console.Write("{0}      {1}", "USD", Trading.DemoBalance["USD"].ToString().PadRight(10).Substring(0, 10));
 
-            for (int i = 0; i < 20; i++)
+            Console.SetCursorPosition(column_2, 2);
+            Console.Write("{0}      {1}", "BTC", Trading.DemoBalance["BTC"].ToString().PadRight(10).Substring(0, 10));
+
+            Console.SetCursorPosition(column_2, 3);
+            Console.Write("{0}      {1}", "ETH", Trading.DemoBalance["ETH"].ToString().PadRight(10).Substring(0, 10));
+
+            for (int i = 0; i < 30; i++)
             {
                 if (i < Trading.DemoBalance.Count)
                 {
-                    Console.SetCursorPosition(column_2, i + 24);
-                    Console.Write("{0,5}  {1:00.000000}", tempDemoBalance.ElementAtOrDefault(i).Key,
-                                                            tempDemoBalance.ElementAtOrDefault(i).Value);
+                    Console.SetCursorPosition(column_2, i + 5);
+                    Console.Write("{0}  {1}", Trading.DemoBalance.ElementAtOrDefault(i).Key.PadRight(7).Substring(0, 7),
+                                              Trading.DemoBalance.ElementAtOrDefault(i).Value.ToString().PadRight(10, '0').Substring(0, 10));
                 }
             }
         }
