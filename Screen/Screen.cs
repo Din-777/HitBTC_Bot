@@ -60,7 +60,7 @@ namespace Screen
                 Console.SetCursorPosition(column_2, 0);
                 Console.Write("Balance");
 
-                tempDemoBalances = Trading.DemoBalance.Select(k => new DemoBalance { Currency = k.Key, Available = k.Value })
+                tempDemoBalances = HitBTC.Balance.Select(k => new DemoBalance { Currency = k.Key, Available = k.Value.Available })
                     .OrderByDescending(v => v.Available).ToList();
 
 

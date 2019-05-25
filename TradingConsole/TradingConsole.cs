@@ -10,6 +10,7 @@ using HitBTC;
 using HitBTC.Models;
 using Trading;
 using Screen;
+using System.IO;
 
 namespace TradingConsole
 {
@@ -26,6 +27,12 @@ namespace TradingConsole
 
 		static void Main(string[] args)
 		{
+			using (var reader = new StreamReader("key.txt"))
+			{
+				pKey = reader.ReadLine().Substring(5);
+				sKey = reader.ReadLine().Substring(5);
+			}
+
 			HitBTC = new HitBTCSocketAPI();
 			Trading = new Trading.Trading(ref HitBTC);
 			Screen = new Screen.Screen(ref HitBTC, ref Trading);
@@ -33,16 +40,12 @@ namespace TradingConsole
 			HitBTC.MessageReceived += HitBTCSocket_MessageReceived;
 
 			HitBTC.SocketAuth.Auth(pKey, sKey);
-            HitBTC.SocketMarketData.GetSymbols();
+			HitBTC.SocketMarketData.GetSymbols();
             HitBTC.SocketTrading.GetTradingBalance();
 
-            while (!IsSymbol) Thread.Sleep(100);
+            while (!IsSymbol) Thread.Sleep(100);			
 
-			Trading.DemoBalance.Add("USD", 10.0m);
-            Trading.DemoBalance.Add("BTC", 0.0m);
-            Trading.DemoBalance.Add("ETH", 0.0m);
-
-            HitBTC.MessageReceived -= HitBTCSocket_MessageReceived;
+			HitBTC.MessageReceived -= HitBTCSocket_MessageReceived;
             HitBTC.SocketMarketData.SubscribeTicker("BTCUSD");
             HitBTC.SocketMarketData.SubscribeTicker("ETHUSD");
 
@@ -54,13 +57,11 @@ namespace TradingConsole
 
 				if (quoteCurrency == "USD" || quoteCurrency == "BTC" || quoteCurrency == "ETH")
 				{
-					if (!Trading.DemoBalance.ContainsKey(baseCurrency))
-						Trading.DemoBalance.Add(baseCurrency, 0);
                     Trading.Add(symbol, startingQuantity: 0.2m, treadingQuantity: 0.2m, stopPercent: 1.0m, closePercent: 0.5m);
                 }
 			}
 
-            Trading.Load("tr.dat");
+            //Trading.Load("tr.dat");
 
             HitBTC.MessageReceived += HitBTCSocket_MessageReceived;
 
@@ -69,6 +70,8 @@ namespace TradingConsole
 			HitBTC.MessageReceived -= HitBTCSocket_MessageReceived;	
 
 			Trading.Save("tr.dat");
+
+			Trading.DemoBalance = HitBTC.Balance.ToDictionary(k => k.Key, k => k.Value.Available);
 
 			for (int i = 0; i < Trading.DemoBalance.Keys.Count; i++)
 			{

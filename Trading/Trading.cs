@@ -584,12 +584,13 @@ namespace Trading
 
             string baseCurrency = HitBTC.Symbols[symbol].BaseCurrency;
             string quoteCurrency = HitBTC.Symbols[symbol].QuoteCurrency;
+			decimal baseAvailable = HitBTC.Balance[baseCurrency].Available;
 
-            if (DemoBalance[baseCurrency] < HitBTC.Symbols[symbol].QuantityIncrement)
+			if (baseAvailable < HitBTC.Symbols[symbol].QuantityIncrement)
 				return false;		
 
-			if (quantity > DemoBalance[baseCurrency])
-				quantity = DemoBalance[baseCurrency];
+			if (quantity > baseAvailable)
+				quantity = baseAvailable;
 
 			quantity -= quantity % HitBTC.Symbols[symbol].QuantityIncrement;
 
@@ -611,21 +612,21 @@ namespace Trading
 
 		public bool Buy(string symbol, decimal price, decimal quantity, bool test = false)
 		{
-			//HitBTC.SocketTrading.PlaceNewOrder(symbol, "buy", quantity);
 			HitBTC.SocketTrading.GetTradingBalance();
 
 			string baseCurrency = HitBTC.Symbols[symbol].BaseCurrency;
             string quoteCurrency = HitBTC.Symbols[symbol].QuoteCurrency;
 			decimal realPrice = price * (1 + HitBTC.Symbols[symbol].TakeLiquidityRate);
+			decimal quoteAvailable = HitBTC.Balance[quoteCurrency].Available;
 
-			if (DemoBalance[quoteCurrency] < (HitBTC.Symbols[symbol].QuantityIncrement * realPrice))
+			if (quoteAvailable < (HitBTC.Symbols[symbol].QuantityIncrement * realPrice))
 				return false;
 
 			decimal realQuoteCurrency = 0;
 			
-			if (DemoBalance[quoteCurrency] < (quantity * price))
+			if (HitBTC.Balance[quoteCurrency].Available < (quantity * price))
 			{				
-				quantity = (DemoBalance[quoteCurrency] / realPrice) - ( (DemoBalance[quoteCurrency] / realPrice) % HitBTC.Symbols[symbol].QuantityIncrement );
+				quantity = (quoteAvailable / realPrice) - ( (quoteAvailable / realPrice) % HitBTC.Symbols[symbol].QuantityIncrement );
 			}
 
 			if (quantity == 0)
