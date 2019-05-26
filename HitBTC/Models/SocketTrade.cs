@@ -29,7 +29,9 @@ namespace HitBTC.Models
         [JsonProperty("id")]
         public int Id { get; set; }
 
-        [JsonProperty("price")]
+		public string Symbol { get; set; }
+
+		[JsonProperty("price")]
         public decimal Price { get; set; }
 
         [JsonProperty("quantity")]

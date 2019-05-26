@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 
 using HitBTC;
 using HitBTC.Models;
+using Trading.Utilities;
 
 namespace Trading
 {
@@ -21,33 +22,6 @@ namespace Trading
 		Deleted,
 		Processed,
 		Additional
-	}
-
-	[Serializable]
-	public class Sma
-	{
-		int _period = 0;
-		Queue<decimal> _queue;
-		public int Period = 20;
-
-		public Sma()
-		{
-			_period = Period;
-			_queue = new Queue<decimal>(Period);
-		}
-
-		public decimal Compute(decimal x)
-		{
-			_period = Period;
-
-			if (_queue.Count >= _period)
-			{
-				_queue.Dequeue();
-			}
-
-			_queue.Enqueue(x);
-			return _queue.Average();
-		}
 	}
 
 	[Serializable]
@@ -62,6 +36,7 @@ namespace Trading
 		public decimal OpenPrice;
 		public decimal StopPrice;
 		public decimal ClosePrice;
+		public decimal EMAdiff;
 
 		public bool Closed = false;
 
@@ -147,7 +122,7 @@ namespace Trading
 		public DateTime DateTimeStart;
 		public DateTime DateTimeStartCurr;
 		public List<PendingOrder> ClosedOrders;
-		public Dictionary<string, decimal> DemoBalance;
+		public Dictionary<string, Balance> DemoBalance;
 		public Dictionary<string, OrderParametr> OrdersParameters;
 		public Dictionary<string, List<PendingOrder>> PendingOrders;
 	}
@@ -165,11 +140,14 @@ namespace Trading
 		public Dictionary<string, List<PendingOrder>> PendingOrders;
 		public List<PendingOrder> ClosedOrders;
 		public Dictionary<string, OrderParametr> OrdersParameters;
-		public Dictionary<string, decimal> DemoBalance;
+		public Dictionary<string, Balance> DemoBalance;
 
 		public Timer timer;
 		public DateTime DateTimeStart;
 		public DateTime DateTimeStartCurr;
+
+		public Dictionary<string, iEMA> dEMAslow;
+		public Dictionary<string, iEMA> dEMAfast;
 
 		private void TimerTick(object obj)
 		{
@@ -190,7 +168,7 @@ namespace Trading
 			this.HitBTC = hitBTC;
 			this.PendingOrders = new Dictionary<string, List<PendingOrder>>();
 			this.OrdersParameters = new Dictionary<string, OrderParametr>();
-			this.DemoBalance = new Dictionary<string, decimal>();
+			this.DemoBalance = new Dictionary<string, Balance>();
 			this.ClosedOrders = new List<PendingOrder>();		
 			
 			HitBTC.Closed += HitBTC_Closed;
@@ -210,6 +188,14 @@ namespace Trading
 			};
 
 			HitBTC.SocketMarketData.SubscribeTicker(symbol);
+			HitBTC.SocketMarketData.SubscribeTrades(symbol, 1);
+
+			if (!dEMAslow.ContainsKey(symbol))
+				dEMAslow.Add(symbol, new iEMA(30));
+
+			if (!dEMAfast.ContainsKey(symbol))
+				dEMAfast.Add(symbol, new iEMA(10));
+
 		}
 
 		public PendingOrder PendingOrderAdd(string side, Ticker ticker)
@@ -382,7 +368,7 @@ namespace Trading
 
 			string symbol = Ticker.Symbol;
 
-			if (DemoBalance[symbol.Substring(0, 3)] == 0)
+			if (DemoBalance[symbol.Substring(0, 3)].Available == 0)
 			{
 				if (Buy(symbol, Ticker.Ask, OrdersParameters[symbol].Quantity * 1))
 					PendingOrderAdd("sell", Ticker);
@@ -520,8 +506,8 @@ namespace Trading
 				{
 					if (PendingOrders[symbol][i].Side == "buy")
 					{
-						if (Ticker.Ask < PendingOrders[symbol][i].ClosePrice)							
-						{
+						//if (Ticker.Ask < PendingOrders[symbol][i].ClosePrice)							
+						//{
 							if (PendingOrders[symbol][i].CurrProfitPercentSma < (PendingOrders[symbol][i].MaxProfitPercentSma * 0.8m))
 							{
                                 if (Buy(symbol, Ticker.Ask, PendingOrders[symbol][i].Quantity))
@@ -541,24 +527,17 @@ namespace Trading
                                 PendingOrders[symbol].ElementAt(i).Type = Type.Processed;
                                 PendingOrders[symbol].ElementAt(i).Quantity *= 2;
                             }
-                        }
+                       // }
 						if (Ticker.Ask > PendingOrders[symbol][i].StopPrice)
-						//if (Ticker.Bid > PendingOrders[symbol][i].StopPrice)
 						{
-							if (PendingOrders[symbol].ElementAt(i).Type == Type.Additional)
-								PendingOrders[symbol].ElementAt(i).Type = Type.Deleted;
-							/*else
-							{
-								PendingOrders[symbol].ElementAt(i).OpenPrice = Ticker.Bid;
-								PendingOrders[symbol].ElementAt(i).StopPercent = OrdersParameters[symbol].StopPercent;
-								PendingOrders[symbol].ElementAt(i).ClosePercent = OrdersParameters[symbol].ClosePercent;
-								PendingOrders[symbol].ElementAt(i).Type = Type.New;
-								PendingOrders[symbol].ElementAt(i).SmaCurrProfitPercent = new Sma();
-								PendingOrders[symbol].ElementAt(i).SmaMaxProfitPercent  = new Sma();
-								PendingOrders[symbol].ElementAt(i).CurrProfitPercentSma = 0.0m;
-								PendingOrders[symbol].ElementAt(i).MaxProfitPercentSma  = 0.0m;
-							}*/
-
+							PendingOrders[symbol].ElementAt(i).OpenPrice = Ticker.Bid;
+							PendingOrders[symbol].ElementAt(i).StopPercent = OrdersParameters[symbol].StopPercent;
+							PendingOrders[symbol].ElementAt(i).ClosePercent = OrdersParameters[symbol].ClosePercent;
+							PendingOrders[symbol].ElementAt(i).Type = Type.New;
+							PendingOrders[symbol].ElementAt(i).SmaCurrProfitPercent = new Sma();
+							PendingOrders[symbol].ElementAt(i).SmaMaxProfitPercent  = new Sma();
+							PendingOrders[symbol].ElementAt(i).CurrProfitPercentSma = 0.0m;
+							PendingOrders[symbol].ElementAt(i).MaxProfitPercentSma  = 0.0m;
 						}
                         else if (Ticker.Ask > PendingOrders[symbol].ElementAt(i).ClosePrice)
                             PendingOrders[symbol].ElementAtOrDefault(i).MaxProfitPercent = 0.0m;
@@ -578,18 +557,57 @@ namespace Trading
             }
 		}
 
+		public void Run_4(Ticker ticker = null)
+		{
+			string symbol = HitBTC.Trade.Symbol;
+			dEMAfast[symbol].Period = 10;
+			dEMAslow[symbol].Period = 30;
+
+			if (dEMAfast[symbol].isPrimed() && dEMAslow[symbol].isPrimed())
+			{
+				foreach (var PendingOrder in PendingOrders[symbol])
+				{
+					PendingOrder.CalcCurrProfitPercent(Ticker);
+				}
+
+				for (int i = 0; i < PendingOrders[symbol].Count; i++)
+				{
+					if (PendingOrders[symbol][i].Side == "sell")
+					{
+						
+					}
+				}
+
+				for (int i = 0; i < PendingOrders[symbol].Count; i++)
+				{
+					if (PendingOrders[symbol][i].Side == "buy")
+					{
+						
+					}
+				}
+
+				for (int i = 0; i < PendingOrders[symbol].Count; i++)
+				{
+					if ((PendingOrders[symbol].ElementAt(i).Type == Type.Deleted) ||
+						(PendingOrders[symbol].ElementAtOrDefault(i).Type == Type.Closed))
+					{
+						PendingOrders[symbol].RemoveAt(i);
+						i -= 1;
+					}
+				}
+			}
+		}
+
 		public bool Sell(string symbol, decimal price, decimal quantity, bool test = false)
 		{
-			HitBTC.SocketTrading.GetTradingBalance();
-
             string baseCurrency = HitBTC.Symbols[symbol].BaseCurrency;
             string quoteCurrency = HitBTC.Symbols[symbol].QuoteCurrency;
 
-            if (DemoBalance[baseCurrency] < HitBTC.Symbols[symbol].QuantityIncrement)
+            if (DemoBalance[baseCurrency].Available < HitBTC.Symbols[symbol].QuantityIncrement)
 				return false;		
 
-			if (quantity > DemoBalance[baseCurrency])
-				quantity = DemoBalance[baseCurrency];
+			if (quantity > DemoBalance[baseCurrency].Available)
+				quantity = DemoBalance[baseCurrency].Available;
 
 			quantity -= quantity % HitBTC.Symbols[symbol].QuantityIncrement;
 
@@ -600,10 +618,8 @@ namespace Trading
 
 			if (test == false)
 			{
-				DemoBalance[baseCurrency] -= quantity;
-				DemoBalance[quoteCurrency] += realQuoteCurrency;
-
-				HitBTC.SocketTrading.PlaceNewOrder(symbol, "sell", quantity);
+				DemoBalance[baseCurrency].Available -= quantity;
+				DemoBalance[quoteCurrency].Available += realQuoteCurrency;
 			}
 
 			return true;
@@ -611,21 +627,20 @@ namespace Trading
 
 		public bool Buy(string symbol, decimal price, decimal quantity, bool test = false)
 		{
-			//HitBTC.SocketTrading.PlaceNewOrder(symbol, "buy", quantity);
 			HitBTC.SocketTrading.GetTradingBalance();
 
 			string baseCurrency = HitBTC.Symbols[symbol].BaseCurrency;
             string quoteCurrency = HitBTC.Symbols[symbol].QuoteCurrency;
 			decimal realPrice = price * (1 + HitBTC.Symbols[symbol].TakeLiquidityRate);
 
-			if (DemoBalance[quoteCurrency] < (HitBTC.Symbols[symbol].QuantityIncrement * realPrice))
+			if (DemoBalance[quoteCurrency].Available < (HitBTC.Symbols[symbol].QuantityIncrement * realPrice))
 				return false;
 
 			decimal realQuoteCurrency = 0;
 			
-			if (DemoBalance[quoteCurrency] < (quantity * price))
+			if (DemoBalance[quoteCurrency].Available < (quantity * price))
 			{				
-				quantity = (DemoBalance[quoteCurrency] / realPrice) - ( (DemoBalance[quoteCurrency] / realPrice) % HitBTC.Symbols[symbol].QuantityIncrement );
+				quantity = (DemoBalance[quoteCurrency].Available / realPrice) - ( (DemoBalance[quoteCurrency].Available / realPrice) % HitBTC.Symbols[symbol].QuantityIncrement );
 			}
 
 			if (quantity == 0)
@@ -635,10 +650,8 @@ namespace Trading
 
 			if (test == false)
 			{
-				DemoBalance[baseCurrency] += quantity;
-				DemoBalance[quoteCurrency] -= realQuoteCurrency;
-
-				HitBTC.SocketTrading.PlaceNewOrder(symbol, "buy", quantity);
+				DemoBalance[baseCurrency].Available += quantity;
+				DemoBalance[quoteCurrency].Available -= realQuoteCurrency;
 			}
 
 			return true;

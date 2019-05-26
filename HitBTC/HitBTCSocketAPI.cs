@@ -231,6 +231,7 @@ namespace HitBTC
 					var Data = jObject["params"]["data"];
 					string symbol = (string)jObject["params"]["symbol"];
 					Trade = JsonConvert.DeserializeObject<SocketTrade>(Data[0].ToString());
+					Trade.Symbol = symbol;
 					Trades[symbol].Add(Trade);
 
 					str = "updateTrades";

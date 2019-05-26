@@ -1,8 +1,10 @@
 ﻿using Newtonsoft.Json;
+using System;
 
 namespace HitBTC.Models
 {
-    public class Balance
+	[Serializable]
+	public class Balance
     {
         [JsonProperty("currency")]
         public string Currency { get; set; }
