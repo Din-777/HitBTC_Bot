@@ -97,7 +97,7 @@ namespace Screen
 												  Trading.ClosedOrders.ElementAt(j).DateTime);
                     }                   
 
-                    if (i < Trading.DemoBalance.Count)
+                    if (i < tempDemoBalances.Count)
                     {
                         Console.SetCursorPosition(column_2, i + 5);
                         Console.Write("{0}  {1}", tempDemoBalances.ElementAt(i).Currency.PadRight(7).Substring(0, 7),
@@ -131,5 +131,35 @@ namespace Screen
                 }
             }
         }
-    }
+
+		public void PrintHitBTCBalance()
+		{
+			var tempDemoBalances = HitBTC.Balance.Select(k => new DemoBalance { Currency = k.Key, Available = k.Value.Available })
+				   .OrderByDescending(v => v.Available).ToList();
+
+
+			Console.SetCursorPosition(column_2, 1);
+			var tempDemoBalance = tempDemoBalances.Find(b => b.Currency == "USD");
+			Console.Write("{0}  {1}", tempDemoBalance.Currency.PadRight(7).Substring(0, 7),
+										  tempDemoBalance.Available.ToString().PadRight(10, '0').Substring(0, 10));
+			Console.SetCursorPosition(column_2, 2);
+			tempDemoBalance = tempDemoBalances.Find(b => b.Currency == "BTC");
+			Console.Write("{0}  {1}", tempDemoBalance.Currency.PadRight(7).Substring(0, 7),
+										  tempDemoBalance.Available.ToString().PadRight(10, '0').Substring(0, 10));
+			Console.SetCursorPosition(column_2, 3);
+			tempDemoBalance = tempDemoBalances.Find(b => b.Currency == "ETH");
+			Console.Write("{0}  {1}", tempDemoBalance.Currency.PadRight(7).Substring(0, 7),
+										  tempDemoBalance.Available.ToString().PadRight(10, '0').Substring(0, 10));
+
+			for (int i = 0; i < 30; i++)
+			{
+				if (i < tempDemoBalances.Count)
+				{
+					Console.SetCursorPosition(column_2, i + 5);
+					Console.Write("{0}  {1}", tempDemoBalances.ElementAt(i).Currency.PadRight(7).Substring(0, 7),
+											  tempDemoBalances.ElementAt(i).Available.ToString().PadRight(10, '0').Substring(0, 10));
+				}
+			}
+		}
+	}
 }

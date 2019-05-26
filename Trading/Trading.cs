@@ -606,6 +606,11 @@ namespace Trading
 
 				HitBTC.SocketTrading.PlaceNewOrder(symbol, "sell", quantity);
 			}
+			else if (test == true)
+			{
+				DemoBalance[baseCurrency] -= quantity;
+				DemoBalance[quoteCurrency] += realQuoteCurrency;
+			}
 
 			return true;
 		}
@@ -640,6 +645,11 @@ namespace Trading
 				DemoBalance[quoteCurrency] -= realQuoteCurrency;
 
 				HitBTC.SocketTrading.PlaceNewOrder(symbol, "buy", quantity);
+			}
+			else if (test == true)
+			{
+				DemoBalance[baseCurrency] += quantity;
+				DemoBalance[quoteCurrency] -= realQuoteCurrency;
 			}
 
 			return true;
