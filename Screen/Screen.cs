@@ -49,7 +49,8 @@ namespace Screen
 															PendingOrder.Side.PadRight(6),
 															PendingOrder.OpenPrice.ToString().PadRight(10).Substring(0, 10),
 															PendingOrder.ClosePrice.ToString().PadRight(10).Substring(0, 10),
-															PendingOrder.CurrProfitPercent.ToString().PadRight(10).Substring(0, 10));
+															//PendingOrder.CurrProfitPercent.ToString().PadRight(10).Substring(0, 10));
+															Trading.dMACD[PendingOrder.Symbol].Value().ToString().PadRight(10).Substring(0, 10));
 				}
 				else if (i > PendingOrders.Count)
 					return;
@@ -70,6 +71,7 @@ namespace Screen
 															ClosedOrder.Side.PadRight(6),
 															ClosedOrder.OpenPrice.ToString().PadRight(10).Substring(0, 10),
 															ClosedOrder.ClosePrice.ToString().PadRight(10).Substring(0, 10),
+															//ClosedOrder.CurrProfitPercent.ToString().PadRight(10).Substring(0, 10));
 															ClosedOrder.CurrProfitPercent.ToString().PadRight(10).Substring(0, 10));
 				}
 				else if (i > ClosedOrders.Count)

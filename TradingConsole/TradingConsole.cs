@@ -170,8 +170,8 @@ namespace TradingConsole
             }
 			else if (s == "updateTrades")
 			{
-				Trading.dEMAfast[HitBTC.Trade.Symbol].ReceiveTick(HitBTC.Trade.Price);
-				Trading.dEMAslow[HitBTC.Trade.Symbol].ReceiveTick(HitBTC.Trade.Price);
+				string symbol = HitBTC.Trade.Symbol;
+				Trading.dMACD[symbol].ReceiveTick(HitBTC.d_Trades[symbol].Price);
 
 				Trading.Run_4();
 				Screen.Print();

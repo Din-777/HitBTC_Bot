@@ -33,7 +33,8 @@ namespace HitBTC
 		public Dictionary<string, List<Candle>> Candles;
 		public SocketTrade Trade;
 		public Dictionary<string, List<SocketTrade>> Trades;
-
+		public Dictionary<string, SocketTrade> d_Trades = new Dictionary<string, SocketTrade>();
+		public Dictionary<string, Candle> d_Candles = new Dictionary<string, Candle>();
 		public Stack<ParamsActiveOrders> ActiveOrders;
 
 		public async void ConnectAsync(WebSocket socket)
@@ -44,9 +45,9 @@ namespace HitBTC
 			}
 			catch
 			{
-				Console.SetCursorPosition(0, 0);
-				Console.Clear();
-				Console.WriteLine("Connecting...");
+				//Console.SetCursorPosition(0, 0);
+				//Console.Clear();
+				//Console.WriteLine("Connecting...");
 			}
 		}
 		public void SocketConnect()
@@ -94,7 +95,7 @@ namespace HitBTC
 				ConnectAsync(socket);
 				Thread.Sleep(5000);
 			}
-			Console.Clear();
+			//Console.Clear();
 
 			socket.Opened += Socket_Opened;
 			socket.Closed += Socket_Closed;
@@ -197,6 +198,8 @@ namespace HitBTC
 
 					if (!Candles.ContainsKey(symbol))
 						Candles.Add(symbol, new List<Candle>());
+					if (!d_Candles.ContainsKey(symbol))
+						d_Candles.Add(symbol, new Candle());
 
 					Candles[symbol] = lCandle; 
 					str = "snapshotCandles";
@@ -206,12 +209,26 @@ namespace HitBTC
 					var Data = jObject["params"]["data"];
 					string symbol = (string)jObject["params"]["symbol"];
 
-					Candle Candle = JsonConvert.DeserializeObject<Candle>(Data[0].ToString());
+					Candle candle = JsonConvert.DeserializeObject<Candle>(Data[0].ToString());
 
 					if (!Candles.ContainsKey(symbol))
 						Candles.Add(symbol, new List<Candle>());
 
-					Candles[symbol].Add(Candle);
+					if (Candles[symbol].Last().TimeStamp == candle.TimeStamp)
+					{
+						Candles[symbol].Last().Close = candle.Close;
+						Candles[symbol].Last().Max = candle.Max;
+						Candles[symbol].Last().Min = candle.Min;
+						Candles[symbol].Last().Open = candle.Open;
+						Candles[symbol].Last().TimeStamp = candle.TimeStamp;
+						Candles[symbol].Last().Volume = candle.Volume;
+						Candles[symbol].Last().VolumeQuote = candle.VolumeQuote;
+					}
+					else
+						Candles[symbol].Add(candle);
+
+					d_Candles[symbol] = candle;
+
 					str = "updateCandles";
 				}
 				else if (method == "snapshotTrades" && Params != null)
@@ -224,6 +241,7 @@ namespace HitBTC
 						Trades.Add(symbol, new List<SocketTrade>());
 
 					Trades[symbol] = ListSocketTradeData;
+					d_Trades.Add(symbol, new SocketTrade());
 					str = "snapshotCandles";
 				}
 				else if (method == "updateTrades" && Params != null)
@@ -233,6 +251,7 @@ namespace HitBTC
 					Trade = JsonConvert.DeserializeObject<SocketTrade>(Data[0].ToString());
 					Trade.Symbol = symbol;
 					Trades[symbol].Add(Trade);
+					d_Trades[symbol] = Trade;
 
 					str = "updateTrades";
 				}

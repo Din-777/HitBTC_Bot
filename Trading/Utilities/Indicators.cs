@@ -7,29 +7,80 @@ using System.Threading.Tasks;
 namespace Trading.Utilities
 {
 	[Serializable]
-	public class Sma
+	public class SMA
 	{
-		int _period = 0;
-		Queue<decimal> _queue;
-		public int Period = 20;
+		Queue<decimal> Queue;
+		public int Period = 0;
 
-		public Sma()
+		public SMA(int period)
 		{
-			_period = Period;
-			_queue = new Queue<decimal>(Period);
+			Period = period;
+			Queue = new Queue<decimal>(Period);
 		}
 
 		public decimal Compute(decimal x)
 		{
-			_period = Period;
-
-			if (_queue.Count >= _period)
+			if (Queue.Count >= Period)
 			{
-				_queue.Dequeue();
+				Queue.Dequeue();
 			}
 
-			_queue.Enqueue(x);
-			return _queue.Average();
+			Queue.Enqueue(x);
+			return Queue.Average();
+		}
+	}
+
+	[Serializable]
+	public class EMA
+	{
+		public Queue<decimal> Queue;
+		public int Period = 0;
+		private decimal Average = 0;
+
+		public EMA(int period)
+		{
+			Period = period;
+			Queue = new Queue<decimal>(0);
+		}
+
+		public decimal Compute(decimal value)
+		{
+			if (Queue.Count >= Period)
+			{
+				Queue.Dequeue();
+			}
+			else if (Queue.Count < Period)
+				Average = value;
+
+			Average = (Average + value) / 2;
+
+			Queue.Enqueue(Average);
+			Average = Queue.Average();
+
+			if (isPrimed())
+				return Average;
+			else
+				return 0;
+		}
+
+		public decimal Value
+		{
+			get
+			{
+				if (isPrimed())
+					return Average;
+				else
+					return 0;
+			}
+
+		}
+
+		public bool isPrimed()
+		{
+			if (Queue.Count >= Period)
+				return true;
+			else
+				return false;
 		}
 	}
 
@@ -117,7 +168,7 @@ namespace Trading.Utilities
 
 			if (slowEMA.isPrimed() && fastEMA.isPrimed())
 			{
-				signalEMA.ReceiveTick(fastEMA.Value() - slowEMA.Value());
+				signalEMA.ReceiveTick( fastEMA.Value() - slowEMA.Value() );
 			}
 		}
 
@@ -135,6 +186,14 @@ namespace Trading.Utilities
 				signal = 0;
 				hist = 0;
 			}
+		}
+
+		public decimal Value()
+		{
+			if (signalEMA.isPrimed())
+				return signalEMA.Value();
+			else
+				return 0;
 		}
 
 		public bool isPrimed()

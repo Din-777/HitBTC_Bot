@@ -41,6 +41,6 @@ namespace HitBTC.Models
         public string Side { get; set; }
 
         [JsonProperty("timestamp")]
-        public string Timestamp { get; set; }
+        public System.DateTime TimeStamp { get; set; }
     }
 }

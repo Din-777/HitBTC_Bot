@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27428.2005
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.28803.452
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingOfflineConsole", "TradingOfflineConsole\TradingOfflineConsole.csproj", "{3265A217-4568-4069-858D-1D3AEB9B633C}"
 EndProject
@@ -14,6 +14,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Screen", "Screen\Screen.csproj", "{2E0CB91F-FCF7-4F49-BDD9-8C05E9A90132}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trading", "Trading\Trading.csproj", "{E55BA61D-00D7-4556-9887-52AB104C888B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chart", "Chart\Chart.csproj", "{9A66B4F5-206C-4673-AD1F-A4C5DD81389F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -45,6 +47,10 @@ Global
 		{E55BA61D-00D7-4556-9887-52AB104C888B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E55BA61D-00D7-4556-9887-52AB104C888B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E55BA61D-00D7-4556-9887-52AB104C888B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9A66B4F5-206C-4673-AD1F-A4C5DD81389F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9A66B4F5-206C-4673-AD1F-A4C5DD81389F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9A66B4F5-206C-4673-AD1F-A4C5DD81389F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9A66B4F5-206C-4673-AD1F-A4C5DD81389F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
