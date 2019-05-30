@@ -81,8 +81,8 @@ namespace Trading
 
 			if (CurrProfitPercent > MaxProfitPercent) MaxProfitPercent = CurrProfitPercent;
 
-			CurrProfitPercentSma = SmaCurrProfitPercent.Compute(CurrProfitPercent);
-			MaxProfitPercentSma = SmaMaxProfitPercent.Compute(MaxProfitPercent);
+			CurrProfitPercentSma = SmaCurrProfitPercent.NextAverage(CurrProfitPercent);
+			MaxProfitPercentSma = SmaMaxProfitPercent.NextAverage(MaxProfitPercent);
 
 			return CurrProfitPercent;
 		}
@@ -147,7 +147,8 @@ namespace Trading
 		public DateTime DateTimeStart;
 		public DateTime DateTimeStartCurr;
 
-		public Dictionary<string, iMACD> dMACD;
+		public Dictionary<string, SMA> SmaFast;
+		public Dictionary<string, SMA> SmaSlow;
 
 		private void TimerTick(object obj)
 		{
@@ -170,7 +171,8 @@ namespace Trading
 			this.OrdersParameters = new Dictionary<string, OrderParametr>();
 			this.DemoBalance = new Dictionary<string, Balance>();
 			this.ClosedOrders = new List<PendingOrder>();
-			this.dMACD = new Dictionary<string, iMACD>();
+			this.SmaFast = new Dictionary<string, SMA>();
+			this.SmaSlow = new Dictionary<string, SMA>();
 			HitBTC.Closed += HitBTC_Closed;
 		}
 
@@ -189,9 +191,9 @@ namespace Trading
 
 			HitBTC.SocketMarketData.SubscribeTicker(symbol);
 			HitBTC.SocketMarketData.SubscribeTrades(symbol, 1);
-
-			if (!dMACD.ContainsKey(symbol))
-				dMACD.Add(symbol, new iMACD(pPFastEMA:25, pPSlowEMA:50, pPSignalEMA:4));
+			HitBTC.SocketMarketData.SubscribeCandles(symbol, Period.M1, 100);
+			SmaSlow.Add(symbol, new SMA(6));
+			SmaFast.Add(symbol, new SMA(4));
 		}
 
 		public PendingOrder PendingOrderAdd(string side, Ticker ticker)
@@ -553,9 +555,8 @@ namespace Trading
             }
 		}
 
-		public void Run_4(Ticker ticker = null)
+		public void Run_4(string symbol, Ticker ticker = null)
 		{
-			string symbol = HitBTC.Trade.Symbol;
 			Ticker = HitBTC.d_Tickers[symbol];
 
 			if (!PendingOrders.ContainsKey(symbol))
@@ -569,11 +570,14 @@ namespace Trading
 					PendingOrder.CalcCurrProfitPercent(HitBTC.d_Tickers[symbol]);
 				}
 
+				var currClose = HitBTC.d_Candle[symbol].Close;
+				decimal emaDiff = SmaFast[symbol].Average(currClose) - SmaSlow[symbol].Average(currClose);
+
 				for (int i = 0; i < PendingOrders[symbol].Count; i++)
 				{
-					if(dMACD[symbol].isPrimed())
+					if(SmaFast[symbol].isPrimed() && SmaSlow[symbol].isPrimed())
 					{
-						if (dMACD[symbol].Value() < -0.5m)
+						if (emaDiff < 0)
 						{
 							if(PendingOrders[symbol][i].Side == "sell")
 								if (Sell(symbol, Ticker.Bid, PendingOrders[symbol][i].Quantity))
@@ -585,7 +589,68 @@ namespace Trading
 								}
 
 						}
-						else if (dMACD[symbol].Value() > 0.5m)
+						else if (emaDiff > 0)
+						{
+							if (PendingOrders[symbol][i].Side == "buy")
+								if (Buy(symbol, Ticker.Bid, PendingOrders[symbol][i].Quantity))
+								{
+									ClosedOrders.Add(PendingOrders[symbol].ElementAt(i));
+									ClosedOrders.Last().ClosePrice = Ticker.Bid;
+									PendingOrders[symbol].ElementAt(i).Type = Type.Closed;
+									PendingOrderAdd("sell", Ticker).Type = Type.New;
+								}
+						}
+
+					}
+				}
+
+				for (int i = 0; i < PendingOrders[symbol].Count; i++)
+				{
+					if ((PendingOrders[symbol].ElementAt(i).Type == Type.Deleted) ||
+						(PendingOrders[symbol].ElementAtOrDefault(i).Type == Type.Closed))
+					{
+						PendingOrders[symbol].RemoveAt(i);
+						i -= 1;
+					}
+				}
+			}
+		}
+
+		public void Run_5(string symbol, Ticker ticker = null)
+		{
+			Ticker = HitBTC.d_Tickers[symbol];
+
+			if (!PendingOrders.ContainsKey(symbol))
+			{
+				PendingOrderAdd("buy", Ticker);
+			}
+			else
+			{
+				foreach (var PendingOrder in PendingOrders[symbol])
+				{
+					PendingOrder.CalcCurrProfitPercent(HitBTC.d_Tickers[symbol]);
+				}
+
+				var currClose = HitBTC.d_Candle[symbol].Close;
+				decimal emaDiff = SmaFast[symbol].Average(currClose) - SmaSlow[symbol].Average(currClose);
+
+				for (int i = 0; i < PendingOrders[symbol].Count; i++)
+				{
+					if (SmaFast[symbol].isPrimed() && SmaSlow[symbol].isPrimed())
+					{
+						if (emaDiff < 0 && PendingOrders[symbol][i].ClosePrice < Ticker.Bid)
+						{
+							if (PendingOrders[symbol][i].Side == "sell")
+								if (Sell(symbol, Ticker.Bid, PendingOrders[symbol][i].Quantity))
+								{
+									ClosedOrders.Add(PendingOrders[symbol].ElementAt(i));
+									ClosedOrders.Last().ClosePrice = Ticker.Bid;
+									PendingOrders[symbol].ElementAt(i).Type = Type.Closed;
+									PendingOrderAdd("buy", Ticker).Type = Type.New;
+								}
+
+						}
+						else if (emaDiff > 0)
 						{
 							if (PendingOrders[symbol][i].Side == "buy")
 								if (Buy(symbol, Ticker.Bid, PendingOrders[symbol][i].Quantity))
@@ -717,7 +782,7 @@ namespace Trading
 			}
 		}
 
-		private void HitBTC_Closed(string s)
+		private void HitBTC_Closed(string s, string ss)
 		{
 			Thread.Sleep(5000);			
 			HitBTC.SocketConnect();
@@ -729,7 +794,6 @@ namespace Trading
 
 			foreach (var p in OrdersParameters)
 				HitBTC.SocketMarketData.SubscribeTicker(p.Key);
-
 		}
 	}
 	

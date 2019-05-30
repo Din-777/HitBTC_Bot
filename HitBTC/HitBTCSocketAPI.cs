@@ -16,10 +16,11 @@ namespace HitBTC
 	{
 		public WebSocket socket;
 
-		public delegate void SocketHandler(string s);
+		public delegate void SocketHandler(string Notification, string Symbol);
 		public event SocketHandler Opened;
 		public event SocketHandler Closed;
-		public event SocketHandler MessageReceived;		
+		public delegate void MessegeHandler(string Notification, string Symbol);
+		public event MessegeHandler MessageReceived;		
 
 		public bool Authorized = false;
 		public Error Error;
@@ -34,7 +35,7 @@ namespace HitBTC
 		public SocketTrade Trade;
 		public Dictionary<string, List<SocketTrade>> Trades;
 		public Dictionary<string, SocketTrade> d_Trades = new Dictionary<string, SocketTrade>();
-		public Dictionary<string, Candle> d_Candles = new Dictionary<string, Candle>();
+		public Dictionary<string, Candle> d_Candle = new Dictionary<string, Candle>();
 		public Stack<ParamsActiveOrders> ActiveOrders;
 
 		public async void ConnectAsync(WebSocket socket)
@@ -106,6 +107,7 @@ namespace HitBTC
 		internal void Socket_MessageReceived(object sender, MessageReceivedEventArgs e)
 		{
 			string str = null;
+			string symbol = null;
 			this.Error = null;
 
 			var jObject = JObject.Parse(e.Message);
@@ -192,24 +194,29 @@ namespace HitBTC
 				else if (method == "snapshotCandles" && Params != null)
 				{ 
 					var Data = jObject["params"]["data"];
-					string symbol = (string)jObject["params"]["symbol"];
+					symbol = (string)jObject["params"]["symbol"];
 
 					List<Candle> lCandle = JsonConvert.DeserializeObject<List<Candle>>(Data.ToString());
+					lCandle.ForEach(c => c.TimeStamp = c.TimeStamp + TimeSpan.FromHours(5));
 
 					if (!Candles.ContainsKey(symbol))
 						Candles.Add(symbol, new List<Candle>());
-					if (!d_Candles.ContainsKey(symbol))
-						d_Candles.Add(symbol, new Candle());
 
+					if (!d_Candle.ContainsKey(symbol))
+						d_Candle.Add(symbol, new Candle());
+
+					d_Candle[symbol] = lCandle.Last();
 					Candles[symbol] = lCandle; 
 					str = "snapshotCandles";
 				}
 				else if (method == "updateCandles" && Params != null)
 				{
 					var Data = jObject["params"]["data"];
-					string symbol = (string)jObject["params"]["symbol"];
+					symbol = (string)jObject["params"]["symbol"];
 
 					Candle candle = JsonConvert.DeserializeObject<Candle>(Data[0].ToString());
+
+					candle.TimeStamp = candle.TimeStamp + TimeSpan.FromHours(5);
 
 					if (!Candles.ContainsKey(symbol))
 						Candles.Add(symbol, new List<Candle>());
@@ -227,14 +234,14 @@ namespace HitBTC
 					else
 						Candles[symbol].Add(candle);
 
-					d_Candles[symbol] = candle;
+					d_Candle[symbol] = candle;
 
 					str = "updateCandles";
 				}
 				else if (method == "snapshotTrades" && Params != null)
 				{
 					var Data = jObject["params"]["data"];
-					string symbol = (string)jObject["params"]["symbol"];
+					symbol = (string)jObject["params"]["symbol"];
 
 					List<SocketTrade> ListSocketTradeData = JsonConvert.DeserializeObject<List<SocketTrade>>(Data.ToString());
 					if (!Trades.ContainsKey(symbol))
@@ -242,12 +249,12 @@ namespace HitBTC
 
 					Trades[symbol] = ListSocketTradeData;
 					d_Trades.Add(symbol, new SocketTrade());
-					str = "snapshotCandles";
+					str = "snapshotTrades";
 				}
 				else if (method == "updateTrades" && Params != null)
 				{
 					var Data = jObject["params"]["data"];
-					string symbol = (string)jObject["params"]["symbol"];
+					symbol = (string)jObject["params"]["symbol"];
 					Trade = JsonConvert.DeserializeObject<SocketTrade>(Data[0].ToString());
 					Trade.Symbol = symbol;
 					Trades[symbol].Add(Trade);
@@ -262,7 +269,7 @@ namespace HitBTC
 				this.Error.Id = id;
 			}
 
-			MessageReceived?.Invoke(str);
+			MessageReceived?.Invoke(str, symbol);
 		}
 
 		internal void Socket_DataReceived(object sender, DataReceivedEventArgs e)
@@ -272,12 +279,12 @@ namespace HitBTC
 
 		internal void Socket_Opened(object sender, EventArgs e)
 		{
-			Opened?.Invoke(e.ToString());
+			Opened?.Invoke(e.ToString(), "");
 		}
 
 		private void Socket_Closed(object sender, EventArgs e)
 		{
-			Closed?.Invoke(e.ToString());
+			Closed?.Invoke(e.ToString(), "");
 		}
 	}
 }

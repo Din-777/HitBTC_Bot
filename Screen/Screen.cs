@@ -50,7 +50,9 @@ namespace Screen
 															PendingOrder.OpenPrice.ToString().PadRight(10).Substring(0, 10),
 															PendingOrder.ClosePrice.ToString().PadRight(10).Substring(0, 10),
 															//PendingOrder.CurrProfitPercent.ToString().PadRight(10).Substring(0, 10));
-															Trading.dMACD[PendingOrder.Symbol].Value().ToString().PadRight(10).Substring(0, 10));
+															(Trading.SmaFast[PendingOrder.Symbol].LastAverage - Trading.SmaSlow[PendingOrder.Symbol].LastAverage).
+																ToString().PadRight(10).Substring(0, 10) 
+															);
 				}
 				else if (i > PendingOrders.Count)
 					return;

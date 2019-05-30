@@ -9,70 +9,41 @@ namespace Trading.Utilities
 	[Serializable]
 	public class SMA
 	{
-		Queue<decimal> Queue;
+		public List<decimal> Queue;
 		public int Period = 0;
+		public decimal LastAverage = 0;
 
 		public SMA(int period)
 		{
 			Period = period;
-			Queue = new Queue<decimal>(Period);
+			Queue = new List<decimal>();
 		}
 
-		public decimal Compute(decimal x)
+		public decimal NextAverage(decimal value)
 		{
 			if (Queue.Count >= Period)
-			{
-				Queue.Dequeue();
-			}
+				Queue.RemoveAt(0);
+			else if (Queue.Count == 0)
+				LastAverage = value;
 
-			Queue.Enqueue(x);
-			return Queue.Average();
-		}
-	}
+			//LastAverage = (LastAverage + value) / 2;
+			LastAverage = value;
 
-	[Serializable]
-	public class EMA
-	{
-		public Queue<decimal> Queue;
-		public int Period = 0;
-		private decimal Average = 0;
+			Queue.Add(LastAverage);
+			LastAverage = Queue.Average();
 
-		public EMA(int period)
-		{
-			Period = period;
-			Queue = new Queue<decimal>(0);
+			return LastAverage;
 		}
 
-		public decimal Compute(decimal value)
+		public decimal Average(decimal value)
 		{
-			if (Queue.Count >= Period)
-			{
-				Queue.Dequeue();
-			}
-			else if (Queue.Count < Period)
-				Average = value;
+			LastAverage = (LastAverage + value) / 2;
 
-			Average = (Average + value) / 2;
+			Queue.Add(LastAverage);
+			LastAverage = Queue.Average();
+			Queue.RemoveAt(Queue.Count - 1);
 
-			Queue.Enqueue(Average);
-			Average = Queue.Average();
-
-			if (isPrimed())
-				return Average;
-			else
-				return 0;
-		}
-
-		public decimal Value
-		{
-			get
-			{
-				if (isPrimed())
-					return Average;
-				else
-					return 0;
-			}
-
+			return LastAverage;
 		}
 
 		public bool isPrimed()
@@ -81,6 +52,11 @@ namespace Trading.Utilities
 				return true;
 			else
 				return false;
+		}
+
+		public void Clear()
+		{
+			Queue.Clear();
 		}
 	}
 

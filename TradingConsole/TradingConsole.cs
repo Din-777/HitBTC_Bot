@@ -9,6 +9,7 @@ using System.Threading;
 using HitBTC;
 using HitBTC.Models;
 using Trading;
+using Trading.Utilities;
 using Screen;
 
 namespace TradingConsole
@@ -22,7 +23,7 @@ namespace TradingConsole
 		static string sKey = "B37LaDlfa70YM9gorzpjYGQAZVRNXDj3";
 
 		public static Trading.Trading Trading;
-        public static bool IsSymbol = false;		
+		public static bool IsSymbol = false;
 
 		static void Main(string[] args)
 		{
@@ -33,42 +34,40 @@ namespace TradingConsole
 			HitBTC.MessageReceived += HitBTCSocket_MessageReceived;
 
 			HitBTC.SocketAuth.Auth(pKey, sKey);
-            HitBTC.SocketMarketData.GetSymbols();
-            HitBTC.SocketTrading.GetTradingBalance();
+			HitBTC.SocketMarketData.GetSymbols();
+			HitBTC.SocketTrading.GetTradingBalance();
 
-            while (!IsSymbol) Thread.Sleep(100);
+			while (!IsSymbol) Thread.Sleep(100);
+			
 
 			Trading.DemoBalance.Add("USD", new Balance { Currency = "USD", Available = 10.0m });
-            Trading.DemoBalance.Add("BTC", new Balance { Currency = "BTC", Available = 00.0m });
-            Trading.DemoBalance.Add("ETH", new Balance { Currency = "ETH", Available = 00.0m });
+			Trading.DemoBalance.Add("BTC", new Balance { Currency = "BTC", Available = 00.0m });
+			Trading.DemoBalance.Add("ETH", new Balance { Currency = "ETH", Available = 00.0m });
+			
+			HitBTC.SocketMarketData.SubscribeTicker("BTCUSD");
+			HitBTC.SocketMarketData.SubscribeTicker("ETHUSD");
 
-            HitBTC.MessageReceived -= HitBTCSocket_MessageReceived;
-            HitBTC.SocketMarketData.SubscribeTicker("BTCUSD");
-            HitBTC.SocketMarketData.SubscribeTicker("ETHUSD");
-
-			string [] treadingBaseCurrency = {  "BTC", "ETH", "ETC", "LTC", "XRP", "ZEC", "TRX", "EOS", "NEO", "ADA",
+			string[] treadingBaseCurrency = {  "BTC", "ETH", "ETC", "LTC", "XRP", "ZEC", "TRX", "EOS", "NEO", "ADA",
 												"XLM", "XMR", "BTG", "ZIL", "DOGE"};
 
-			for (int i = 0; i < treadingBaseCurrency.Count(); i ++)
+			for (int i = 0; i < treadingBaseCurrency.Count(); i++)
 			{
-                string symbol = treadingBaseCurrency[i] + "USD";
-                string baseCurrency = treadingBaseCurrency[i];
+				string symbol = treadingBaseCurrency[i] + "USD";
+				string baseCurrency = treadingBaseCurrency[i];
 				string quoteCurrency = "USD";
 
 				if (quoteCurrency == "USD" || quoteCurrency == "BTC" || quoteCurrency == "ETH")
 				{
 					if (!Trading.DemoBalance.ContainsKey(baseCurrency))
 						Trading.DemoBalance.Add(baseCurrency, new Balance { Currency = baseCurrency, Available = 0.0m });
-                    Trading.Add(symbol, startingQuantity: 0.2m, treadingQuantity: 0.2m, stopPercent: 1.0m, closePercent: 0.5m);
-                }
+					Trading.Add(symbol, startingQuantity: 0.2m, treadingQuantity: 0.2m, stopPercent: 1.0m, closePercent: 0.5m);
+				}
 			}
 
-            //Trading.Load("tr.dat");
-
-            HitBTC.MessageReceived += HitBTCSocket_MessageReceived;
+			//Trading.Load("tr.dat");/
 
 			bool close = false;
-			while(close != true)
+			while (close != true)
 			{
 				Console.ReadLine();
 				HitBTC.MessageReceived -= HitBTCSocket_MessageReceived;
@@ -83,7 +82,7 @@ namespace TradingConsole
 
 				string ansver = Console.ReadLine();
 
-				switch(ansver)
+				switch (ansver)
 				{
 					case "1":
 						HitBTC.MessageReceived += HitBTCSocket_MessageReceived;
@@ -92,7 +91,7 @@ namespace TradingConsole
 						Console.CursorVisible = false;
 						Trading.Save("tr.dat");
 						SubtotalBalanse();
-						Screen.PrintBalance(column: 20, row: 23, count: 20, Trading.DemoBalance);						
+						Screen.PrintBalance(column: 20, row: 23, count: 20, Trading.DemoBalance);
 						Console.ReadLine();
 						Trading.Load("tr.dat");
 						HitBTC.MessageReceived += HitBTCSocket_MessageReceived;
@@ -100,7 +99,7 @@ namespace TradingConsole
 					case "3":
 						Console.CursorVisible = false;
 						SubtotalBalanse();
-						Screen.PrintBalance(column: 20, row: 23, count: 20, Trading.DemoBalance);						
+						Screen.PrintBalance(column: 20, row: 23, count: 20, Trading.DemoBalance);
 						Trading.Save("tr.dat");
 						Console.ReadLine();
 						close = true;
@@ -110,7 +109,7 @@ namespace TradingConsole
 						Trading.Save("tr.dat");
 						SubtotalBalanse();
 						Screen.PrintBalance(column: 20, row: 23, count: 20, Trading.DemoBalance);
-						Console.ReadLine();						
+						Console.ReadLine();
 						close = true;
 						break;
 
@@ -121,7 +120,7 @@ namespace TradingConsole
 
 				Console.CursorVisible = false;
 				Console.Clear();
-			}			
+			}
 		}
 
 		private static void SubtotalBalanse()
@@ -155,26 +154,46 @@ namespace TradingConsole
 			if (Trading.DemoBalance["ETH"].Available > 0.0m)
 				Trading.Sell("ETHUSD", HitBTC.d_Tickers["ETHUSD"].Bid, Trading.DemoBalance["ETH"].Available);
 
-			
+
 		}
 
-		private static void HitBTCSocket_MessageReceived(string s)
+		static Dictionary<string, DateTime> d_DateTimes = new Dictionary<string, DateTime>();
+		private static void HitBTCSocket_MessageReceived(string s, string symbol)
 		{
 			if (s == "ticker")
 			{
-				
+
 			}
 			else if (s == "getSymbol")
-            {
-                IsSymbol = true;
-            }
-			else if (s == "updateTrades")
 			{
-				string symbol = HitBTC.Trade.Symbol;
-				Trading.dMACD[symbol].ReceiveTick(HitBTC.d_Trades[symbol].Price);
+				IsSymbol = true;
+			}
+			else if(s == "updateCandles")
+			{
+				var candle = HitBTC.d_Candle[symbol];
 
-				Trading.Run_4();
-				Screen.Print();
+				if (d_DateTimes[symbol] == candle.TimeStamp)
+				{
+					Trading.Run_5(symbol: symbol);
+					Screen.Print();
+				}
+				else
+				{
+					Trading.SmaSlow[symbol].NextAverage(HitBTC.d_Candle[symbol].Open);
+					Trading.SmaFast[symbol].NextAverage(HitBTC.d_Candle[symbol].Open);
+					d_DateTimes[symbol] = HitBTC.Candles[symbol].Last().TimeStamp;
+				}
+			}
+			else if (s == "snapshotCandles")
+			{				
+				d_DateTimes.Add(symbol, new DateTime());
+				d_DateTimes[symbol] = HitBTC.Candles[symbol].Last().TimeStamp;
+
+				foreach (var candle in HitBTC.Candles[symbol])
+				{
+					Trading.SmaSlow[symbol].NextAverage(candle.Close);
+					Trading.SmaFast[symbol].NextAverage(candle.Close);
+				}
 			}
 		}
 	}
