@@ -104,9 +104,10 @@ namespace HitBTC
 			socket.MessageReceived += Socket_MessageReceived;
 		}
 
+		public string MessageType = null;
 		internal void Socket_MessageReceived(object sender, MessageReceivedEventArgs e)
 		{
-			string str = null;
+			MessageType = null;
 			string symbol = null;
 			this.Error = null;
 
@@ -123,45 +124,45 @@ namespace HitBTC
 				if (id == "auth")
 				{
 					this.Authorized = true;
-					str = "auth";
+					MessageType = "auth";
 				}
 				else if (id == "balance")
 				{
 					List<Balance> ListBalance = JsonConvert.DeserializeObject<List<Balance>>(result.ToString());
 					Balance = ListBalance.ToDictionary(b => b.Currency);
 
-					str = "balance";
+					MessageType = "balance";
 				}
 				else if (id == "subscribeReports")
 				{
-					str = "subscribeReports";
+					MessageType = "subscribeReports";
 				}
 				else if (id == "subscribeCandles")
 				{
-					str = "subscribeCandles";
+					MessageType = "subscribeCandles";
 				}
 				else if (id == "unsubscribeCandles")
 				{
-					str = "unsubscribeCandles";
+					MessageType = "unsubscribeCandles";
 				}
 				else if (id == "subscribeTrades")
 				{
-					str = "subscribeTrades";
+					MessageType = "subscribeTrades";
 				}
 				else if (id == "unsubscribeTrades")
 				{
-					str = "unsubscribeTrades";
+					MessageType = "unsubscribeTrades";
 				}
 				else if (id == "placeNewOrder")
 				{
 					NewOrederResult = JsonConvert.DeserializeObject<SocketOrederResult>(result.ToString());
 					stackPlaceNewOrderResults.Push(NewOrederResult);
-					str = "placeNewOrder";
+					MessageType = "placeNewOrder";
 				}
 				else if (id == "getSymbol")
 				{
 					Symbols = (JsonConvert.DeserializeObject<List<Symbol>>(result.ToString())).ToDictionary(t => t.Id);
-					str = "getSymbol";
+					MessageType = "getSymbol";
 				}
 				else if (method == "activeOrders")
 				{
@@ -175,7 +176,7 @@ namespace HitBTC
 					{
 						if (Ticker == null)
 						{
-							str = "null";							
+							MessageType = "null";							
 						}
 						else
 						{
@@ -187,7 +188,7 @@ namespace HitBTC
 
 							d_Tickers[Ticker.Symbol] = Ticker;
 
-							str = "ticker";
+							MessageType = "ticker";
 						}
 					}
 				}
@@ -207,7 +208,7 @@ namespace HitBTC
 
 					d_Candle[symbol] = lCandle.Last();
 					Candles[symbol] = lCandle; 
-					str = "snapshotCandles";
+					MessageType = "snapshotCandles";
 				}
 				else if (method == "updateCandles" && Params != null)
 				{
@@ -236,7 +237,7 @@ namespace HitBTC
 
 					d_Candle[symbol] = candle;
 
-					str = "updateCandles";
+					MessageType = "updateCandles";
 				}
 				else if (method == "snapshotTrades" && Params != null)
 				{
@@ -248,8 +249,9 @@ namespace HitBTC
 						Trades.Add(symbol, new List<SocketTrade>());
 
 					Trades[symbol] = ListSocketTradeData;
-					d_Trades.Add(symbol, new SocketTrade());
-					str = "snapshotTrades";
+					if(!d_Trades.ContainsKey(symbol))
+						d_Trades.Add(symbol, new SocketTrade());
+					MessageType = "snapshotTrades";
 				}
 				else if (method == "updateTrades" && Params != null)
 				{
@@ -260,7 +262,7 @@ namespace HitBTC
 					Trades[symbol].Add(Trade);
 					d_Trades[symbol] = Trade;
 
-					str = "updateTrades";
+					MessageType = "updateTrades";
 				}
 			}
 			else
@@ -269,7 +271,7 @@ namespace HitBTC
 				this.Error.Id = id;
 			}
 
-			MessageReceived?.Invoke(str, symbol);
+			MessageReceived?.Invoke(MessageType, symbol);
 		}
 
 		internal void Socket_DataReceived(object sender, DataReceivedEventArgs e)

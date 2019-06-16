@@ -22,24 +22,22 @@ namespace Trading.Utilities
 		public decimal NextAverage(decimal value)
 		{
 			if (Queue.Count >= Period)
-				Queue.RemoveAt(0);
-			else if (Queue.Count == 0)
-				LastAverage = value;
+				Queue.RemoveRange(0, Queue.Count-Period);
 
-			//LastAverage = (LastAverage + value) / 2;
-			LastAverage = value;
-
-			Queue.Add(LastAverage);
+			Queue.Add(value);
 			LastAverage = Queue.Average();
+			//Queue.RemoveAt(Queue.Count - 1);
+			//Queue.Add(LastAverage);
+			//LastAverage = Queue.Average();
 
 			return LastAverage;
 		}
 
 		public decimal Average(decimal value)
 		{
-			LastAverage = (LastAverage + value) / 2;
+			// = (LastAverage + value) / 2;
 
-			Queue.Add(LastAverage);
+			Queue.Add(value);
 			LastAverage = Queue.Average();
 			Queue.RemoveAt(Queue.Count - 1);
 
@@ -180,4 +178,28 @@ namespace Trading.Utilities
 				return false;
 		}
 	}
+
+	public class Revers
+	{
+		private bool LastState = false;
+		public bool ReversNow = false;
+
+		public bool IsRevers(decimal val)
+		{
+			if (val > 0 && LastState)
+				ReversNow = false;
+			else if (val > 0 && !LastState)
+				ReversNow = true;
+			else if (val < 0 && LastState)
+				ReversNow = true;
+			else if (val < 0 && !LastState)
+				ReversNow = false;
+			else if (val == 0)
+				return false;
+
+			if (val != 0) LastState = val > 0 ? true : false;
+			return ReversNow;
+		}
+	}
+
 }

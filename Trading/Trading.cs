@@ -1,21 +1,16 @@
-﻿using System;
+﻿using HitBTC;
+using HitBTC.Models;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net.WebSockets;
-using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
-
-using HitBTC;
-using HitBTC.Models;
 using Trading.Utilities;
 
 namespace Trading
 {
-    public enum Type
+	public enum Type
 	{
 		New,
 		Closed,
@@ -35,7 +30,7 @@ namespace Trading
 		public decimal Quantity;
 		public decimal OpenPrice;
 		public decimal StopPrice;
-		public decimal ClosePrice;		
+		public decimal ClosePrice;
 
 		public bool Closed = false;
 
@@ -65,14 +60,10 @@ namespace Trading
 		}
 
 		public decimal CurrProfitPercent = 0.0m;
-		public decimal MaxProfitPercent = 0.0m;	   
-
-		public SMA SmaCurrProfitPercent = new SMA(40);
-		public SMA SmaMaxProfitPercent = new SMA(20);
-
-
-		public decimal CurrProfitPercentSma = 0.0m;
-		public decimal MaxProfitPercentSma = 0.0m;   
+		public decimal MaxProfitPercent = 0.0m;
+		public decimal CurrProfitInUSD = 0.0m;
+		public decimal QuantityInUSDBuy = 0.0m;
+		public decimal QuantityInUSDSell = 0.0m;
 
 		public decimal CalcCurrProfitPercent(Ticker ticker)
 		{
@@ -81,20 +72,14 @@ namespace Trading
 
 			if (CurrProfitPercent > MaxProfitPercent) MaxProfitPercent = CurrProfitPercent;
 
-			CurrProfitPercentSma = SmaCurrProfitPercent.NextAverage(CurrProfitPercent);
-			MaxProfitPercentSma = SmaMaxProfitPercent.NextAverage(MaxProfitPercent);
-
 			return CurrProfitPercent;
 		}
 
 		public PendingOrder()
-        {
-            StaticId += 1; Id = StaticId;
-
-            SmaCurrProfitPercent.Period = 20;
-            SmaMaxProfitPercent.Period = 20;
+		{
+			StaticId += 1; Id = StaticId;
 			DateTime = DateTime.Now;
-        }
+		}
 
 		public int CompareTo(PendingOrder obj)
 		{
@@ -114,7 +99,7 @@ namespace Trading
 		public decimal Quantity;
 		public decimal StopPercent;
 		public decimal ClosePercent;
-    }
+	}
 
 	[Serializable]
 	class SaveObject
@@ -130,10 +115,10 @@ namespace Trading
 
 	public class DemoBalance
 	{
-        public string Currency { get; set; }
+		public string Currency { get; set; }
 		public decimal Available { get; set; }
 	}
-	
+
 	public class Trading
 	{
 		public Ticker Ticker;
@@ -160,11 +145,12 @@ namespace Trading
 				start, elapsedTotalTime, elapsedTCurrentTime, DateTime.Now.ToString("HH:mm:ss"));
 		}
 
-		public Trading(ref HitBTCSocketAPI hitBTC)
+		public Trading(ref HitBTCSocketAPI hitBTC, bool console = true)
 		{
 			DateTimeStart = DateTime.Now;
 			DateTimeStartCurr = DateTime.Now;
-			timer = new Timer(new TimerCallback(TimerTick), null, 0, 1000);
+			if (console)
+				timer = new Timer(new TimerCallback(TimerTick), null, 0, 1000);
 
 			this.HitBTC = hitBTC;
 			this.PendingOrders = new Dictionary<string, List<PendingOrder>>();
@@ -178,10 +164,10 @@ namespace Trading
 
 		public void Add(string symbol, decimal startingQuantity, decimal treadingQuantity, decimal stopPercent, decimal closePercent)
 		{
-            if (!OrdersParameters.ContainsKey(symbol))
-                OrdersParameters.Add(symbol, new OrderParametr());
+			if (!OrdersParameters.ContainsKey(symbol))
+				OrdersParameters.Add(symbol, new OrderParametr());
 
-            OrdersParameters[symbol] = new OrderParametr
+			OrdersParameters[symbol] = new OrderParametr
 			{
 				Quantity = treadingQuantity,
 				StartingQuantity = startingQuantity,
@@ -190,417 +176,176 @@ namespace Trading
 			};
 
 			HitBTC.SocketMarketData.SubscribeTicker(symbol);
-			HitBTC.SocketMarketData.SubscribeTrades(symbol, 1);
+			Thread.Sleep(10);
+			//HitBTC.SocketMarketData.SubscribeTrades(symbol, 1);
+			Thread.Sleep(10);
 			HitBTC.SocketMarketData.SubscribeCandles(symbol, Period.M1, 100);
-			SmaSlow.Add(symbol, new SMA(6));
+			Thread.Sleep(10);
+			SmaSlow.Add(symbol, new SMA(7));
 			SmaFast.Add(symbol, new SMA(4));
 		}
 
 		public PendingOrder PendingOrderAdd(string side, Ticker ticker)
-		{            
-			string symbol = ticker.Symbol;
-            PendingOrder PendingOrder = null;
-
-            if (OrdersParameters.ContainsKey(symbol))
-            {
-                string baseCurrency = HitBTC.Symbols[symbol].BaseCurrency;
-                string quoteCurrency = HitBTC.Symbols[symbol].QuoteCurrency;
-
-                if (side == "sell")
-                {
-                    if (!PendingOrders.ContainsKey(Ticker.Symbol))
-                        PendingOrders.Add(symbol, new List<PendingOrder>());
-
-                    PendingOrder = new PendingOrder
-                    {
-                        Side = "sell",
-                        Symbol = symbol,
-                        OpenPrice = ticker.Ask,
-                        Quantity = OrdersParameters[symbol].Quantity,
-                        StopPercent = OrdersParameters[symbol].StopPercent,
-                        ClosePercent = OrdersParameters[symbol].ClosePercent
-                    };
-
-                    decimal price = ticker.Bid;
-                    decimal OrderParameterQuantity;
-                    decimal quantity = 0;
-
-                    if (quoteCurrency == "USD")
-                    {
-                        OrderParameterQuantity = OrdersParameters[symbol].Quantity;
-                        quantity = (OrderParameterQuantity / price) - ((OrderParameterQuantity / price) % HitBTC.Symbols[symbol].QuantityIncrement);
-                    }
-                    else
-                    {
-                        OrderParameterQuantity = OrdersParameters[symbol].Quantity / HitBTC.d_Tickers[String.Concat(quoteCurrency, "USD")].Ask;
-                        quantity = (OrderParameterQuantity / price) - ((OrderParameterQuantity / price) % HitBTC.Symbols[symbol].QuantityIncrement);
-                    }
-
-                    PendingOrder.Quantity = quantity;
-                }
-                else if (side == "buy")
-                {
-                    if (!PendingOrders.ContainsKey(Ticker.Symbol))
-                        PendingOrders.Add(symbol, new List<PendingOrder>());
-
-                    PendingOrder = new PendingOrder
-                    {
-                        Side = "buy",
-                        Symbol = symbol,
-                        OpenPrice = ticker.Bid,
-                        Quantity = OrdersParameters[symbol].Quantity,
-                        StopPercent = OrdersParameters[symbol].StopPercent,
-                        ClosePercent = OrdersParameters[symbol].ClosePercent
-                    };
-
-                    decimal price = ticker.Ask;
-                    decimal OrderParameterQuantity;
-                    decimal quantity = 0;
-
-                    if (quoteCurrency == "USD")
-                    {
-                        OrderParameterQuantity = OrdersParameters[symbol].Quantity;
-                        quantity = (OrderParameterQuantity / price) - ((OrderParameterQuantity / price) % HitBTC.Symbols[symbol].QuantityIncrement);
-                    }
-                    else
-                    {
-                        OrderParameterQuantity = OrdersParameters[symbol].Quantity / HitBTC.d_Tickers[String.Concat(quoteCurrency, "USD")].Ask;
-                        quantity = (OrderParameterQuantity / price) - ((OrderParameterQuantity / price) % HitBTC.Symbols[symbol].QuantityIncrement);                        
-                    }
-
-                    PendingOrder.Quantity = quantity;
-                }
-
-				PendingOrders[symbol].Add(PendingOrder);                
-            }
-            return PendingOrder;
-        }
-
-		public void Run_1(Ticker ticker = null)
 		{
-			if (ticker == null)
-				Ticker = HitBTC.Ticker;
-			else Ticker = ticker;
+			string symbol = ticker.Symbol;
+			PendingOrder PendingOrder = null;
 
-			string symbol = Ticker.Symbol;
-			string baseCurrency = HitBTC.Symbols[symbol].BaseCurrency;
-			string quoteCurrency = HitBTC.Symbols[symbol].QuoteCurrency;
+			if (OrdersParameters.ContainsKey(symbol))
+			{
+				string baseCurrency = HitBTC.Symbols[symbol].BaseCurrency;
+				string quoteCurrency = HitBTC.Symbols[symbol].QuoteCurrency;
+
+				if (side == "sell")
+				{
+					if (!PendingOrders.ContainsKey(Ticker.Symbol))
+						PendingOrders.Add(symbol, new List<PendingOrder>());
+
+					PendingOrder = new PendingOrder
+					{
+						Side = "sell",
+						Symbol = symbol,
+						OpenPrice = ticker.Ask,
+						Quantity = OrdersParameters[symbol].Quantity,
+						StopPercent = OrdersParameters[symbol].StopPercent,
+						ClosePercent = OrdersParameters[symbol].ClosePercent
+					};
+
+					decimal price = ticker.Bid;
+					decimal OrderParameterQuantity;
+					decimal quantity = 0;
+
+					if (quoteCurrency == "USD")
+					{
+						OrderParameterQuantity = OrdersParameters[symbol].Quantity;
+						quantity = (OrderParameterQuantity / price) - ((OrderParameterQuantity / price) % HitBTC.Symbols[symbol].QuantityIncrement);
+					}
+					else
+					{
+						OrderParameterQuantity = OrdersParameters[symbol].Quantity / HitBTC.d_Tickers[String.Concat(quoteCurrency, "USD")].Ask;
+						quantity = (OrderParameterQuantity / price) - ((OrderParameterQuantity / price) % HitBTC.Symbols[symbol].QuantityIncrement);
+					}
+
+					PendingOrder.Quantity = quantity;
+				}
+				else if (side == "buy")
+				{
+					if (!PendingOrders.ContainsKey(Ticker.Symbol))
+						PendingOrders.Add(symbol, new List<PendingOrder>());
+
+					PendingOrder = new PendingOrder
+					{
+						Side = "buy",
+						Symbol = symbol,
+						OpenPrice = ticker.Ask,
+						Quantity = OrdersParameters[symbol].Quantity,
+						StopPercent = OrdersParameters[symbol].StopPercent,
+						ClosePercent = OrdersParameters[symbol].ClosePercent
+					};
+
+					decimal price = ticker.Ask;
+					decimal OrderParameterQuantity;
+					decimal quantity = 0;
+
+					if (quoteCurrency == "USD")
+					{
+						OrderParameterQuantity = OrdersParameters[symbol].Quantity;
+						quantity = (OrderParameterQuantity / price) - ((OrderParameterQuantity / price) % HitBTC.Symbols[symbol].QuantityIncrement);
+					}
+					else
+					{
+						OrderParameterQuantity = OrdersParameters[symbol].Quantity / HitBTC.d_Tickers[String.Concat(quoteCurrency, "USD")].Ask;
+						quantity = (OrderParameterQuantity / price) - ((OrderParameterQuantity / price) % HitBTC.Symbols[symbol].QuantityIncrement);
+					}
+
+					PendingOrder.Quantity = quantity;
+				}
+
+				PendingOrders[symbol].Add(PendingOrder);
+			}
+			return PendingOrder;
+		}
+
+		public void Run_4(string symbol)
+		{
+			Ticker = HitBTC.d_Tickers[symbol];
 
 			if (!PendingOrders.ContainsKey(symbol))
 			{
-				//if (Buy(symbol, Ticker.Ask, OrdersParameters[symbol].Quantity / HitBTC.d_Tickers[symbol].Ask))
-				//	PendingOrderAdd("sell", Ticker);
 				PendingOrderAdd("buy", Ticker);
 			}
 			else
 			{
-				foreach (var pO in PendingOrders[symbol])
+				var currPrise = HitBTC.d_Candle[symbol].Close;
+				var currSmaFastPrice = SmaFast[symbol].LastAverage;
+				var currSmaSlowPrice = SmaSlow[symbol].LastAverage;
+
+				foreach (var pendingOrder in PendingOrders[symbol])
 				{
-					pO.CalcCurrProfitPercent(Ticker);
-				}
-
-				for (int i = 0; i < PendingOrders[symbol].Count; i++)
-				{
-					if (PendingOrders[symbol][i].Side == "sell")
-					{
-						if ((Ticker.Bid > PendingOrders[symbol][i].ClosePrice) &&
-							 (PendingOrders[symbol][i].CurrProfitPercent < (PendingOrders[symbol][i].MaxProfitPercent * 0.9m)))
-						{
-							if (Sell(symbol, Ticker.Bid, PendingOrders[symbol][i].Quantity))
-							{
-								ClosedOrders.Add(PendingOrders[symbol].ElementAtOrDefault(i));
-
-								PendingOrders[symbol].RemoveAt(i);
-
-								PendingOrderAdd("buy", Ticker);
-							}
-							else PendingOrders[symbol].ElementAtOrDefault(i).Closed = true;
-						}
-						else if (Ticker.Bid < PendingOrders[symbol][i].ClosePrice) PendingOrders[symbol][i].MaxProfitPercent = 0.0m;
-						else if (Ticker.Bid < PendingOrders[symbol][i].StopPrice)
-						{
-							PendingOrders[symbol].RemoveAt(i);
-						}
-						else PendingOrders[symbol].ElementAtOrDefault(i).Closed = false;
-					}
+					pendingOrder.CalcCurrProfitPercent(Ticker);
 				}
 
 				for (int i = 0; i < PendingOrders[symbol].Count; i++)
 				{
 					if (PendingOrders[symbol][i].Side == "buy")
 					{
-						if ((Ticker.Ask < PendingOrders[symbol][i].ClosePrice) &&
-							 (PendingOrders[symbol][i].CurrProfitPercent < (PendingOrders[symbol][i].MaxProfitPercent * 0.9m)))
+						if (PendingOrders[symbol][i].CurrProfitPercent > 0.2m &&
+							PendingOrders[symbol][i].CurrProfitPercent < (PendingOrders[symbol][i].MaxProfitPercent * 0.7m))
 						{
-							if (Buy(symbol, Ticker.Ask, PendingOrders[symbol][i].Quantity))
+							var  result = Buy(symbol, Ticker.Ask, PendingOrders[symbol][i].Quantity);
+							if (result.Item1 == true)
 							{
-								ClosedOrders.Add(PendingOrders[symbol].ElementAtOrDefault(i));
-
-								PendingOrders[symbol].RemoveAt(i);
-
-								PendingOrderAdd("sell", Ticker);
-							}
-							else PendingOrders[symbol].ElementAtOrDefault(i).Closed = true;
-						}
-						else if (Ticker.Ask > PendingOrders[symbol][i].ClosePrice) PendingOrders[symbol][i].MaxProfitPercent = 0.0m;
-						else if (Ticker.Ask > PendingOrders[symbol][i].StopPrice)
-						{
-							PendingOrders[symbol].RemoveAt(i);
-						}
-						else PendingOrders[symbol].ElementAtOrDefault(i).Closed = false;
-					}
-				}
-
-				if (!PendingOrders[symbol].Any(t => t.Side == "sell"))
-					PendingOrderAdd("sell", Ticker);
-				if (!PendingOrders[symbol].Any(t => t.Side == "buy"))
-					PendingOrderAdd("buy", Ticker);
-			}
-		}
-
-		public void Run_2(Ticker ticker = null)
-		{
-			if (ticker == null)
-				Ticker = HitBTC.Ticker;
-			else Ticker = ticker;
-
-			string symbol = Ticker.Symbol;
-
-			if (DemoBalance[symbol.Substring(0, 3)].Available == 0)
-			{
-				if (Buy(symbol, Ticker.Ask, OrdersParameters[symbol].Quantity * 1))
-					PendingOrderAdd("sell", Ticker);
-			}
-			else
-			{
-				foreach (var pO in PendingOrders[symbol])
-				{
-					pO.CalcCurrProfitPercent(Ticker);
-				}
-
-				for (int i = 0; i < PendingOrders[symbol].Count; i++)
-				{
-					if (PendingOrders[symbol][i].Side == "sell")
-					{
-						if ((Ticker.Bid > PendingOrders[symbol][i].ClosePrice) &&
-							 (PendingOrders[symbol][i].CurrProfitPercent < (PendingOrders[symbol][i].MaxProfitPercent * 0.7m)))
-						{
-							if (Sell(symbol, Ticker.Bid, PendingOrders[symbol][i].Quantity))
-							{
-								ClosedOrders.Add(PendingOrders[symbol].ElementAtOrDefault(i));
-								ClosedOrders.Last().ClosePrice = Ticker.Bid;
-								PendingOrders[symbol].RemoveAt(i);
-								PendingOrderAdd("buy", Ticker);
-							}
-							else PendingOrders[symbol].ElementAtOrDefault(i).Closed = true;
-						}						
-						else if (Ticker.Bid < PendingOrders[symbol][i].StopPrice)
-						{	
-							PendingOrders[symbol].RemoveAt(i);
-						}
-						else if (Ticker.Bid < PendingOrders[symbol].ElementAtOrDefault(i).ClosePrice)
-							PendingOrders[symbol].ElementAtOrDefault(i).MaxProfitPercent = 0.0m;
-						else PendingOrders[symbol].ElementAtOrDefault(i).Closed = false;						
-					}
-				}
-
-				for (int i = 0; i < PendingOrders[symbol].Count; i++)
-				{
-					if (PendingOrders[symbol][i].Side == "buy")
-					{
-						if ((Ticker.Ask < PendingOrders[symbol][i].ClosePrice) &&
-							 (PendingOrders[symbol][i].CurrProfitPercent < (PendingOrders[symbol][i].MaxProfitPercent * 0.7m)))
-						{
-							if (Buy(symbol, Ticker.Ask, PendingOrders[symbol][i].Quantity))
-							{
-								ClosedOrders.Add(PendingOrders[symbol].ElementAtOrDefault(i));
+								ClosedOrders.Add(PendingOrders[symbol][i]);
 								ClosedOrders.Last().ClosePrice = Ticker.Ask;
-								PendingOrders[symbol].RemoveAt(i);
-								i -= 1;
+								ClosedOrders.Last().CurrProfitPercent = -HitBTC.Symbols[symbol].TakeLiquidityRate * 100.0m;
+								PendingOrders[symbol][i].Type = Type.Closed;
 								PendingOrderAdd("sell", Ticker);
+								PendingOrders[symbol].Last().QuantityInUSDBuy = result.Item2;
 							}
-							else PendingOrders[symbol].ElementAtOrDefault(i).Closed = true;
 						}
-						else if (Ticker.Ask > PendingOrders[symbol][i].StopPrice)
+						else if (PendingOrders[symbol][i].CurrProfitPercent < -0.1m)
 						{
-							PendingOrders[symbol].RemoveAt(i);
-							i -= 1;
+							PendingOrders[symbol][i].OpenPrice = Ticker.Ask;
+							PendingOrders[symbol][i].MaxProfitPercent = 0.0m;
 						}
-						else if (Ticker.Ask > PendingOrders[symbol].ElementAtOrDefault(i).ClosePrice)
-							PendingOrders[symbol].ElementAtOrDefault(i).MaxProfitPercent = 0.0m;
-						else PendingOrders[symbol].ElementAtOrDefault(i).Closed = false;						
 					}
-				}
-
-				if (!PendingOrders[symbol].Any(t => t.Side == "sell"))
-					PendingOrderAdd("sell", Ticker);
-				if (!PendingOrders[symbol].Any(t => t.Side == "buy"))
-					PendingOrderAdd("buy", Ticker);
-			}
-		}
-
-		public void Run_3(Ticker ticker = null)
-		{
-			if (ticker == null)
-				Ticker = HitBTC.Ticker;
-			else Ticker = ticker;
-
-			string symbol = Ticker.Symbol;
-
-			if (!PendingOrders.ContainsKey(symbol))
-			{
-                PendingOrderAdd("buy", Ticker);
-			}
-			else
-			{
-				foreach (var PendingOrder in PendingOrders[symbol])
-				{
-					PendingOrder.CalcCurrProfitPercent(Ticker);
-				}
-
-				for (int i = 0; i < PendingOrders[symbol].Count; i++)
-				{
-					if (PendingOrders[symbol][i].Side == "sell")
+					else if (PendingOrders[symbol][i].Side == "sell")
 					{
 						if (Ticker.Bid > PendingOrders[symbol][i].ClosePrice)
 						{
-							if (PendingOrders[symbol][i].CurrProfitPercentSma < (PendingOrders[symbol][i].MaxProfitPercentSma * 0.8m))
+							if (PendingOrders[symbol][i].CurrProfitPercent < (PendingOrders[symbol][i].MaxProfitPercent * 0.7m))
 							{
-								if (Sell(symbol, Ticker.Bid, PendingOrders[symbol][i].Quantity))
+								var result = Sell(symbol, Ticker.Bid, PendingOrders[symbol][i].Quantity);
+								if (result.Item1 == true)
 								{
+									PendingOrders[symbol][i].QuantityInUSDSell = result.Item2;
+									PendingOrders[symbol][i].CurrProfitInUSD = result.Item2 - PendingOrders[symbol][i].QuantityInUSDBuy;
 									ClosedOrders.Add(PendingOrders[symbol].ElementAt(i));
 									ClosedOrders.Last().ClosePrice = Ticker.Bid;
+									ClosedOrders.Last().CurrProfitPercent -= HitBTC.Symbols[symbol].TakeLiquidityRate * 100.0m;
 									PendingOrders[symbol].ElementAt(i).Type = Type.Closed;
-									if(PendingOrders[symbol].ElementAt(i).Type != Type.Additional)
-										PendingOrderAdd("buy", Ticker).Type = Type.New;	
+									if (PendingOrders[symbol].ElementAt(i).Type != Type.Additional)
+									{
+										PendingOrderAdd("buy", Ticker).Type = Type.New;
+									}
 								}
 								else if (PendingOrders[symbol].ElementAt(i).Type == Type.Additional)
 									PendingOrders[symbol].ElementAt(i).Type = Type.Deleted;
 								else PendingOrders[symbol].ElementAt(i).Closed = true;
 							}
-							else if(PendingOrders[symbol].ElementAt(i).Type == Type.New)
-							{
-								PendingOrders[symbol].ElementAt(i).Type = Type.Processed;
-                                PendingOrders[symbol][i].Quantity *= 2;
-                            }
 						}
-						else if (Ticker.Ask < PendingOrders[symbol][i].StopPrice)
+						else if (Ticker.Bid < PendingOrders[symbol][i].StopPrice)
 						{
-							if (Sell(symbol, Ticker.Bid, PendingOrders[symbol][i].Quantity))
+							var result = Sell(symbol, Ticker.Bid, PendingOrders[symbol][i].Quantity);
+							if (result.Item1 == true)
 							{
+								PendingOrders[symbol][i].QuantityInUSDSell = result.Item2;
+								PendingOrders[symbol][i].CurrProfitInUSD = result.Item2 - PendingOrders[symbol][i].QuantityInUSDBuy;
 								ClosedOrders.Add(PendingOrders[symbol].ElementAt(i));
 								ClosedOrders.Last().ClosePrice = Ticker.Bid;
 								PendingOrders[symbol].ElementAt(i).Type = Type.Closed;
 								PendingOrderAdd("buy", Ticker).Type = Type.New;
 							}
-                        }
-						else if (Ticker.Bid < PendingOrders[symbol].ElementAt(i).ClosePrice)
-							PendingOrders[symbol].ElementAtOrDefault(i).MaxProfitPercent = 0.0m;
-						else PendingOrders[symbol].ElementAtOrDefault(i).Closed = false;
-					}
-				}
-
-				for (int i = 0; i < PendingOrders[symbol].Count; i++)
-				{
-					if (PendingOrders[symbol][i].Side == "buy")
-					{
-						//if (Ticker.Ask < PendingOrders[symbol][i].ClosePrice)							
-						//{
-							if (PendingOrders[symbol][i].CurrProfitPercentSma < (PendingOrders[symbol][i].MaxProfitPercentSma * 0.8m))
-							{
-                                if (Buy(symbol, Ticker.Ask, PendingOrders[symbol][i].Quantity))
-                                {
-                                    ClosedOrders.Add(PendingOrders[symbol].ElementAt(i));
-                                    ClosedOrders.Last().ClosePrice = Ticker.Ask;
-                                    PendingOrders[symbol].ElementAt(i).Type = Type.Closed;
-                                    if (PendingOrders[symbol].ElementAt(i).Type != Type.Additional)
-                                        PendingOrderAdd("sell", Ticker).Type = Type.New;
-                                }
-                                else if (PendingOrders[symbol].ElementAt(i).Type == Type.Additional)
-                                    PendingOrders[symbol].ElementAt(i).Type = Type.Deleted;
-                                else PendingOrders[symbol].ElementAtOrDefault(i).Closed = true;
-                            }
-                            else if (PendingOrders[symbol].ElementAt(i).Type == Type.New)
-                            {
-                                PendingOrders[symbol].ElementAt(i).Type = Type.Processed;
-                                PendingOrders[symbol].ElementAt(i).Quantity *= 2;
-                            }
-                       // }
-						if (Ticker.Ask > PendingOrders[symbol][i].StopPrice)
-						{
-							PendingOrders[symbol].ElementAt(i).OpenPrice = Ticker.Bid;
-							PendingOrders[symbol].ElementAt(i).StopPercent = OrdersParameters[symbol].StopPercent;
-							PendingOrders[symbol].ElementAt(i).ClosePercent = OrdersParameters[symbol].ClosePercent;
-							PendingOrders[symbol].ElementAt(i).Type = Type.New;
-							PendingOrders[symbol].ElementAt(i).SmaCurrProfitPercent = new SMA(40);
-							PendingOrders[symbol].ElementAt(i).SmaMaxProfitPercent  = new SMA(20);
-							PendingOrders[symbol].ElementAt(i).CurrProfitPercentSma = 0.0m;
-							PendingOrders[symbol].ElementAt(i).MaxProfitPercentSma  = 0.0m;
 						}
-                        else if (Ticker.Ask > PendingOrders[symbol].ElementAt(i).ClosePrice)
-                            PendingOrders[symbol].ElementAtOrDefault(i).MaxProfitPercent = 0.0m;
-                        else PendingOrders[symbol].ElementAt(i).Closed = false;
-					}
-				}
-
-				for (int i = 0; i < PendingOrders[symbol].Count; i++)
-				{
-					if ( (PendingOrders[symbol].ElementAt(i).Type == Type.Deleted) ||
-						(PendingOrders[symbol].ElementAtOrDefault(i).Type == Type.Closed) )
-					{
-						PendingOrders[symbol].RemoveAt(i);
-						i -= 1;
-					}
-				}
-            }
-		}
-
-		public void Run_4(string symbol, Ticker ticker = null)
-		{
-			Ticker = HitBTC.d_Tickers[symbol];
-
-			if (!PendingOrders.ContainsKey(symbol))
-			{
-				PendingOrderAdd("buy", Ticker);
-			}
-			else
-			{
-				foreach (var PendingOrder in PendingOrders[symbol])
-				{
-					PendingOrder.CalcCurrProfitPercent(HitBTC.d_Tickers[symbol]);
-				}
-
-				var currClose = HitBTC.d_Candle[symbol].Close;
-				decimal emaDiff = SmaFast[symbol].Average(currClose) - SmaSlow[symbol].Average(currClose);
-
-				for (int i = 0; i < PendingOrders[symbol].Count; i++)
-				{
-					if(SmaFast[symbol].isPrimed() && SmaSlow[symbol].isPrimed())
-					{
-						if (emaDiff < 0)
-						{
-							if(PendingOrders[symbol][i].Side == "sell")
-								if (Sell(symbol, Ticker.Bid, PendingOrders[symbol][i].Quantity))
-								{
-									ClosedOrders.Add(PendingOrders[symbol].ElementAt(i));
-									ClosedOrders.Last().ClosePrice = Ticker.Bid;
-									PendingOrders[symbol].ElementAt(i).Type = Type.Closed;
-									PendingOrderAdd("buy", Ticker).Type = Type.New;
-								}
-
-						}
-						else if (emaDiff > 0)
-						{
-							if (PendingOrders[symbol][i].Side == "buy")
-								if (Buy(symbol, Ticker.Bid, PendingOrders[symbol][i].Quantity))
-								{
-									ClosedOrders.Add(PendingOrders[symbol].ElementAt(i));
-									ClosedOrders.Last().ClosePrice = Ticker.Bid;
-									PendingOrders[symbol].ElementAt(i).Type = Type.Closed;
-									PendingOrderAdd("sell", Ticker).Type = Type.New;
-								}
-						}
-
 					}
 				}
 
@@ -616,124 +361,76 @@ namespace Trading
 			}
 		}
 
-		public void Run_5(string symbol, Ticker ticker = null)
+		public (bool, decimal) Sell(string symbol, decimal price, decimal quantity, bool demo = true)
 		{
-			Ticker = HitBTC.d_Tickers[symbol];
+			HitBTC.SocketTrading.GetTradingBalance();
+			var result = (false, 0.0m);
 
-			if (!PendingOrders.ContainsKey(symbol))
-			{
-				PendingOrderAdd("buy", Ticker);
-			}
-			else
-			{
-				foreach (var PendingOrder in PendingOrders[symbol])
-				{
-					PendingOrder.CalcCurrProfitPercent(HitBTC.d_Tickers[symbol]);
-				}
+			if (demo == false)
+				DemoBalance = HitBTC.Balance;
 
-				var currClose = HitBTC.d_Candle[symbol].Close;
-				decimal emaDiff = SmaFast[symbol].Average(currClose) - SmaSlow[symbol].Average(currClose);
+			string baseCurrency = HitBTC.Symbols[symbol].BaseCurrency;
+			string quoteCurrency = HitBTC.Symbols[symbol].QuoteCurrency;
+			decimal baseAvailable = DemoBalance[baseCurrency].Available;
 
-				for (int i = 0; i < PendingOrders[symbol].Count; i++)
-				{
-					if (SmaFast[symbol].isPrimed() && SmaSlow[symbol].isPrimed())
-					{
-						if (emaDiff < 0 && PendingOrders[symbol][i].ClosePrice < Ticker.Bid)
-						{
-							if (PendingOrders[symbol][i].Side == "sell")
-								if (Sell(symbol, Ticker.Bid, PendingOrders[symbol][i].Quantity))
-								{
-									ClosedOrders.Add(PendingOrders[symbol].ElementAt(i));
-									ClosedOrders.Last().ClosePrice = Ticker.Bid;
-									PendingOrders[symbol].ElementAt(i).Type = Type.Closed;
-									PendingOrderAdd("buy", Ticker).Type = Type.New;
-								}
+			if (baseAvailable < HitBTC.Symbols[symbol].QuantityIncrement)
+				return result;
 
-						}
-						else if (emaDiff > 0)
-						{
-							if (PendingOrders[symbol][i].Side == "buy")
-								if (Buy(symbol, Ticker.Bid, PendingOrders[symbol][i].Quantity))
-								{
-									ClosedOrders.Add(PendingOrders[symbol].ElementAt(i));
-									ClosedOrders.Last().ClosePrice = Ticker.Bid;
-									PendingOrders[symbol].ElementAt(i).Type = Type.Closed;
-									PendingOrderAdd("sell", Ticker).Type = Type.New;
-								}
-						}
-
-					}
-				}
-
-				for (int i = 0; i < PendingOrders[symbol].Count; i++)
-				{
-					if ((PendingOrders[symbol].ElementAt(i).Type == Type.Deleted) ||
-						(PendingOrders[symbol].ElementAtOrDefault(i).Type == Type.Closed))
-					{
-						PendingOrders[symbol].RemoveAt(i);
-						i -= 1;
-					}
-				}
-			}
-		}
-
-		public bool Sell(string symbol, decimal price, decimal quantity, bool test = false)
-		{
-            string baseCurrency = HitBTC.Symbols[symbol].BaseCurrency;
-            string quoteCurrency = HitBTC.Symbols[symbol].QuoteCurrency;
-
-            if (DemoBalance[baseCurrency].Available < HitBTC.Symbols[symbol].QuantityIncrement)
-				return false;		
-
-			if (quantity > DemoBalance[baseCurrency].Available)
-				quantity = DemoBalance[baseCurrency].Available;
+			if (quantity > baseAvailable)
+				quantity = baseAvailable;
 
 			quantity -= quantity % HitBTC.Symbols[symbol].QuantityIncrement;
 
 			if (quantity == 0)
-				return false;
+				return result;
 
-			decimal realQuoteCurrency = quantity * price * (1 - HitBTC.Symbols[symbol].TakeLiquidityRate);
+			decimal quantityQuoteCurrency = quantity * price * (1 - HitBTC.Symbols[symbol].TakeLiquidityRate);
 
-			if (test == false)
-			{
-				DemoBalance[baseCurrency].Available -= quantity;
-				DemoBalance[quoteCurrency].Available += realQuoteCurrency;
-			}
+			if (demo == false)
+				HitBTC.SocketTrading.PlaceNewOrder(symbol, "sell", quantity);
 
-			return true;
+			DemoBalance[baseCurrency].Available -= quantity;
+			DemoBalance[quoteCurrency].Available += quantityQuoteCurrency;
+
+			result.Item1 = true; result.Item2 = quantityQuoteCurrency;
+			return result;
 		}
 
-		public bool Buy(string symbol, decimal price, decimal quantity, bool test = false)
+		public (bool, decimal) Buy(string symbol, decimal price, decimal quantity, bool demo = true)
 		{
 			HitBTC.SocketTrading.GetTradingBalance();
+			var result = (false, 0.0m);
+
+			if (demo == false)
+				DemoBalance = HitBTC.Balance;
 
 			string baseCurrency = HitBTC.Symbols[symbol].BaseCurrency;
-            string quoteCurrency = HitBTC.Symbols[symbol].QuoteCurrency;
+			string quoteCurrency = HitBTC.Symbols[symbol].QuoteCurrency;
 			decimal realPrice = price * (1 + HitBTC.Symbols[symbol].TakeLiquidityRate);
+			decimal quoteAvailable = DemoBalance[quoteCurrency].Available;
 
-			if (DemoBalance[quoteCurrency].Available < (HitBTC.Symbols[symbol].QuantityIncrement * realPrice))
-				return false;
+			if (quoteAvailable < (HitBTC.Symbols[symbol].QuantityIncrement * realPrice))
+				return result;
 
-			decimal realQuoteCurrency = 0;
-			
-			if (DemoBalance[quoteCurrency].Available < (quantity * price))
-			{				
-				quantity = (DemoBalance[quoteCurrency].Available / realPrice) - ( (DemoBalance[quoteCurrency].Available / realPrice) % HitBTC.Symbols[symbol].QuantityIncrement );
+			if (quoteAvailable < (quantity * price))
+			{
+				quantity = (quoteAvailable / realPrice) - ((quoteAvailable / realPrice) % HitBTC.Symbols[symbol].QuantityIncrement);
 			}
 
 			if (quantity == 0)
-				return false;
+				return result;
 
-			realQuoteCurrency = quantity * realPrice;
+			decimal quantityQuoteCurrency = quantity * realPrice;
 
-			if (test == false)
-			{
-				DemoBalance[baseCurrency].Available += quantity;
-				DemoBalance[quoteCurrency].Available -= realQuoteCurrency;
-			}
+			if (demo == false)
+				HitBTC.SocketTrading.PlaceNewOrder(symbol, "buy", quantity);
 
-			return true;
+			DemoBalance[baseCurrency].Available += quantity;
+			DemoBalance[quoteCurrency].Available -= quantityQuoteCurrency;
+
+			result.Item1 = true; result.Item2 = quantityQuoteCurrency;
+
+			return result;
 		}
 
 		public void Save(string fileNeme)
@@ -748,7 +445,7 @@ namespace Trading
 					DateTimeStart = DateTimeStart,
 					DemoBalance = DemoBalance,
 					ClosedOrders = ClosedOrders,
-                    OrdersParameters = OrdersParameters,
+					OrdersParameters = OrdersParameters,
 					PendingOrders = PendingOrders
 				});
 			}
@@ -766,13 +463,13 @@ namespace Trading
 					DateTimeStart = saveObject.DateTimeStart;
 					DemoBalance = saveObject.DemoBalance;
 					ClosedOrders = saveObject.ClosedOrders;
-                    PendingOrders = saveObject.PendingOrders;
-                    OrdersParameters = saveObject.OrdersParameters;
+					PendingOrders = saveObject.PendingOrders;
+					OrdersParameters = saveObject.OrdersParameters;
 					PendingOrder.StaticId = saveObject.StaticId;
 
 					if (DateTimeStart == null)
 						DateTimeStart = DateTime.Now;
-					
+
 					return true;
 				}
 			}
@@ -784,7 +481,7 @@ namespace Trading
 
 		private void HitBTC_Closed(string s, string ss)
 		{
-			Thread.Sleep(5000);			
+			Thread.Sleep(5000);
 			HitBTC.SocketConnect();
 			Thread.Sleep(5000);
 
@@ -793,10 +490,13 @@ namespace Trading
 			HitBTC.SocketMarketData.GetSymbols();
 
 			foreach (var p in OrdersParameters)
+			{
 				HitBTC.SocketMarketData.SubscribeTicker(p.Key);
+				HitBTC.SocketMarketData.SubscribeCandles(p.Key, period: Period.M1, 100);
+			}
 		}
 	}
-	
+
 	public static class DecimalExtension
 	{
 		public static decimal Percent(this decimal number, decimal percent)

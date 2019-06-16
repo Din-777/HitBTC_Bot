@@ -13,41 +13,51 @@ using HitBTC;
 using HitBTC.Models;
 using HitBTC.Categories;
 using Trading.Utilities;
+using Trading;
 
 namespace Chart
 {
 	public partial class Form1 : Form
 	{
 		HitBTCSocketAPI HitBTC;
-		SMA EmaSlow;
-		SMA EmaFast;
-		List<decimal> lEmaSlow;
-		List<decimal> lEmaFast;
+		SMA SmaSlow;
+		SMA SmaFast;
+		List<decimal> lSmaSlow;
+		List<decimal> lSmaFast;
+		List<decimal> lBuySell;
 		List<DateTime> lDateTime;
-		string Symbol = "BTCUSD";
+		string Symbol = "ZRXUSD";
+		Trading.Trading Trading;
+		Revers Rev;
 
 		public Form1()
 		{
 			InitializeComponent();
+		}
 
+		private void Form1_Load(object sender, EventArgs e)
+		{
 			HitBTC = new HitBTCSocketAPI();
-			EmaFast = new SMA(7);
-			EmaSlow = new SMA(11);
-			lEmaSlow = new List<decimal>();
-			lEmaFast = new List<decimal>();
+			Trading = new Trading.Trading(ref HitBTC, console: false);
+			Rev = new Revers();
+			SmaFast = new SMA(7);
+			SmaSlow = new SMA(11);
+			lSmaSlow = new List<decimal>();
+			lSmaFast = new List<decimal>();
+			lBuySell = new List<decimal>();
 			lDateTime = new List<DateTime>();
 			HitBTC.SocketMarketData.SubscribeCandles(Symbol, period: Period.M1, limit: 500);
 			HitBTC.SocketMarketData.SubscribeTrades(Symbol, limit: 1);
-			System.Threading.Thread.Sleep(2000);			
+			System.Threading.Thread.Sleep(2000);
 
-			chart1.Series.Add("New");
-			chart1.Series["New"].ChartType = SeriesChartType.Candlestick;
-			chart1.Series["New"].XValueType = ChartValueType.Time;
-			chart1.Series["New"].CustomProperties = "PriceDownColor=Red, PriceUpColor=Green";
-			chart1.Series["New"]. YValueMembers = "Max,Min,Open,Close";
-			//chart1.Series["New"].XValueMember = "TimeStamp";
-			chart1.Series["New"].BorderWidth = 2;
-			chart1.Series["New"].IsXValueIndexed = true;
+			chart1.Series.Add("Candles");
+			chart1.Series["Candles"].ChartType = SeriesChartType.Candlestick;
+			chart1.Series["Candles"].XValueType = ChartValueType.Time;
+			chart1.Series["Candles"].CustomProperties = "PriceDownColor=Red, PriceUpColor=Green";
+			chart1.Series["Candles"].YValueMembers = "Max,Min,Open,Close";
+			chart1.Series["Candles"].XValueMember = "TimeStamp";
+			chart1.Series["Candles"].BorderWidth = 2;
+			chart1.Series["Candles"].IsXValueIndexed = true;
 
 			chart1.Series.Add("EmaSlow");
 			chart1.Series["EmaSlow"].ChartType = SeriesChartType.Line;
@@ -67,36 +77,54 @@ namespace Chart
 			chart1.Series["EmaFast"].IsXValueIndexed = true;
 			chart1.Series["EmaFast"].Color = Color.Orange;
 
+			chart1.Series.Add("BuySell");
+			chart1.Series["BuySell"].ChartType = SeriesChartType.Point;
+			chart1.Series["BuySell"].XValueType = ChartValueType.Time;
+			chart1.Series["BuySell"].BorderWidth = 2;
+			chart1.Series["BuySell"].IsXValueIndexed = true;
+			chart1.Series["BuySell"].Color = Color.Black;
+
 			chart1.ChartAreas.Add("0");
 			chart1.ChartAreas["0"].AxisY.IsStartedFromZero = false;
 			chart1.ChartAreas["0"].AxisY.IsStartedFromZero = false;
 
 			chart1.MouseWheel += Chart1_MouseWheel;
 			chart1.MouseClick += Chart1_MouseClick;
+			chart1.MouseDown += chart1_MouseDown;
+			chart1.MouseMove += chart1_MouseMove;
+			chart1.MouseUp += chart1_MouseUp;
 
 			System.Threading.Thread.Sleep(3000);
 
-			chart1.DataBind();						
-
 			foreach (var c in HitBTC.Candles[Symbol])
 			{
-				EmaFast.NextAverage(c.Open);
-				//EmaFast.Compute(c.Close);
-
-				EmaSlow.NextAverage(c.Open);
-				//EmaSlow.Compute(c.Close);
+				SmaFast.NextAverage(c.Close);
+				SmaSlow.NextAverage(c.Close);
 
 				lDateTime.Add(c.TimeStamp);
-				lEmaSlow.Add(EmaSlow.LastAverage);
-				lEmaFast.Add(EmaFast.LastAverage);
+				lSmaSlow.Add(SmaSlow.LastAverage);
+				lSmaFast.Add(SmaFast.LastAverage);
+				lBuySell.Add(0);
 			}
 
-			chart1.Series["New"].Points.DataBind(HitBTC.Candles[Symbol], "TimeStamp", "Max,Min,Open,Close", "");
-
-			chart1.Series["EmaSlow"].Points.DataBindXY(lDateTime, lEmaSlow);
-			chart1.Series["EmaFast"].Points.DataBindXY(lDateTime, lEmaFast);
+			chart1.Series["Candles"].Points.DataBind(HitBTC.Candles[Symbol], "TimeStamp", "Max,Min,Open,Close", "");
+			chart1.Series["EmaSlow"].Points.DataBindXY(lDateTime, lSmaSlow);
+			chart1.Series["EmaFast"].Points.DataBindXY(lDateTime, lSmaFast);
+			chart1.Series["BuySell"].Points.DataBindXY(lDateTime, lBuySell);
 
 			HitBTC.MessageReceived += HitBTCSocket_MessageReceived;
+		}
+
+		private void chart1_MouseDown(object sender, MouseEventArgs e)
+		{
+		}
+
+		private void chart1_MouseUp(object sender, MouseEventArgs e)
+		{
+		}
+
+		private void chart1_MouseMove(object sender, MouseEventArgs e)
+		{
 		}
 
 		private void Chart1_MouseWheel(object sender, MouseEventArgs e)
@@ -112,8 +140,8 @@ namespace Chart
 
 			chart1.BeginInvoke((MethodInvoker)(() => chart1.ChartAreas["0"].AxisX.Minimum = minX));
 
-			var minY = chart1.Series["New"].Points.Where((x, i) => i >= minX-1 && i <= maxX).Select(x => x.YValues[1]).ToArray().Min();
-			var maxY = chart1.Series["New"].Points.Where((x, i) => i >= minX-1 && i <= maxX).Select(x => x.YValues[0]).ToArray().Max();
+			var minY = chart1.Series["Candles"].Points.Where((x, i) => i >= minX-1 && i <= maxX).Select(x => x.YValues[1]).ToArray().Min();
+			var maxY = chart1.Series["Candles"].Points.Where((x, i) => i >= minX-1 && i <= maxX).Select(x => x.YValues[0]).ToArray().Max();
 
 			chart1.ChartAreas[0].AxisY.Minimum = minY;
 			chart1.ChartAreas[0].AxisY.Maximum = maxY;
@@ -131,66 +159,100 @@ namespace Chart
 				var trade = HitBTC.d_Trades[Symbol];
 				var dateTime = HitBTC.Candles[Symbol].Last().TimeStamp;
 
+				var val = (HitBTC.d_Candle[Symbol].Open +
+							HitBTC.d_Candle[Symbol].Close +
+							HitBTC.d_Candle[Symbol].Min +
+							HitBTC.d_Candle[Symbol].Max) / 4.0m;
+
 				if (HitBTC.Candles[Symbol].Count == lDateTime.Count)
 				{
-					lEmaSlow[lEmaSlow.Count - 1] = EmaSlow.Average(HitBTC.d_Candle[Symbol].Close);
-					lEmaFast[lEmaFast.Count - 1] = EmaFast.Average(HitBTC.d_Candle[Symbol].Close);
+					lSmaSlow[lSmaSlow.Count - 1] = SmaSlow.Average(val);
+					lSmaFast[lSmaFast.Count - 1] = SmaFast.Average(val);
+					lBuySell[lBuySell.Count - 1] = 0;
 				}
 				else
 				{
-					lEmaSlow.Add(EmaSlow.NextAverage(HitBTC.d_Candle[Symbol].Close));
-					lEmaFast.Add(EmaFast.NextAverage(HitBTC.d_Candle[Symbol].Close));
+					lSmaSlow.Add(SmaSlow.NextAverage(HitBTC.d_Candle[Symbol].Close));
+					lSmaFast.Add(SmaFast.NextAverage(HitBTC.d_Candle[Symbol].Close));
+					lBuySell.Add(0);
 					lDateTime.Add(dateTime);
 				}
 
+				var diff = lSmaSlow[lSmaSlow.Count - 1] - lSmaFast[lSmaFast.Count - 1];
+				if(Rev.IsRevers(diff))
+					textBox1.BeginInvoke((MethodInvoker)(() => { textBox1.AppendText((diff > 0.0m ? "sell" : "buy") + 
+						"  " + HitBTC.Candles[Symbol].Last().Close.ToString() + "\r\n"); }));
+
 				chart1.BeginInvoke((MethodInvoker)(() =>
 				{
-					chart1.Series["New"].Points.DataBind(HitBTC.Candles[Symbol], "TimeStamp", "Max,Min,Open,Close", "");
-					chart1.Series["EmaSlow"].Points.DataBindXY(lDateTime, lEmaSlow);
-					chart1.Series["EmaFast"].Points.DataBindXY(lDateTime, lEmaFast);
+					chart1.Series["Candles"].Points.DataBind(HitBTC.Candles[Symbol], "TimeStamp", "Max,Min,Open,Close", "");
+					chart1.Series["EmaSlow"].Points.DataBindXY(lDateTime, lSmaSlow);
+					chart1.Series["EmaFast"].Points.DataBindXY(lDateTime, lSmaFast);
+					chart1.Series["BuySell"].Points.DataBindXY(lDateTime, lBuySell);
 				}));
 			}
 		}
 
 		private void Button1_Click(object sender, EventArgs e)
 		{
-			int period = (int)numericUpDown1.Value;
-			EmaFast.Period = period;
-			EmaFast.Clear();
+			int periodFast = (int)numericUpDown1.Value;
+			int periodSlow = (int)numericUpDown2.Value;
+			SmaFast.Period = periodFast;
+			SmaSlow.Period = periodSlow;
+			SmaFast.Clear();
+			SmaSlow.Clear();
+			lBuySell.Clear();
+			
+
 			for (int i = 0; i < HitBTC.Candles[Symbol].Count; i++)
 			{
-				if (i < lEmaFast.Count)
-					lEmaFast[i] = EmaFast.NextAverage(HitBTC.Candles[Symbol][i].Close);
+				var val = (HitBTC.Candles[Symbol][i].Open +
+							HitBTC.Candles[Symbol][i].Close +
+							HitBTC.Candles[Symbol][i].Min +
+							HitBTC.Candles[Symbol][i].Max) / 4.0m;
+
+				if (i < lSmaSlow.Count)
+					lSmaSlow[i] = SmaSlow.NextAverage(val);
 				else
-					lEmaFast.Add(EmaFast.NextAverage(HitBTC.Candles[Symbol][i].Close));
+					lSmaSlow.Add(SmaSlow.NextAverage(val));
+
+				if (i < lSmaFast.Count)
+					lSmaFast[i] = SmaFast.NextAverage(val);
+				else
+					lSmaFast.Add(SmaFast.NextAverage(val));
+				
+				decimal emaDiff = SmaSlow.LastAverage - SmaFast.LastAverage;
+				Rev.IsRevers(emaDiff);
+
+				if (SmaSlow.isPrimed() && SmaFast.isPrimed())
+				{
+					if (Rev.ReversNow)
+					{
+						if (emaDiff > 0.0m)
+						{
+							lBuySell.Add(HitBTC.Candles[Symbol][i].Close);
+						}
+						else if (emaDiff < 0.0m)
+						{
+							lBuySell.Add(HitBTC.Candles[Symbol][i].Close);
+						}
+						else
+							lBuySell.Add(0);
+					}
+					else
+						lBuySell.Add(0);
+				}
+				else
+					lBuySell.Add(0);
 			}
 
 			chart1.BeginInvoke((MethodInvoker)(() =>
 			{
-				chart1.Series["New"].Points.DataBind(HitBTC.Candles[Symbol], "TimeStamp", "Max,Min,Open,Close", "");
-				chart1.Series["EmaSlow"].Points.DataBindXY(lDateTime, lEmaSlow);
-				chart1.Series["EmaFast"].Points.DataBindXY(lDateTime, lEmaFast);
+				chart1.Series["Candles"].Points.DataBind(HitBTC.Candles[Symbol], "TimeStamp", "Max,Min,Open,Close", "");
+				chart1.Series["EmaSlow"].Points.DataBindXY(lDateTime, lSmaSlow);
+				chart1.Series["EmaFast"].Points.DataBindXY(lDateTime, lSmaFast);
+				chart1.Series["BuySell"].Points.DataBindXY(lDateTime, lBuySell);
 			}));
-		}
-		private void Button2_Click(object sender, EventArgs e)
-		{
-			int period = (int)numericUpDown2.Value;
-			EmaSlow.Period = period;
-			EmaSlow.Clear();
-			for (int i = 0; i < HitBTC.Candles[Symbol].Count; i++)
-			{
-				if (i < lEmaSlow.Count)
-					lEmaSlow[i] = EmaSlow.NextAverage(HitBTC.Candles[Symbol][i].Close);
-				else
-					lEmaSlow.Add(EmaSlow.NextAverage(HitBTC.Candles[Symbol][i].Close));
-			}
-
-			chart1.BeginInvoke((MethodInvoker)(() =>
-			{
-				chart1.Series["New"].Points.DataBind(HitBTC.Candles[Symbol], "TimeStamp", "Max,Min,Open,Close", "");
-				chart1.Series["EmaSlow"].Points.DataBindXY(lDateTime, lEmaSlow);
-				chart1.Series["EmaFast"].Points.DataBindXY(lDateTime, lEmaFast);
-			}));
-		}
+		}		
 	}
 }

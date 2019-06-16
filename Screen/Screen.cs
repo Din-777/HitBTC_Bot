@@ -49,9 +49,9 @@ namespace Screen
 															PendingOrder.Side.PadRight(6),
 															PendingOrder.OpenPrice.ToString().PadRight(10).Substring(0, 10),
 															PendingOrder.ClosePrice.ToString().PadRight(10).Substring(0, 10),
-															//PendingOrder.CurrProfitPercent.ToString().PadRight(10).Substring(0, 10));
-															(Trading.SmaFast[PendingOrder.Symbol].LastAverage - Trading.SmaSlow[PendingOrder.Symbol].LastAverage).
-																ToString().PadRight(10).Substring(0, 10) 
+															PendingOrder.CurrProfitPercent.ToString().PadRight(10).Substring(0, 10)
+															//(Trading.SmaFast[PendingOrder.Symbol].LastAverage - Trading.SmaSlow[PendingOrder.Symbol].LastAverage).
+															//	ToString().PadRight(10).Substring(0, 10) 
 															);
 				}
 				else if (i > PendingOrders.Count)
@@ -74,7 +74,7 @@ namespace Screen
 															ClosedOrder.OpenPrice.ToString().PadRight(10).Substring(0, 10),
 															ClosedOrder.ClosePrice.ToString().PadRight(10).Substring(0, 10),
 															//ClosedOrder.CurrProfitPercent.ToString().PadRight(10).Substring(0, 10));
-															ClosedOrder.CurrProfitPercent.ToString().PadRight(10).Substring(0, 10));
+															ClosedOrder.CurrProfitInUSD.ToString().PadRight(10).Substring(0, 10));
 				}
 				else if (i > ClosedOrders.Count)
 					return;
@@ -83,6 +83,7 @@ namespace Screen
 
 		public void PrintBalance(int column, int row, int count, Dictionary<string, Balance> Balances)
 		{
+			Balances = Balances.OrderByDescending(pair => pair.Value.Available).ToDictionary(pair => pair.Key, pair => pair.Value);
 			for (int i = 0; i < count; i++)
 			{
 				if (i < Balances.Count)
@@ -100,7 +101,7 @@ namespace Screen
 		public void Print()
         {     
 			var t = Trading.PendingOrders.SelectMany(kvp => kvp.Value).ToList();
-			var tempPendingOrders = t.OrderByDescending(o => o.CurrProfitPercent).ToList();
+			var tempPendingOrders = t.OrderByDescending(o => o.Side == "sell"? o.CurrProfitPercent: -333.0m).ToList();
 
 			if (StaticId != PendingOrder.StaticId)
 			{
@@ -110,16 +111,16 @@ namespace Screen
 				Console.Write("Id    Sym      Side   Open        Close       Profit");
 
 				Console.SetCursorPosition(column_2, 0);
-				decimal sumPercent = Trading.ClosedOrders.Sum(x => x.Side == "sell" ? x.CurrProfitPercent : 0m);
+				decimal sumPercent = Trading.ClosedOrders.Sum(x => x.CurrProfitInUSD);
 				Console.Write("Closed orders {0}  {1}", Trading.ClosedOrders.Count , sumPercent);
 				Console.SetCursorPosition(column_2, 1);
 				Console.Write("Id    Sym      Side   Open        Close       Profit");
 
-				Console.SetCursorPosition(column_1, series_2 + 2);
+				Console.SetCursorPosition(column_1, series_2 + 4);
 				Console.Write("Balance");
 
-				PrintClosedorders(column: column_2, row: 2, count: series_2, ClosedOrders: Trading.ClosedOrders);
-				PrintBalance(column: column_1, row: series_2 + 3, count: series_2, Trading.DemoBalance);
+				PrintClosedorders(column: column_2, row: 2, count: 44, ClosedOrders: Trading.ClosedOrders);
+				PrintBalance(column: column_1, row: series_2 + 5, count: series_2, Trading.DemoBalance);
 
 				StaticId = PendingOrder.StaticId;
 			}

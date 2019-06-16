@@ -34,37 +34,44 @@ namespace TradingConsole
 			HitBTC.MessageReceived += HitBTCSocket_MessageReceived;
 
 			HitBTC.SocketAuth.Auth(pKey, sKey);
+
 			HitBTC.SocketMarketData.GetSymbols();
+			while (HitBTC.MessageType != "getSymbol") { Thread.Sleep(1); }
+
 			HitBTC.SocketTrading.GetTradingBalance();
-
-			while (!IsSymbol) Thread.Sleep(100);
+			while (HitBTC.MessageType != "balance") { Thread.Sleep(1); }
 			
+			HitBTC.MessageReceived -= HitBTCSocket_MessageReceived;
+			Trading.DemoBalance = HitBTC.Balance;
+			Trading.DemoBalance["USD"].Available = 10.0m;
+			//Trading.DemoBalance.Add("USD", new Balance { Currency = "USD", Available = 10.0m });
+			//Trading.DemoBalance.Add("BTC", new Balance { Currency = "BTC", Available = 00.0m });
+			//Trading.DemoBalance.Add("ETH", new Balance { Currency = "ETH", Available = 00.0m });
 
-			Trading.DemoBalance.Add("USD", new Balance { Currency = "USD", Available = 10.0m });
-			Trading.DemoBalance.Add("BTC", new Balance { Currency = "BTC", Available = 00.0m });
-			Trading.DemoBalance.Add("ETH", new Balance { Currency = "ETH", Available = 00.0m });
-			
 			HitBTC.SocketMarketData.SubscribeTicker("BTCUSD");
 			HitBTC.SocketMarketData.SubscribeTicker("ETHUSD");
+			//HitBTC.SocketMarketData.SubscribeCandles("BTCUSD", period: Period.M1, 1000);
+			//HitBTC.SocketMarketData.SubscribeCandles("ETHUSD", period: Period.M1, 1000);
 
 			string[] treadingBaseCurrency = {  "BTC", "ETH", "ETC", "LTC", "XRP", "ZEC", "TRX", "EOS", "NEO", "ADA",
 												"XLM", "XMR", "BTG", "ZIL", "DOGE"};
 
-			for (int i = 0; i < treadingBaseCurrency.Count(); i++)
+			for (int i = 0; i < HitBTC.Symbols.Count(); i++)
 			{
-				string symbol = treadingBaseCurrency[i] + "USD";
-				string baseCurrency = treadingBaseCurrency[i];
-				string quoteCurrency = "USD";
-
-				if (quoteCurrency == "USD" || quoteCurrency == "BTC" || quoteCurrency == "ETH")
+				string symbol = HitBTC.Symbols.ElementAt(i).Key;
+				string baseCurrency = HitBTC.Symbols.ElementAt(i).Value.BaseCurrency;
+				string quoteCurrency = HitBTC.Symbols.ElementAt(i).Value.QuoteCurrency;
+				//string symbol = treadingBaseCurrency[i] + "USD";
+				if (quoteCurrency == "USD" ) // || quoteCurrency == "BTC" || quoteCurrency == "ETH")
 				{
-					if (!Trading.DemoBalance.ContainsKey(baseCurrency))
-						Trading.DemoBalance.Add(baseCurrency, new Balance { Currency = baseCurrency, Available = 0.0m });
-					Trading.Add(symbol, startingQuantity: 0.2m, treadingQuantity: 0.2m, stopPercent: 1.0m, closePercent: 0.5m);
+					//if (!Trading.DemoBalance.ContainsKey(baseCurrency))
+					//	Trading.DemoBalance.Add(baseCurrency, 0);
+					Trading.Add(symbol, startingQuantity: 0.1m, treadingQuantity: 0.1m, stopPercent: 1.0m, closePercent: 0.5m);
 				}
 			}
 
-			//Trading.Load("tr.dat");/
+			HitBTC.MessageReceived += HitBTCSocket_MessageReceived;
+			Trading.Load("tr.dat");
 
 			bool close = false;
 			while (close != true)
@@ -160,34 +167,39 @@ namespace TradingConsole
 		static Dictionary<string, DateTime> d_DateTimes = new Dictionary<string, DateTime>();
 		private static void HitBTCSocket_MessageReceived(string s, string symbol)
 		{
-			if (s == "ticker")
-			{
-
-			}
-			else if (s == "getSymbol")
+			if (s == "getSymbol")
 			{
 				IsSymbol = true;
 			}
-			else if(s == "updateCandles")
+			else if(s == "updateCandles" && symbol != null)
 			{
 				var candle = HitBTC.d_Candle[symbol];
 
+				if (!d_DateTimes.ContainsKey(symbol))
+					d_DateTimes.Add(symbol, HitBTC.Candles[symbol].Last().TimeStamp);
+
 				if (d_DateTimes[symbol] == candle.TimeStamp)
 				{
-					Trading.Run_5(symbol: symbol);
+					Trading.Run_4(symbol);
 					Screen.Print();
 				}
 				else
 				{
-					Trading.SmaSlow[symbol].NextAverage(HitBTC.d_Candle[symbol].Open);
-					Trading.SmaFast[symbol].NextAverage(HitBTC.d_Candle[symbol].Open);
+					Trading.SmaSlow[symbol].NextAverage(HitBTC.d_Candle[symbol].Close);
+					Trading.SmaFast[symbol].NextAverage(HitBTC.d_Candle[symbol].Close);
 					d_DateTimes[symbol] = HitBTC.Candles[symbol].Last().TimeStamp;
 				}
 			}
-			else if (s == "snapshotCandles")
+			else if (s == "snapshotCandles" && symbol != null)
 			{				
-				d_DateTimes.Add(symbol, new DateTime());
+				if(!d_DateTimes.ContainsKey(symbol))
+					d_DateTimes.Add(symbol, new DateTime());
 				d_DateTimes[symbol] = HitBTC.Candles[symbol].Last().TimeStamp;
+
+				if (!Trading.SmaFast.ContainsKey(symbol))
+					Trading.SmaFast.Add(symbol, new SMA(4));
+				if (!Trading.SmaSlow.ContainsKey(symbol))
+					Trading.SmaSlow.Add(symbol, new SMA(7));
 
 				foreach (var candle in HitBTC.Candles[symbol])
 				{
