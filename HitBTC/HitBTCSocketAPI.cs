@@ -71,8 +71,7 @@ namespace HitBTC
 		{
 			socket.Close();
 		}
-
-
+		
 		public SocketAuth SocketAuth;
 		public SocketTrading SocketTrading;
 		public SocketMarketData SocketMarketData;
@@ -224,13 +223,7 @@ namespace HitBTC
 
 					if (Candles[symbol].Last().TimeStamp == candle.TimeStamp)
 					{
-						Candles[symbol].Last().Close = candle.Close;
-						Candles[symbol].Last().Max = candle.Max;
-						Candles[symbol].Last().Min = candle.Min;
-						Candles[symbol].Last().Open = candle.Open;
-						Candles[symbol].Last().TimeStamp = candle.TimeStamp;
-						Candles[symbol].Last().Volume = candle.Volume;
-						Candles[symbol].Last().VolumeQuote = candle.VolumeQuote;
+						Candles[symbol][Candles[symbol].Count - 1] = candle;
 					}
 					else
 						Candles[symbol].Add(candle);
@@ -251,6 +244,7 @@ namespace HitBTC
 					Trades[symbol] = ListSocketTradeData;
 					if(!d_Trades.ContainsKey(symbol))
 						d_Trades.Add(symbol, new SocketTrade());
+					d_Trades[symbol] = Trades[symbol].Last();
 					MessageType = "snapshotTrades";
 				}
 				else if (method == "updateTrades" && Params != null)

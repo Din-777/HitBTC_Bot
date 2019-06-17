@@ -62,22 +62,5 @@ namespace HitBTC.Models
         [JsonProperty("timestamp")]
         public string Timestamp { get; set; }
 
-
-        public override string ToString()
-        {
-            StringBuilder sb = new StringBuilder();
-            sb.AppendLine(string.Format("ask:{0}", Ask));
-            sb.AppendLine(string.Format("bid:{0}", Bid));
-            sb.AppendLine(string.Format("last:{0}",Last));
-            sb.AppendLine(string.Format("open:{0}", Open));
-            sb.AppendLine(string.Format("low:{0}", Low));
-            sb.AppendLine(string.Format("high:{0}", High));
-            sb.AppendLine(string.Format("volume:{0}", Volume));
-            sb.AppendLine(string.Format("volume_quote:{0}", VolumeQuoute));
-            sb.AppendLine(string.Format("timestamp:{0}", Timestamp));
-            sb.AppendLine(string.Format("symbol:{0}", Symbol));
-
-            return sb.ToString();
-        }
     }
 }
