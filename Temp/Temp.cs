@@ -1,8 +1,9 @@
 ﻿using System;
 
 using HitBTC;
+using HitBTC.Models;
 using System.Diagnostics;
-
+using System.Threading;
 
 namespace Temp
 {
@@ -18,18 +19,30 @@ namespace Temp
 		static decimal Price;
 		static void Main(string[] args)
 		{
-			var v = (5, 10);
+			string Symbol = "BTCUSD";
+			HitBTC = new HitBTCSocketAPI();
+			HitBTC.SocketMarketData.GetSymbols();
 
+			Thread.Sleep(2000);
 
+			foreach(var s in HitBTC.Symbols)
+			{
+				if(s.Key.EndsWith("USD"))
+				{
+					HitBTC.SocketMarketData.SubscribeCandles(s.Key, Period.M1, 1);
+					Thread.Sleep(20);
+					HitBTC.SocketMarketData.SubscribeTrades(s.Key, 1);
+					Thread.Sleep(20);
+					//HitBTC.SocketMarketData.SubscribeTicker(s.Key);
+				}
+			}						
+
+			HitBTC.MessageReceived += HitBTCSocket_MessageReceived;
 
 			Console.ReadKey();
 		}
 		private static void HitBTCSocket_MessageReceived(string notification, string symbol)
-		{			
-			if (notification == "balance")
-			{
-				
-			}
+		{
 		}
 	}
 }
