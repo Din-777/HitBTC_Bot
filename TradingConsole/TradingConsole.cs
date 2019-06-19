@@ -23,7 +23,6 @@ namespace TradingConsole
 		static string sKey = "B37LaDlfa70YM9gorzpjYGQAZVRNXDj3";
 
 		public static Trading.Trading Trading;
-		public static bool IsSymbol = false;
 
 		public static Dictionary<string, SMA> SmaPrices = new Dictionary<string, SMA>();
 
@@ -58,14 +57,14 @@ namespace TradingConsole
 				string symbol = HitBTC.Symbols.ElementAt(i).Key;
 				string baseCurrency = HitBTC.Symbols.ElementAt(i).Value.BaseCurrency;
 				string quoteCurrency = HitBTC.Symbols.ElementAt(i).Value.QuoteCurrency;
-				if (quoteCurrency == "USD" )
+				if (symbol.EndsWith("USD"))
 				{
-					Trading.Add(symbol, period: Period.M1, treadingQuantity: 0.1m, stopPercent: 1.0m, closePercent: 0.5m);
+					Trading.Add(symbol, period: Period.H1, treadingQuantity: 0.5m, stopPercent: 10.0m, closePercent: 10.0m);
 				}
 			}
 
 			HitBTC.MessageReceived += HitBTCSocket_MessageReceived;
-			//Trading.Load("tr.dat");
+			Trading.Load("tr.dat");
 
 			bool close = false;
 			while (close != true)
@@ -77,6 +76,8 @@ namespace TradingConsole
 				Console.WriteLine("Subtotal       > 2");
 				Console.WriteLine("Sell all/exit  > 3");
 				Console.WriteLine("Save and exit  > 4");
+				Console.WriteLine("Save and exit  > 5");
+
 				Console.CursorVisible = true;
 				Console.WriteLine();
 				Console.Write("> ");
@@ -111,6 +112,15 @@ namespace TradingConsole
 						SubtotalBalanse();
 						Screen.PrintBalance(column: 20, row: 23, count: 20, Trading.DemoBalance);
 						Console.ReadLine();
+						Trading.Load("tr.dat");
+						HitBTC.MessageReceived += HitBTCSocket_MessageReceived;
+						break;
+					case "5":
+						Console.CursorVisible = false;
+						Trading.Save("tr.dat");
+						SubtotalBalanse();
+						Screen.PrintBalance(column: 20, row: 23, count: 20, Trading.DemoBalance);
+						Console.ReadLine();
 						close = true;
 						break;
 
@@ -135,7 +145,7 @@ namespace TradingConsole
 				if (Trading.DemoBalance.ElementAt(i).Key != "USD")
 					if (Trading.DemoBalance.ElementAt(i).Value.Available > 0.0m)
 						if (HitBTC.d_Tickers.ContainsKey(symbol))
-							Trading.Sell(symbol, HitBTC.d_Tickers[symbol].Bid, Trading.DemoBalance.ElementAt(i).Value.Available);
+							Trading.Sell(symbol, HitBTC.d_Candle[symbol].Close, Trading.DemoBalance.ElementAt(i).Value.Available);
 						else if (HitBTC.d_Tickers.ContainsKey(String.Concat(baseCurrency, "BTC")))
 						{
 							quoteCurrency = "BTC";
@@ -151,52 +161,20 @@ namespace TradingConsole
 			}
 
 			if (Trading.DemoBalance["BTC"].Available > 0.0m)
-				Trading.Sell("BTCUSD", HitBTC.d_Tickers["BTCUSD"].Bid, Trading.DemoBalance["BTC"].Available);
+				Trading.Sell("BTCUSD", HitBTC.d_Candle["BTCUSD"].Close, Trading.DemoBalance["BTC"].Available);
 			if (Trading.DemoBalance["ETH"].Available > 0.0m)
-				Trading.Sell("ETHUSD", HitBTC.d_Tickers["ETHUSD"].Bid, Trading.DemoBalance["ETH"].Available);
+				Trading.Sell("ETHUSD", HitBTC.d_Candle["ETHUSD"].Close, Trading.DemoBalance["ETH"].Available);
 		}
 
-		static Dictionary<string, DateTime> d_DateTimes = new Dictionary<string, DateTime>();
 		private static void HitBTCSocket_MessageReceived(string s, string symbol)
 		{
-			if (s == "getSymbol")
+			if(s == "updateCandles" && symbol != null)
 			{
-				IsSymbol = true;
-			}
-			else if(s == "updateTrades" && symbol != null)
-			{
-				var candle = HitBTC.d_Candle[symbol];
-
-				if (!d_DateTimes.ContainsKey(symbol))
-					d_DateTimes.Add(symbol, HitBTC.Candles[symbol].Last().TimeStamp);
-
-				if (d_DateTimes[symbol] == candle.TimeStamp)
+				if (Trading.SmaFast[symbol].isPrimed() && Trading.SmaSlow[symbol].isPrimed())
 				{
+					Trading.Run_6(symbol, HitBTC.d_Candle[symbol].Close);
+					Screen.Print();
 				}
-				else
-				{
-					if (!SmaPrices.ContainsKey(symbol))
-						SmaPrices.Add(symbol, new SMA(3));
-					else if (!SmaPrices[symbol].isPrimed())
-						SmaPrices[symbol].NextAverage(HitBTC.Candles[symbol].Last().Open);
-					else
-					{
-						d_DateTimes[symbol] = HitBTC.Candles[symbol].Last().TimeStamp;
-						Trading.Run_5(symbol, smaPrice: SmaPrices[symbol].NextAverage(HitBTC.Candles[symbol].Last().Open));
-						Screen.Print();
-					}
-				}
-			}
-			else if (s == "snapshotCandles" && symbol != null)
-			{				
-				if(!d_DateTimes.ContainsKey(symbol))
-					d_DateTimes.Add(symbol, new DateTime());
-				d_DateTimes[symbol] = HitBTC.Candles[symbol].Last().TimeStamp;
-
-				if (!SmaPrices.ContainsKey(symbol))
-					SmaPrices.Add(symbol, new SMA(3));
-
-				HitBTC.Candles[symbol].ForEach(candle => SmaPrices[symbol].NextAverage(candle.Close));					 
 			}
 		}
 	}

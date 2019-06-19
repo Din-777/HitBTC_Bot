@@ -76,6 +76,16 @@ namespace HitBTC
 		public SocketTrading SocketTrading;
 		public SocketMarketData SocketMarketData;
 
+		public TimeSpan TimeZone = TimeSpan.FromHours(5);
+
+		public void ReceiveMessages(bool received)
+		{
+			if(received)
+				socket.DataReceived += Socket_DataReceived;
+			else if(!received)
+				socket.DataReceived -= Socket_DataReceived;
+		}
+
 		public HitBTCSocketAPI()
 		{
 			string uri = "wss://api.hitbtc.com/api/2/ws";
@@ -197,7 +207,7 @@ namespace HitBTC
 					symbol = (string)jObject["params"]["symbol"];
 
 					List<Candle> lCandle = JsonConvert.DeserializeObject<List<Candle>>(Data.ToString());
-					lCandle.ForEach(c => c.TimeStamp = c.TimeStamp + TimeSpan.FromHours(5));
+					lCandle.ForEach(c => c.TimeStamp = c.TimeStamp + TimeZone);
 
 					if (!Candles.ContainsKey(symbol))
 						Candles.Add(symbol, new List<Candle>());
@@ -216,7 +226,7 @@ namespace HitBTC
 
 					Candle candle = JsonConvert.DeserializeObject<Candle>(Data[0].ToString());
 
-					candle.TimeStamp = candle.TimeStamp + TimeSpan.FromHours(5);
+					candle.TimeStamp = candle.TimeStamp + TimeZone;
 
 					if (!Candles.ContainsKey(symbol))
 						Candles.Add(symbol, new List<Candle>());
@@ -238,20 +248,25 @@ namespace HitBTC
 					symbol = (string)jObject["params"]["symbol"];
 
 					List<SocketTrade> ListSocketTradeData = JsonConvert.DeserializeObject<List<SocketTrade>>(Data.ToString());
+					ListSocketTradeData.ForEach(c => c.TimeStamp = c.TimeStamp + TimeZone);
 					if (!Trades.ContainsKey(symbol))
 						Trades.Add(symbol, new List<SocketTrade>());
 
 					Trades[symbol] = ListSocketTradeData;
 					if(!d_Trades.ContainsKey(symbol))
 						d_Trades.Add(symbol, new SocketTrade());
-					d_Trades[symbol] = Trades[symbol].Last();
-					MessageType = "snapshotTrades";
+					if (Trades[symbol].Count > 0)
+					{
+						d_Trades[symbol] = Trades[symbol].Last();
+						MessageType = "snapshotTrades";
+					}
 				}
 				else if (method == "updateTrades" && Params != null)
 				{
 					var Data = jObject["params"]["data"];
 					symbol = (string)jObject["params"]["symbol"];
 					Trade = JsonConvert.DeserializeObject<SocketTrade>(Data[0].ToString());
+					Trade.TimeStamp = Trade.TimeStamp + TimeZone;
 					Trade.Symbol = symbol;
 					Trades[symbol].Add(Trade);
 					d_Trades[symbol] = Trade;

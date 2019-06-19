@@ -45,7 +45,7 @@ namespace Screen
 
 					Console.SetCursorPosition(column_1, i + row);
 					Console.Write("{0}  {1} {2} {3}  {4}  {5}", PendingOrder.Id.ToString().PadLeft(4, '0'),
-															PendingOrder.Symbol.PadRight(8),
+															PendingOrder.Symbol.PadRight(9),
 															PendingOrder.Side.PadRight(6),
 															PendingOrder.OpenPrice.ToString().PadRight(10).Substring(0, 10),
 															PendingOrder.ClosePrice.ToString().PadRight(10).Substring(0, 10),
@@ -69,7 +69,7 @@ namespace Screen
 					var ClosedOrder = ClosedOrders[j];
 					Console.SetCursorPosition(column_2, i + row);
 					Console.Write("{0}  {1} {2} {3}  {4}  {5}", ClosedOrder.Id.ToString().PadLeft(4, '0'),
-															ClosedOrder.Symbol.PadRight(8),
+															ClosedOrder.Symbol.PadRight(9),
 															ClosedOrder.Side.PadRight(6),
 															ClosedOrder.OpenPrice.ToString().PadRight(10).Substring(0, 10),
 															ClosedOrder.ClosePrice.ToString().PadRight(10).Substring(0, 10),
@@ -90,7 +90,7 @@ namespace Screen
 				{
 					var Balance = Balances.ElementAt(i);
 					Console.SetCursorPosition(column_1, i + row);
-					Console.Write("{0}  {1}", Balance.Value.Currency.PadRight(6),
+					Console.Write("{0}  {1}", Balance.Value.Currency.PadRight(8),
 												Balance.Value.Available.ToString().PadRight(10).Substring(0, 10));
 				}
 				else if (i > Balances.Count)

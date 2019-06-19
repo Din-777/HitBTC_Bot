@@ -35,13 +35,12 @@ namespace Trading.Utilities
 
 		public decimal Average(decimal value)
 		{
-			// = (LastAverage + value) / 2;
-
 			Queue.Add(value);
-			LastAverage = Queue.Average();
+			var average = Queue.Average();
+			LastAverage = average;
 			Queue.RemoveAt(Queue.Count - 1);
 
-			return LastAverage;
+			return average;
 		}
 
 		public bool isPrimed()
