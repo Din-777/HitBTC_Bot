@@ -10,28 +10,27 @@ using Trading;
 
 namespace Screen
 {
-    public class Screen
-    {
-        HitBTCSocketAPI HitBTC;
-        Trading.Trading Trading;
+	public class Screen
+	{
+		HitBTCSocketAPI HitBTC;
+		Trading.Trading Trading;
+		string TradingDataFileName;
 
-        public Screen(ref HitBTCSocketAPI hitBTC, ref Trading.Trading trading)
-        {
-            HitBTC = hitBTC;
-            Trading = trading;
-            Console.CursorVisible = false;
-        }
+		public Screen(ref HitBTCSocketAPI hitBTC, ref Trading.Trading trading, string sfn = "tr.dat")
+		{
+			HitBTC = hitBTC;
+			Trading = trading;
+			Console.CursorVisible = false;
+			TradingDataFileName = sfn;
+		}
 
-        private int ClosedOrdersCount = 99999999;
+		private int ClosedOrdersCount = 99999999;
 		private int StaticId = 99999999;
 
 		static int column_1 = 0;               // Tickers
-        static int column_2 = 60;              // Pending orders
-        static int column_3 = column_2 + 50;   // Closed orders
-        static int column_4 = column_3 + 20;   // 
-        static int column_5 = column_4 + 0;    // Orders Profit
-        static int column_6 = column_5 + 0;    // Trad balance / Dealing
-        static int column_7 = column_6 + 16;   // Estim balance
+		static int column_2 = 60;              // Pending orders
+		static int column_3 = column_2 + 50;   // Closed orders
+		static int column_4 = column_3 + 20;   //
 
 		static int series_2 = 20;
 
@@ -104,9 +103,9 @@ namespace Screen
 		}
 
 		public void Print()
-        {     
+		{
 			var t = Trading.PendingOrders.SelectMany(kvp => kvp.Value).ToList();
-			var tempPendingOrders = t.OrderByDescending(o => o.Side == "sell"? o.CurrProfitPercent: -333.0m).ToList();
+			var tempPendingOrders = t.OrderByDescending(o => o.Side == "sell" ? o.CurrProfitPercent : -333.0m).ToList();
 
 			if (StaticId != PendingOrder.StaticId)
 			{
@@ -116,8 +115,8 @@ namespace Screen
 				Console.Write("Id    Sym      Side   Open        Close       Profit");
 
 				Console.SetCursorPosition(column_2, 0);
-				decimal sumProfit= Trading.ClosedOrders.Sum(x => x.CurrProfitInUSD);
-				Console.Write("Closed orders {0}  {1}", Trading.ClosedOrders.Count , sumProfit);
+				decimal sumProfit = Trading.ClosedOrders.Sum(x => x.CurrProfitInUSD);
+				Console.Write("Closed orders {0}  {1}", Trading.ClosedOrders.Count, sumProfit);
 				Console.SetCursorPosition(column_2, 1);
 				Console.Write("Id    Sym      Side   Open        Close       Profit");
 
@@ -132,31 +131,108 @@ namespace Screen
 
 			PrintPendingOrders(column: column_1, row: 2, count: series_2, tempPendingOrders);
 
-            ClosedOrdersCount = Trading.ClosedOrders.Count;
-        }
+			ClosedOrdersCount = Trading.ClosedOrders.Count;
+		}
 
-        public void PrintBalance()
-        {
-            Trading.DemoBalance.OrderByDescending(o => o.Value);
+		public void PrintBalance()
+		{
+			Trading.DemoBalance.OrderByDescending(o => o.Value);
 
-            Console.SetCursorPosition(column_2, 1);
-            Console.Write("{0}      {1}", "USD", Trading.DemoBalance["USD"].ToString().PadRight(10).Substring(0, 10));
+			Console.SetCursorPosition(column_2, 1);
+			Console.Write("{0}      {1}", "USD", Trading.DemoBalance["USD"].ToString().PadRight(10).Substring(0, 10));
 
-            Console.SetCursorPosition(column_2, 2);
-            Console.Write("{0}      {1}", "BTC", Trading.DemoBalance["BTC"].ToString().PadRight(10).Substring(0, 10));
+			Console.SetCursorPosition(column_2, 2);
+			Console.Write("{0}      {1}", "BTC", Trading.DemoBalance["BTC"].ToString().PadRight(10).Substring(0, 10));
 
-            Console.SetCursorPosition(column_2, 3);
-            Console.Write("{0}      {1}", "ETH", Trading.DemoBalance["ETH"].ToString().PadRight(10).Substring(0, 10));
+			Console.SetCursorPosition(column_2, 3);
+			Console.Write("{0}      {1}", "ETH", Trading.DemoBalance["ETH"].ToString().PadRight(10).Substring(0, 10));
 
-            for (int i = 0; i < 30; i++)
-            {
-                if (i < Trading.DemoBalance.Count)
-                {
-                    Console.SetCursorPosition(column_2, i + 5);
-                    Console.Write("{0}  {1}", Trading.DemoBalance.ElementAtOrDefault(i).Key.PadRight(7).Substring(0, 7),
-                                              Trading.DemoBalance.ElementAtOrDefault(i).Value.ToString().PadRight(10, '0').Substring(0, 10));
-                }
-            }
-        }
-    }
+			for (int i = 0; i < 30; i++)
+			{
+				if (i < Trading.DemoBalance.Count)
+				{
+					Console.SetCursorPosition(column_2, i + 5);
+					Console.Write("{0}  {1}", Trading.DemoBalance.ElementAtOrDefault(i).Key.PadRight(7).Substring(0, 7),
+											  Trading.DemoBalance.ElementAtOrDefault(i).Value.ToString().PadRight(10, '0').Substring(0, 10));
+				}
+			}
+		}
+
+		public bool MenuRun()
+		{
+			bool close = false;
+			var column = 22;
+			Console.SetCursorPosition(column, series_2 + 4);
+			Console.WriteLine("MENU:");
+			Console.SetCursorPosition(column, series_2 + 5);
+			Console.WriteLine("Continue          > 1");
+			Console.SetCursorPosition(column, series_2 + 6);
+			Console.WriteLine("Subtotal and save > 2");
+			Console.SetCursorPosition(column, series_2 + 7);
+			Console.WriteLine("Sell all/exit     > 3");
+			Console.SetCursorPosition(column, series_2 + 8);
+			Console.WriteLine("Save and exit     > 4");
+			Console.SetCursorPosition(column, series_2 + 9);
+			Console.WriteLine("Add Orders from Candles   > 5");
+
+			Console.CursorVisible = true;
+			Console.WriteLine();
+			Console.SetCursorPosition(column, series_2 + 10);
+			Console.Write("> ");
+
+			string ansver = Console.ReadLine();
+
+			switch (ansver)
+			{
+				case "1":
+					break;
+				case "2":
+					Console.CursorVisible = false;
+					Trading.Save(TradingDataFileName);
+					Trading.SellAll();
+					PrintBalance(column: column_1, row: series_2 + 5, count: series_2, Trading.DemoBalance);
+					Console.ReadLine();
+					Trading.Load(TradingDataFileName);
+					break;
+				case "3":
+					Console.CursorVisible = false;
+					Trading.SellAll();
+					PrintBalance(column: column_1, row: series_2 + 5, count: series_2, Trading.DemoBalance);
+					Trading.Save(TradingDataFileName);
+					Console.ReadLine();
+					close = true;
+					break;
+				case "4":
+					Console.CursorVisible = false;
+					Trading.Save(TradingDataFileName);
+					Trading.SellAll();
+					PrintBalance(column: column_1, row: series_2 + 5, count: series_2, Trading.DemoBalance);
+					Console.ReadLine();
+					close = true;
+					break;
+				case "5":
+					Console.CursorVisible = false;
+					Trading.Save(TradingDataFileName);
+
+					OrderParametr op = Trading.OrdersParameters.First().Value;
+					foreach (var c in HitBTC.Candles)
+					{
+						if (!Trading.PendingOrders.ContainsKey(c.Key))
+						{
+
+						}
+					}
+
+					Console.ReadLine();
+					close = false;
+					break;
+				default:
+					break;
+			}
+
+			Console.CursorVisible = false;
+			Console.Clear();
+			return close;
+		}
+	}
 }

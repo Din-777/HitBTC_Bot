@@ -25,6 +25,7 @@ namespace Temp
 		public static string TradingDataFileName = "tr.dat";
 		public static string Symbol = "BTCUSD";
 
+		[STAThread]
 		static void Main(string[] args)
 		{
 			Application.EnableVisualStyles();
@@ -53,6 +54,8 @@ namespace Temp
 
 			HitBTC.MessageReceived += HitBTCSocket_MessageReceived;
 			Trading.Load(TradingDataFileName);
+
+			Task task = Task.Run(() => { Application.Run(new Form1(HitBTC, Trading)); });
 
 			bool close = false;
 			while (close != true)

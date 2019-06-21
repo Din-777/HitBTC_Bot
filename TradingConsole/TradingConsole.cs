@@ -67,7 +67,7 @@ namespace TradingConsole
 				string quoteCurrency = HitBTC.Symbols.ElementAt(i).Value.QuoteCurrency;
 				if (symbol.EndsWith("USD") || symbol.EndsWith("USDT"))
 				{
-					Trading.Add(symbol, period: Period.H1, treadingQuantity: 100.0m, stopPercent: 1.0m, closePercent: 1.0m);
+					Trading.Add(symbol, period: Period.H1, treadingQuantity: 100.0m, stopPercent: 5.0m, closePercent: 0.5m);
 				}
 			}
 

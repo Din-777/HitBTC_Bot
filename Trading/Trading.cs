@@ -312,8 +312,6 @@ namespace Trading
 				decimal OrderParameterQuantity;
 				decimal quantityInBaseCurrency = 0;
 
-				OrdersParameters[symbol].QuantityQuoteCurrency -= OrdersParameters[symbol].QuantityQuoteCurrency * HitBTC.Symbols[symbol].TakeLiquidityRate;
-
 				OrderParameterQuantity = OrdersParameters[symbol].QuantityQuoteCurrency;
 				quantityInBaseCurrency = (OrderParameterQuantity / price) - ((OrderParameterQuantity / price) % HitBTC.Symbols[symbol].QuantityIncrement);
 
@@ -352,8 +350,7 @@ namespace Trading
 
 					if (PendingOrders[symbol][i].Side == "buy")
 					{
-						if (SmaFastPrice > SmaSlowPrice
-							&& d_lSmaSlow[symbol].Last() == d_lSmaSlow[symbol].ElementAt(d_lSmaSlow[symbol].Count - 1))
+						if (SmaFastPrice > SmaSlowPrice)
 						{
 							if (PendingOrders[symbol][i].Type == Type.Processed)
 							{
@@ -389,7 +386,7 @@ namespace Trading
 					}
 					else if (PendingOrders[symbol][i].Side == "sell")
 					{
-						if (SmaFastPrice < SmaSlowPrice && SmaFastPrice > PendingOrders[symbol][i].ClosePrice)
+						if (SmaFastPrice < SmaSlowPrice)// && SmaFastPrice > PendingOrders[symbol][i].ClosePrice)
 						{
 							if (PendingOrders[symbol][i].Type == Type.Processed)
 							{
@@ -630,6 +627,40 @@ namespace Trading
 			result.Item1 = true; result.Item2 = quantityQuoteCurrency;
 
 			return result;
+		}
+
+		public void SellAll()
+		{
+			for (int i = 0; i < DemoBalance.Keys.Count; i++)
+			{
+				string baseCurrency = DemoBalance.ElementAt(i).Key;
+				string quoteCurrency = "USD";
+				string symbol = String.Concat(baseCurrency, quoteCurrency);
+
+				if (DemoBalance.ElementAt(i).Key != "USD")
+					if (DemoBalance.ElementAt(i).Value.Available > 0.0m)
+						if (HitBTC.d_Candle.ContainsKey(symbol))
+						{
+							Sell(symbol, HitBTC.d_Candle[symbol].Close, DemoBalance.ElementAt(i).Value.Available);
+						}
+						else if (HitBTC.d_Candle.ContainsKey(String.Concat(baseCurrency, "BTC")))
+						{
+							quoteCurrency = "BTC";
+							symbol = String.Concat(baseCurrency, quoteCurrency);
+							Sell(symbol, HitBTC.d_Candle[symbol].Close, DemoBalance.ElementAt(i).Value.Available);
+						}
+						else if (HitBTC.d_Candle.ContainsKey(String.Concat(baseCurrency, "ETH")))
+						{
+							quoteCurrency = "ETH";
+							symbol = String.Concat(baseCurrency, quoteCurrency);
+							Sell(symbol, HitBTC.d_Candle[symbol].Close, DemoBalance.ElementAt(i).Value.Available);
+						}
+			}
+
+			if (DemoBalance["BTC"].Available > 0.0m)
+				Sell("BTCUSD", HitBTC.d_Candle["BTCUSD"].Close, DemoBalance["BTC"].Available);
+			if (DemoBalance["ETH"].Available > 0.0m)
+				Sell("ETHUSD", HitBTC.d_Candle["ETHUSD"].Close, DemoBalance["ETH"].Available);
 		}
 
 		public void Save(string fileNeme)
