@@ -23,13 +23,13 @@ namespace Chart
 		List<decimal> lBuy;
 		List<decimal> lSell;
 		List<DateTime> lDateTime;
-		static string baseCurrency = "EDO";
+		static string baseCurrency = "LTC";
 		string Symbol = baseCurrency + "USD";
 		Trading.Trading Trading;
 		SMA SmaPrice = new SMA(50);
 
 		public Form1()
-		{
+		{ 
 			InitializeComponent();
 		}
 
@@ -154,7 +154,7 @@ namespace Chart
 
 				SmaPrice.NextAverage(val);
 
-				if (Trading.SmaFast[Symbol].isPrimed() && Trading.SmaSlow[Symbol].isPrimed())
+				if (Trading.SmaFast[Symbol].IsPrimed() && Trading.SmaSlow[Symbol].IsPrimed())
 				{
 					var oldBalance = Trading.DemoBalance["USD"].Available;
 

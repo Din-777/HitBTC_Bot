@@ -3,10 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.28803.452
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingOfflineConsole", "TradingOfflineConsole\TradingOfflineConsole.csproj", "{3265A217-4568-4069-858D-1D3AEB9B633C}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Temp", "Temp\Temp.csproj", "{0EFD1923-D790-4E16-8462-E58E6AA9FE7F}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HitBTC", "HitBTC\HitBTC.csproj", "{DB31C129-2D33-4F37-A767-6AB8AE0B324C}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradingConsole", "TradingConsole\TradingConsole.csproj", "{BF72A7FD-630A-4BE1-8C94-9EBD5909AA85}"
@@ -17,20 +13,16 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trading", "Trading\Trading.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chart", "Chart\Chart.csproj", "{9A66B4F5-206C-4673-AD1F-A4C5DD81389F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Temp", "Temp\Temp.csproj", "{9F61B293-8A02-4B93-A7C8-8EACC1F72FE7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ViewChart", "ViewChart\ViewChart.csproj", "{29627F60-FBCA-42C0-89BD-9419FDFFDEF6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{3265A217-4568-4069-858D-1D3AEB9B633C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{3265A217-4568-4069-858D-1D3AEB9B633C}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{3265A217-4568-4069-858D-1D3AEB9B633C}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{3265A217-4568-4069-858D-1D3AEB9B633C}.Release|Any CPU.Build.0 = Release|Any CPU
-		{0EFD1923-D790-4E16-8462-E58E6AA9FE7F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{0EFD1923-D790-4E16-8462-E58E6AA9FE7F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{0EFD1923-D790-4E16-8462-E58E6AA9FE7F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{0EFD1923-D790-4E16-8462-E58E6AA9FE7F}.Release|Any CPU.Build.0 = Release|Any CPU
 		{DB31C129-2D33-4F37-A767-6AB8AE0B324C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{DB31C129-2D33-4F37-A767-6AB8AE0B324C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DB31C129-2D33-4F37-A767-6AB8AE0B324C}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -51,6 +43,14 @@ Global
 		{9A66B4F5-206C-4673-AD1F-A4C5DD81389F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9A66B4F5-206C-4673-AD1F-A4C5DD81389F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9A66B4F5-206C-4673-AD1F-A4C5DD81389F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9F61B293-8A02-4B93-A7C8-8EACC1F72FE7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9F61B293-8A02-4B93-A7C8-8EACC1F72FE7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9F61B293-8A02-4B93-A7C8-8EACC1F72FE7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9F61B293-8A02-4B93-A7C8-8EACC1F72FE7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{29627F60-FBCA-42C0-89BD-9419FDFFDEF6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{29627F60-FBCA-42C0-89BD-9419FDFFDEF6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{29627F60-FBCA-42C0-89BD-9419FDFFDEF6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{29627F60-FBCA-42C0-89BD-9419FDFFDEF6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

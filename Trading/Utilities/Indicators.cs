@@ -43,7 +43,7 @@ namespace Trading.Utilities
 			return average;
 		}
 
-		public bool isPrimed()
+		public bool IsPrimed()
 		{
 			if (Queue.Count >= Period)
 				return true;
@@ -58,61 +58,42 @@ namespace Trading.Utilities
 	}
 
 	[Serializable]
-	public class iEMA
+	public class EMA
 	{
-		public decimal LastValue = 0;
-		private int tickcount;
-		public int Period;
-		private decimal dampen;
-		private decimal emav;
+		public int Period = 0;
+		public decimal LastAverage = 0;
+		public decimal Alpha = 0;
 
-		public iEMA(int pPeriods)
+		public EMA(int period)
 		{
-			Period = pPeriods;
-			dampen = 2 / ((decimal)1.0 + Period);
+			Period = period;
+			Alpha = 2.0m / (period + 1.0m);
 		}
 
-		public decimal ReceiveTick(decimal Val)
+		public decimal NextAverage(decimal value)
 		{
-			if (LastValue != Val)
-			{
-				if (tickcount < Period)
-					emav += Val;
-				if (tickcount == Period)
-					emav /= Period;
-				if (tickcount > Period)
-					emav = (dampen * (Val - emav)) + emav;
+			LastAverage = LastAverage == 0 ? value : (value - LastAverage) * Alpha + LastAverage;
 
-				if (tickcount <= (Period + 1))
-				{
-					// avoid overflow by stopping use of tickcount
-					// when indicator is fully primed
-					tickcount++;
-				}
-
-				LastValue = Val;
-			}
-
-			if (isPrimed())
-				return emav;
-			else
-				return 0;
+			return LastAverage;
 		}
 
-		public decimal Value()
+		public decimal Average(decimal value)
 		{
-			if (isPrimed())
-				return emav;
-			else
-				return 0;
+			var average = LastAverage == 0 ? value : (value - LastAverage) * Alpha + LastAverage;
+
+			return average;
 		}
 
-		public bool isPrimed()
+		public bool IsPrimed()
 		{
-			if (tickcount > Period)
-				return true;			
-			else 
-				return false;
+			if (LastAverage == 0) return false;
+			else if (LastAverage != 0) return true;
+			else return false;
+		}
+
+		public void Clear()
+		{
+			LastAverage = 0;
 		}
 	}
 
@@ -120,7 +101,7 @@ namespace Trading.Utilities
 	public class iMACD
 	{
 		int pSlowEMA, pFastEMA, pSignalEMA;
-		iEMA slowEMA, fastEMA, signalEMA;
+		SMA slowEMA, fastEMA, signalEMA;
 
 		// restriction: pPFastEMA < pPSlowEMA
 		public iMACD(int pPFastEMA, int pPSlowEMA, int pPSignalEMA)
@@ -129,28 +110,28 @@ namespace Trading.Utilities
 			pSlowEMA = pPSlowEMA;
 			pSignalEMA = pPSignalEMA;
 
-			slowEMA = new iEMA(pSlowEMA);
-			fastEMA = new iEMA(pFastEMA);
-			signalEMA = new iEMA(pSignalEMA);
+			slowEMA = new SMA(pSlowEMA);
+			fastEMA = new SMA(pFastEMA);
+			signalEMA = new SMA(pSignalEMA);
 		}
 
 		public void ReceiveTick(decimal Val)
 		{
-			slowEMA.ReceiveTick(Val);
-			fastEMA.ReceiveTick(Val);
+			slowEMA.NextAverage(Val);
+			fastEMA.NextAverage(Val);
 
-			if (slowEMA.isPrimed() && fastEMA.isPrimed())
+			if (slowEMA.IsPrimed() && fastEMA.IsPrimed())
 			{
-				signalEMA.ReceiveTick( fastEMA.Value() - slowEMA.Value() );
+				signalEMA.NextAverage( fastEMA.LastAverage - slowEMA.LastAverage );
 			}
 		}
 
 		public void Value(out decimal MACD, out decimal signal, out decimal hist)
 		{
-			if (signalEMA.isPrimed())
+			if (signalEMA.IsPrimed())
 			{
-				MACD = fastEMA.Value() - slowEMA.Value();
-				signal = signalEMA.Value();
+				MACD = fastEMA.LastAverage - slowEMA.LastAverage;
+				signal = signalEMA.LastAverage;
 				hist = MACD - signal;
 			}
 			else
@@ -163,15 +144,15 @@ namespace Trading.Utilities
 
 		public decimal Value()
 		{
-			if (signalEMA.isPrimed())
-				return signalEMA.Value();
+			if (signalEMA.IsPrimed())
+				return signalEMA.LastAverage;
 			else
 				return 0;
 		}
 
 		public bool isPrimed()
 		{
-			if (signalEMA.isPrimed())
+			if (signalEMA.IsPrimed())
 				return true;
 			else
 				return false;

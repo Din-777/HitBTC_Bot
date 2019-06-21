@@ -8,6 +8,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading;
 using Trading.Utilities;
 
+
 namespace Trading
 {
 	public enum Type
@@ -112,10 +113,12 @@ namespace Trading
 	[Serializable]
 	public class OrderParametr
 	{
-		public decimal Quantity;
+		public decimal QuantityQuoteCurrency;
 		public decimal StopPercent;
 		public decimal ClosePercent;
 		public Period Period;
+		public int SmaPeriodFast;
+		public int SmaPeriodSlow;
 	}
 
 	[Serializable]
@@ -140,8 +143,7 @@ namespace Trading
 	public class Trading
 	{
 		public Dictionary<string, SMA> SmaSlow = new Dictionary<string, SMA>();
-		public Dictionary<string, SMA> SmaFast = new Dictionary<string, SMA>();
-		private HitBTCSocketAPI HitBTC;
+		public Dictionary<string, SMA> SmaFast = new Dictionary<string, SMA>();		
 		public Dictionary<string, List<PendingOrder>> PendingOrders;
 		public List<PendingOrder> ClosedOrders;
 		public Dictionary<string, OrderParametr> OrdersParameters;
@@ -149,6 +151,10 @@ namespace Trading
 
 		public Dictionary<string, List<decimal>> d_lSmaSlow;
 		public Dictionary<string, List<decimal>> d_lSmaFast;
+
+		private HitBTCSocketAPI HitBTC;
+		public bool DataFileIsloaded = false;
+		private string TradingDataFileName;
 
 		private Timer timer;
 		private DateTime DateTimeStart;
@@ -183,21 +189,25 @@ namespace Trading
 			HitBTC.MessageReceived += HitBTC_MessageReceived;
 		}
 
-		public void Add(string symbol, Period period, decimal treadingQuantity, decimal stopPercent, decimal closePercent)
+		public void Add(string symbol, Period period, decimal treadingQuantity, decimal stopPercent, decimal closePercent, int SmaPeriodFast = 5, int SmaPeriodSlow = 50)
 		{
 			if (!OrdersParameters.ContainsKey(symbol))
 				OrdersParameters.Add(symbol, new OrderParametr());
 
 			OrdersParameters[symbol] = new OrderParametr
 			{
-				Quantity = treadingQuantity,
+				QuantityQuoteCurrency = treadingQuantity,
 				StopPercent = stopPercent,
 				ClosePercent = closePercent,
-				Period = period
+				Period = period,
+				SmaPeriodFast = SmaPeriodFast,
+				SmaPeriodSlow = SmaPeriodSlow
 			};
 
-			SmaFast.Add(symbol, new SMA(5));
-			SmaSlow.Add(symbol, new SMA(50));
+			if (!SmaFast.ContainsKey(symbol))
+				SmaFast.Add(symbol, new SMA(SmaPeriodFast));
+			if (!SmaSlow.ContainsKey(symbol))
+				SmaSlow.Add(symbol, new SMA(SmaPeriodSlow));
 
 			//HitBTC.SocketMarketData.SubscribeTicker(symbol);
 			Thread.Sleep(10);
@@ -227,7 +237,7 @@ namespace Trading
 						Side = "sell",
 						Symbol = symbol,
 						OpenPrice = ticker.Ask,
-						Quantity = OrdersParameters[symbol].Quantity,
+						Quantity = OrdersParameters[symbol].QuantityQuoteCurrency,
 						StopPercent = OrdersParameters[symbol].StopPercent,
 						ClosePercent = OrdersParameters[symbol].ClosePercent
 					};
@@ -238,12 +248,12 @@ namespace Trading
 
 					if (quoteCurrency == "USD")
 					{
-						OrderParameterQuantity = OrdersParameters[symbol].Quantity;
+						OrderParameterQuantity = OrdersParameters[symbol].QuantityQuoteCurrency;
 						quantity = (OrderParameterQuantity / price) - ((OrderParameterQuantity / price) % HitBTC.Symbols[symbol].QuantityIncrement);
 					}
 					else
 					{
-						OrderParameterQuantity = OrdersParameters[symbol].Quantity / HitBTC.d_Tickers[String.Concat(quoteCurrency, "USD")].Ask;
+						OrderParameterQuantity = OrdersParameters[symbol].QuantityQuoteCurrency / HitBTC.d_Tickers[String.Concat(quoteCurrency, "USD")].Ask;
 						quantity = (OrderParameterQuantity / price) - ((OrderParameterQuantity / price) % HitBTC.Symbols[symbol].QuantityIncrement);
 					}
 
@@ -259,7 +269,7 @@ namespace Trading
 						Side = "buy",
 						Symbol = symbol,
 						OpenPrice = ticker.Ask,
-						Quantity = OrdersParameters[symbol].Quantity,
+						Quantity = OrdersParameters[symbol].QuantityQuoteCurrency,
 						StopPercent = OrdersParameters[symbol].StopPercent,
 						ClosePercent = OrdersParameters[symbol].ClosePercent
 					};
@@ -270,12 +280,12 @@ namespace Trading
 
 					if (quoteCurrency == "USD")
 					{
-						OrderParameterQuantity = OrdersParameters[symbol].Quantity;
+						OrderParameterQuantity = OrdersParameters[symbol].QuantityQuoteCurrency;
 						quantity = (OrderParameterQuantity / price) - ((OrderParameterQuantity / price) % HitBTC.Symbols[symbol].QuantityIncrement);
 					}
 					else
 					{
-						OrderParameterQuantity = OrdersParameters[symbol].Quantity / HitBTC.d_Tickers[String.Concat(quoteCurrency, "USD")].Ask;
+						OrderParameterQuantity = OrdersParameters[symbol].QuantityQuoteCurrency / HitBTC.d_Tickers[String.Concat(quoteCurrency, "USD")].Ask;
 						quantity = (OrderParameterQuantity / price) - ((OrderParameterQuantity / price) % HitBTC.Symbols[symbol].QuantityIncrement);
 					}
 
@@ -299,23 +309,23 @@ namespace Trading
 				if (!PendingOrders.ContainsKey(symbol))
 					PendingOrders.Add(symbol, new List<PendingOrder>());
 
+				decimal OrderParameterQuantity;
+				decimal quantityInBaseCurrency = 0;
+
+				OrdersParameters[symbol].QuantityQuoteCurrency -= OrdersParameters[symbol].QuantityQuoteCurrency * HitBTC.Symbols[symbol].TakeLiquidityRate;
+
+				OrderParameterQuantity = OrdersParameters[symbol].QuantityQuoteCurrency;
+				quantityInBaseCurrency = (OrderParameterQuantity / price) - ((OrderParameterQuantity / price) % HitBTC.Symbols[symbol].QuantityIncrement);
+
 				PendingOrder = new PendingOrder
 				{
 					Side = side,
 					Symbol = symbol,
 					OpenPrice = price,
-					Quantity = OrdersParameters[symbol].Quantity,
+					Quantity = quantityInBaseCurrency,
 					StopPercent = OrdersParameters[symbol].StopPercent,
 					ClosePercent = OrdersParameters[symbol].ClosePercent
 				};
-
-				decimal OrderParameterQuantity;
-				decimal quantity = 0;
-
-				OrderParameterQuantity = OrdersParameters[symbol].Quantity;
-				quantity = (OrderParameterQuantity / price) - ((OrderParameterQuantity / price) % HitBTC.Symbols[symbol].QuantityIncrement);
-
-				PendingOrder.Quantity = quantity;
 
 				PendingOrders[symbol].Add(PendingOrder);
 			}
@@ -326,7 +336,7 @@ namespace Trading
 		{
 			if (!PendingOrders.ContainsKey(symbol))
 			{
-				PendingOrderAdd(symbol, "buy", price).Type = Type.New;
+				PendingOrderAdd(symbol, "buy", price).Type = Type.First;
 			}
 			else
 			{
@@ -363,6 +373,8 @@ namespace Trading
 									PendingOrderAdd(symbol, "sell", price).Type = Type.New;
 									PendingOrders[symbol].Last().QuantityInUSDBuy = result.Item2;
 								}
+								else
+									PendingOrders[symbol][i].Type = Type.First;
 							}
 						}
 						else if (SmaFastPrice < SmaSlowPrice && PendingOrders[symbol][i].Type == Type.First)
@@ -640,6 +652,7 @@ namespace Trading
 
 		public bool Load(string fileNeme)
 		{
+			TradingDataFileName = fileNeme;
 			BinaryFormatter formatter = new BinaryFormatter();
 			try
 			{
@@ -657,6 +670,7 @@ namespace Trading
 					if (DateTimeStart == null)
 						DateTimeStart = DateTime.Now;
 
+					DataFileIsloaded = true;
 					return true;
 				}
 			}
@@ -666,7 +680,7 @@ namespace Trading
 			}
 		}
 
-		static Dictionary<string, DateTime> d_DateTimes = new Dictionary<string, DateTime>();
+		public Dictionary<string, List<DateTime>> d_DateTimes = new Dictionary<string, List<DateTime>>();
 		private void HitBTC_MessageReceived(string notification, string symbol)
 		{
 			if (notification == "updateCandles" && symbol != null)
@@ -674,16 +688,17 @@ namespace Trading
 				var candle = HitBTC.d_Candle[symbol];
 				if (!d_DateTimes.ContainsKey(symbol))
 				{
-					d_DateTimes.Add(symbol, new DateTime());
-					d_DateTimes[symbol] = candle.TimeStamp;
+					d_DateTimes.Add(symbol, new List<DateTime>());
+					d_DateTimes[symbol].Add(candle.TimeStamp);
 				}
 
-				if (candle.TimeStamp > d_DateTimes[symbol])
+				if (candle.TimeStamp > d_DateTimes[symbol].Last())
 				{
-					d_DateTimes[symbol] = candle.TimeStamp;
+					d_DateTimes[symbol][d_DateTimes[symbol].Count - 1] = candle.TimeStamp;
 
 					d_lSmaFast[symbol].Add(SmaFast[symbol].NextAverage(candle.Close));
 					d_lSmaSlow[symbol].Add(SmaFast[symbol].NextAverage(candle.Close));
+					d_DateTimes[symbol].Add(candle.TimeStamp);
 				}
 				else
 				{
@@ -705,10 +720,14 @@ namespace Trading
 				if (!d_lSmaSlow.ContainsKey(symbol))
 					d_lSmaSlow.Add(symbol, new List<decimal>());
 
+				if(!d_DateTimes.ContainsKey(symbol))
+					d_DateTimes.Add(symbol, new List<DateTime>());
+
 				foreach (var candle in HitBTC.Candles[symbol])
 				{
 					d_lSmaFast[symbol].Add(SmaFast[symbol].NextAverage(candle.Close));
 					d_lSmaSlow[symbol].Add(SmaSlow[symbol].NextAverage(candle.Close));
+					d_DateTimes[symbol].Add(candle.TimeStamp);
 				}
 			}
 		}
@@ -726,8 +745,8 @@ namespace Trading
 			foreach (var p in OrdersParameters)
 			{
 				//HitBTC.SocketMarketData.SubscribeTicker(p.Key);
-				HitBTC.SocketMarketData.SubscribeCandles(p.Key, period: p.Value.Period, 100);
-				HitBTC.SocketMarketData.SubscribeTrades(p.Key, 10);
+				HitBTC.SocketMarketData.SubscribeCandles(p.Key, period: p.Value.Period, 500);
+				//HitBTC.SocketMarketData.SubscribeTrades(p.Key, 10);
 			}
 		}
 	}

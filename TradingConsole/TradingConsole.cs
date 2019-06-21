@@ -2,8 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 using System.Threading;
 using HitBTC;
@@ -11,6 +9,9 @@ using HitBTC.Models;
 using Trading;
 using Trading.Utilities;
 using Screen;
+
+using System.Runtime.InteropServices;
+using System.IO;
 
 namespace TradingConsole
 {
@@ -23,11 +24,21 @@ namespace TradingConsole
 		static string sKey = "B37LaDlfa70YM9gorzpjYGQAZVRNXDj3";
 
 		public static Trading.Trading Trading;
-
-		public static Dictionary<string, SMA> SmaPrices = new Dictionary<string, SMA>();
+		public static string TradingDataFileName = "tr.dat";
 
 		static void Main(string[] args)
 		{
+			SetConsoleCtrlHandler(new HandlerRoutine(ConsoleCtrlCheck), true);
+
+			if (pKey == null || sKey == null)
+			{
+				using (var reader = new StreamReader("key.txt"))
+				{
+					pKey = reader.ReadLine().Substring(5);
+					sKey = reader.ReadLine().Substring(5);
+				}
+			}
+
 			HitBTC = new HitBTCSocketAPI();
 			Trading = new Trading.Trading(ref HitBTC);
 			Screen = new Screen.Screen(ref HitBTC, ref Trading);
@@ -44,10 +55,7 @@ namespace TradingConsole
 			
 			HitBTC.MessageReceived -= HitBTCSocket_MessageReceived;
 			Trading.DemoBalance = HitBTC.Balance;
-			Trading.DemoBalance["USD"].Available = 10.0m;
-
-			HitBTC.SocketMarketData.SubscribeTicker("BTCUSD");
-			HitBTC.SocketMarketData.SubscribeTicker("ETHUSD");
+			Trading.DemoBalance["USD"].Available = 10000.0m;
 
 			string[] treadingBaseCurrency = {  "BTC", "ETH", "ETC", "LTC", "XRP", "ZEC", "TRX", "EOS", "NEO", "ADA",
 												"XLM", "XMR", "BTG", "ZIL", "DOGE"};
@@ -57,14 +65,14 @@ namespace TradingConsole
 				string symbol = HitBTC.Symbols.ElementAt(i).Key;
 				string baseCurrency = HitBTC.Symbols.ElementAt(i).Value.BaseCurrency;
 				string quoteCurrency = HitBTC.Symbols.ElementAt(i).Value.QuoteCurrency;
-				if (symbol.EndsWith("USD"))
+				if (symbol.EndsWith("USD") || symbol.EndsWith("USDT"))
 				{
-					Trading.Add(symbol, period: Period.H1, treadingQuantity: 0.5m, stopPercent: 10.0m, closePercent: 10.0m);
+					Trading.Add(symbol, period: Period.H1, treadingQuantity: 100.0m, stopPercent: 1.0m, closePercent: 1.0m);
 				}
 			}
 
 			HitBTC.MessageReceived += HitBTCSocket_MessageReceived;
-			Trading.Load("tr.dat");
+			Trading.Load(TradingDataFileName);
 
 			bool close = false;
 			while (close != true)
@@ -72,11 +80,10 @@ namespace TradingConsole
 				Console.ReadLine();
 				HitBTC.MessageReceived -= HitBTCSocket_MessageReceived;
 				Console.SetCursorPosition(0, 40);
-				Console.WriteLine("Continue       > 1");
-				Console.WriteLine("Subtotal       > 2");
-				Console.WriteLine("Sell all/exit  > 3");
-				Console.WriteLine("Save and exit  > 4");
-				Console.WriteLine("Save and exit  > 5");
+				Console.WriteLine("Continue          > 1");
+				Console.WriteLine("Subtotal and save > 2");
+				Console.WriteLine("Sell all/exit     > 3");
+				Console.WriteLine("Save and exit     > 4");
 
 				Console.CursorVisible = true;
 				Console.WriteLine();
@@ -91,33 +98,24 @@ namespace TradingConsole
 						break;
 					case "2":
 						Console.CursorVisible = false;
-						Trading.Save("tr.dat");
+						Trading.Save(TradingDataFileName);
 						SubtotalBalanse();
 						Screen.PrintBalance(column: 20, row: 23, count: 20, Trading.DemoBalance);
 						Console.ReadLine();
-						Trading.Load("tr.dat");
+						Trading.Load(TradingDataFileName);
 						HitBTC.MessageReceived += HitBTCSocket_MessageReceived;
 						break;
 					case "3":
 						Console.CursorVisible = false;
 						SubtotalBalanse();
 						Screen.PrintBalance(column: 20, row: 23, count: 20, Trading.DemoBalance);
-						Trading.Save("tr.dat");
+						Trading.Save(TradingDataFileName);
 						Console.ReadLine();
 						close = true;
 						break;
 					case "4":
 						Console.CursorVisible = false;
-						Trading.Save("tr.dat");
-						SubtotalBalanse();
-						Screen.PrintBalance(column: 20, row: 23, count: 20, Trading.DemoBalance);
-						Console.ReadLine();
-						Trading.Load("tr.dat");
-						HitBTC.MessageReceived += HitBTCSocket_MessageReceived;
-						break;
-					case "5":
-						Console.CursorVisible = false;
-						Trading.Save("tr.dat");
+						Trading.Save(TradingDataFileName);
 						SubtotalBalanse();
 						Screen.PrintBalance(column: 20, row: 23, count: 20, Trading.DemoBalance);
 						Console.ReadLine();
@@ -144,19 +142,19 @@ namespace TradingConsole
 
 				if (Trading.DemoBalance.ElementAt(i).Key != "USD")
 					if (Trading.DemoBalance.ElementAt(i).Value.Available > 0.0m)
-						if (HitBTC.d_Tickers.ContainsKey(symbol))
+						if (HitBTC.d_Candle.ContainsKey(symbol))
 							Trading.Sell(symbol, HitBTC.d_Candle[symbol].Close, Trading.DemoBalance.ElementAt(i).Value.Available);
-						else if (HitBTC.d_Tickers.ContainsKey(String.Concat(baseCurrency, "BTC")))
+						else if (HitBTC.d_Candle.ContainsKey(String.Concat(baseCurrency, "BTC")))
 						{
 							quoteCurrency = "BTC";
 							symbol = String.Concat(baseCurrency, quoteCurrency);
-							Trading.Sell(symbol, HitBTC.d_Tickers[symbol].Bid, Trading.DemoBalance.ElementAt(i).Value.Available);
+							Trading.Sell(symbol, HitBTC.d_Candle[symbol].Close, Trading.DemoBalance.ElementAt(i).Value.Available);
 						}
-						else if (HitBTC.d_Tickers.ContainsKey(String.Concat(baseCurrency, "ETH")))
+						else if (HitBTC.d_Candle.ContainsKey(String.Concat(baseCurrency, "ETH")))
 						{
 							quoteCurrency = "ETH";
 							symbol = String.Concat(baseCurrency, quoteCurrency);
-							Trading.Sell(symbol, HitBTC.d_Tickers[symbol].Bid, Trading.DemoBalance.ElementAt(i).Value.Available);
+							Trading.Sell(symbol, HitBTC.d_Candle[symbol].Close, Trading.DemoBalance.ElementAt(i).Value.Available);
 						}
 			}
 
@@ -170,12 +168,53 @@ namespace TradingConsole
 		{
 			if(s == "updateCandles" && symbol != null)
 			{
-				if (Trading.SmaFast[symbol].isPrimed() && Trading.SmaSlow[symbol].isPrimed())
+				if (Trading.SmaFast[symbol].IsPrimed() && Trading.SmaSlow[symbol].IsPrimed())
 				{
 					Trading.Run_6(symbol, HitBTC.d_Candle[symbol].Close);
 					Screen.Print();
 				}
 			}
 		}
+
+		private static bool ConsoleCtrlCheck(CtrlTypes ctrlType)
+		{
+			HitBTC.ReceiveMessages(false);
+			HitBTC.MessageReceived -= HitBTCSocket_MessageReceived;
+
+			if(Trading.DataFileIsloaded)
+			{
+				Console.Clear();
+				Console.Write("SAVE...");
+				Trading.Save(TradingDataFileName);
+				Console.Write("  OK");
+				Thread.Sleep(1000);
+			}
+			return true;
+		}
+
+		#region Unmanaged
+
+		// Declare the SetConsoleCtrlHandler function
+		// as external and receiving a delegate.
+		[DllImport("Kernel32")]
+		private static extern bool SetConsoleCtrlHandler(HandlerRoutine Handler, bool Add);
+
+		// A delegate type to be used as the handler routine
+		// for SetConsoleCtrlHandler.
+		private delegate bool HandlerRoutine(CtrlTypes CtrlType);
+
+		// An enumerated type for the control messages
+		// sent to the handler routine.
+		private enum CtrlTypes
+		{
+			CTRL_C_EVENT = 0,
+			CTRL_BREAK_EVENT,
+			CTRL_CLOSE_EVENT,
+			CTRL_LOGOFF_EVENT = 5,
+			CTRL_SHUTDOWN_EVENT
+
+		}
+
+		#endregion
 	}
 }

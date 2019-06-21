@@ -37,6 +37,11 @@ namespace Screen
 
 		private void PrintPendingOrders(int column, int row, int count, List<PendingOrder> PendingOrders)
 		{
+			decimal profit = PendingOrders.Sum(p => p.Side == "sell" ? p.CurrProfitPercent : 0.0m);
+
+			Console.SetCursorPosition(30, 0);
+			Console.Write(profit.ToString().PadRight(10).Substring(0, 10));
+
 			for (int i = 0; i < count; i++)
 			{
 				if (i < PendingOrders.Count)
@@ -59,7 +64,7 @@ namespace Screen
 			}
 		}
 
-		private void PrintClosedorders(int column, int row, int count, List<PendingOrder> ClosedOrders)
+		private void PrintClosedOrders(int column, int row, int count, List<PendingOrder> ClosedOrders)
 		{
 			for (int i = 0; i < count; i++)
 			{
@@ -111,15 +116,15 @@ namespace Screen
 				Console.Write("Id    Sym      Side   Open        Close       Profit");
 
 				Console.SetCursorPosition(column_2, 0);
-				decimal sumPercent = Trading.ClosedOrders.Sum(x => x.CurrProfitInUSD);
-				Console.Write("Closed orders {0}  {1}", Trading.ClosedOrders.Count , sumPercent);
+				decimal sumProfit= Trading.ClosedOrders.Sum(x => x.CurrProfitInUSD);
+				Console.Write("Closed orders {0}  {1}", Trading.ClosedOrders.Count , sumProfit);
 				Console.SetCursorPosition(column_2, 1);
 				Console.Write("Id    Sym      Side   Open        Close       Profit");
 
 				Console.SetCursorPosition(column_1, series_2 + 4);
 				Console.Write("Balance");
 
-				PrintClosedorders(column: column_2, row: 2, count: 44, ClosedOrders: Trading.ClosedOrders);
+				PrintClosedOrders(column: column_2, row: 2, count: 44, ClosedOrders: Trading.ClosedOrders);
 				PrintBalance(column: column_1, row: series_2 + 5, count: series_2, Trading.DemoBalance);
 
 				StaticId = PendingOrder.StaticId;
