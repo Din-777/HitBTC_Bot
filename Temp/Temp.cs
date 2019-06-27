@@ -55,7 +55,7 @@ namespace Temp
 			HitBTC.MessageReceived += HitBTCSocket_MessageReceived;
 			Trading.Load(TradingDataFileName);
 
-			Task task = Task.Run(() => { Application.Run(new Form1(HitBTC, Trading)); });
+			Task task = Task.Run(() => { Application.Run(new ViewChart.Form1(HitBTC, Trading)); });
 
 			bool close = false;
 			while (close != true)
