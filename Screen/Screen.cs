@@ -174,10 +174,12 @@ namespace Screen
 			Console.WriteLine("Save and exit     > 4");
 			Console.SetCursorPosition(column, series_2 + 9);
 			Console.WriteLine("Add Orders from Candles   > 5");
+			Console.SetCursorPosition(column, series_2 + 10);
+			Console.WriteLine("Delete Order by ID   > 6");
 
 			Console.CursorVisible = true;
 			Console.WriteLine();
-			Console.SetCursorPosition(column, series_2 + 10);
+			Console.SetCursorPosition(column, series_2 + 11);
 			Console.Write("> ");
 
 			string ansver = Console.ReadLine();
@@ -226,6 +228,16 @@ namespace Screen
 					Console.ReadLine();
 					close = false;
 					break;
+				case "6":
+					Console.CursorVisible = true;
+					Console.SetCursorPosition(column, series_2 + 12);
+					Console.Write("Inder Order id   > ");
+					int id = Convert.ToInt32(Console.ReadLine());
+					Console.CursorVisible = false;
+					Trading.ClosedOrderById(id);
+					close = false;
+					break;
+
 				default:
 					break;
 			}

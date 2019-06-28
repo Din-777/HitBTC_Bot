@@ -46,7 +46,7 @@
 			this.chart1.Dock = System.Windows.Forms.DockStyle.Fill;
 			this.chart1.Location = new System.Drawing.Point(0, 0);
 			this.chart1.Name = "chart1";
-			this.chart1.Size = new System.Drawing.Size(1007, 589);
+			this.chart1.Size = new System.Drawing.Size(904, 589);
 			this.chart1.TabIndex = 3;
 			this.chart1.Text = "chart1";
 			// 
@@ -57,7 +57,7 @@
 			this.textBox1.Multiline = true;
 			this.textBox1.Name = "textBox1";
 			this.textBox1.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-			this.textBox1.Size = new System.Drawing.Size(188, 467);
+			this.textBox1.Size = new System.Drawing.Size(291, 467);
 			this.textBox1.TabIndex = 4;
 			// 
 			// splitContainer1
@@ -77,7 +77,7 @@
 			this.splitContainer1.Panel2.Controls.Add(this.button1);
 			this.splitContainer1.Panel2.Controls.Add(this.textBox1);
 			this.splitContainer1.Size = new System.Drawing.Size(1199, 589);
-			this.splitContainer1.SplitterDistance = 1007;
+			this.splitContainer1.SplitterDistance = 904;
 			this.splitContainer1.TabIndex = 5;
 			// 
 			// checkBoxAll

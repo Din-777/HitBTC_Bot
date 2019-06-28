@@ -14,6 +14,7 @@ namespace Trading
 	public enum Type
 	{
 		New,
+		Sell,
 		First,
 		Closed,
 		Deleted,
@@ -330,6 +331,18 @@ namespace Trading
 			return PendingOrder;
 		}
 
+		public void ClosedOrderById(int id)
+		{
+			foreach (var kvp in PendingOrders)
+				foreach (var p in kvp.Value)
+					if (p.Id == id)
+					{
+						p.Type = Type.Sell;
+						continue;
+					}
+
+		}
+
 		public void Run_6(string symbol, decimal price)
 		{
 			if (!PendingOrders.ContainsKey(symbol))
@@ -408,6 +421,23 @@ namespace Trading
 
 									PendingOrderAdd(symbol, "buy", price).Type = Type.New;
 								}
+							}
+						}
+						else if (PendingOrders[symbol][i].Type == Type.Sell)
+						{
+							var result = Sell(symbol, price, PendingOrders[symbol][i].Quantity);
+							if (result.Item1 == true)
+							{
+								PendingOrders[symbol][i].QuantityInUSDSell = result.Item2;
+								PendingOrders[symbol][i].CurrProfitInUSD = result.Item2 - PendingOrders[symbol][i].QuantityInUSDBuy;
+
+								ClosedOrders.Add(PendingOrders[symbol].ElementAt(i));
+								ClosedOrders.Last().ClosePrice = price;
+								ClosedOrders.Last().CurrProfitPercent -= HitBTC.Symbols[symbol].TakeLiquidityRate * 100.0m;
+
+								PendingOrders[symbol].ElementAt(i).Type = Type.Deleted;
+
+								PendingOrderAdd(symbol, "buy", price).Type = Type.New;
 							}
 						}
 						else if (PendingOrders[symbol][i].Type == Type.Confirmed)
