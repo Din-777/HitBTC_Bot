@@ -56,25 +56,26 @@ namespace TradingConsole
 			
 			HitBTC.MessageReceived -= HitBTCSocket_MessageReceived;
 			Trading.DemoBalance = HitBTC.Balance;
+			if(Trading.Demo == true)
+				Trading.DemoBalance["BTC"].Available = 0.01m;
 
-			string[] treadingBaseCurrency = {  "BTC", "ETH", "ETC", "LTC", "XRP", "ZEC", "TRX", "EOS", "NEO", "ADA",
-												"XLM", "XMR", "BTG", "ZIL", "DOGE"};
 
 			for (int i = 0; i < HitBTC.Symbols.Count(); i++)
 			{
 				string symbol = HitBTC.Symbols.ElementAt(i).Key;
 				string baseCurrency = HitBTC.Symbols.ElementAt(i).Value.BaseCurrency;
 				string quoteCurrency = HitBTC.Symbols.ElementAt(i).Value.QuoteCurrency;
-				if (symbol.EndsWith("USD") || symbol.EndsWith("USDT"))
+				if (symbol.EndsWith("BTC") || symbol.EndsWith("BTC"))
 				{
-					Trading.Add(symbol, period: Period.H1, treadingQuantity: HitBTC.Balance[symbol].Available / 10.0m , stopPercent: 5.0m, closePercent: 0.5m);
+					Trading.Add(symbol: symbol, period: Period.M5, tradingQuantityInPercent: 10.0m, stopPercent: 10.0m, closePercent: 1.0m,
+							SmaPeriodFast: 20, SmaPeriodSlow: 5);
 				}
 			}
 
 			HitBTC.MessageReceived += HitBTCSocket_MessageReceived;
 			Trading.Load(TradingDataFileName);
 
-			Process.Start("https://hitbtc.com/exchange/BTC-to-USDT");
+			//Process.Start("https://hitbtc.com/exchange/BTC-to-USDT");
 
 			bool close = false;
 			while (close != true)
@@ -94,9 +95,9 @@ namespace TradingConsole
 			{
 				if (Trading.SmaFast[symbol].IsPrimed() && Trading.SmaSlow[symbol].IsPrimed())
 				{
-					if (HitBTC.d_Candle[symbol].VolumeQuote > 5000.0m)
+					if (HitBTC.d_Candle[symbol].VolumeQuote > 0.5m)
 					{
-						Trading.Run_6(symbol, HitBTC.d_Candle[symbol].Close);
+						Trading.Run_7_RSI(symbol, HitBTC.d_Candle[symbol].Close);
 						Screen.Print();
 					}
 				}

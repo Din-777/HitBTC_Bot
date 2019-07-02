@@ -5,7 +5,7 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{29627F60-FBCA-42C0-89BD-9419FDFFDEF6}</ProjectGuid>
-    <OutputType>Library</OutputType>
+    <OutputType>WinExe</OutputType>
     <RootNamespace>ViewChart</RootNamespace>
     <AssemblyName>ViewChart</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>

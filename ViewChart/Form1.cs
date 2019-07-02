@@ -111,18 +111,47 @@ namespace ViewChart
 		{
 			this.Symbol = comboBoxSymbols.SelectedItem.ToString();
 
-			if (HitBTC.Candles.ContainsKey(Symbol))
+			Trading.DemoBalance["USD"].Available = 100.0m;
+			Trading.PendingOrders.Clear();
+			Trading.ClosedOrders.Clear();
+			textBox1.BeginInvoke((MethodInvoker)(() =>
 			{
-				chart1.BeginInvoke((MethodInvoker)(() =>
-				{
-					chart1.Series["Candles"].Points.Clear();
-					chart1.Series["SmaFast"].Points.Clear();
-					chart1.Series["SmaSlow"].Points.Clear();
-					chart1.Series["Candles"].Points.DataBind(HitBTC.Candles[Symbol].ToList(), "TimeStamp", "Max,Min,Open,Close", "");
-					chart1.Series["SmaFast"].Points.DataBindXY(Trading.d_DateTimes[Symbol].ToList(), Trading.d_lSmaFast[Symbol].ToList());
-					chart1.Series["SmaSlow"].Points.DataBindXY(Trading.d_DateTimes[Symbol].ToList(), Trading.d_lSmaSlow[Symbol].ToList());
-				}));
+				textBox1.Clear();
+			}));
+
+			Trading.Add(symbol: Symbol, period: Period.H1, tradingQuantityInPercent: 10.0m, stopPercent: 10.0m, closePercent: 5.0m);
+
+			while (!HitBTC.Candles.ContainsKey(Symbol)) Thread.Sleep(100);
+			HitBTC.SocketMarketData.UnSubscribeCandles(symbol: Symbol);
+
+			decimal BalanceUSD = Trading.DemoBalance["USD"].Available;
+
+			foreach (var candle in HitBTC.Candles[Symbol])
+			{
+				Trading.Run_6(Symbol, candle.Close);
+
+				if (Trading.DemoBalance["USD"].Available > BalanceUSD)
+					textBox1.BeginInvoke((MethodInvoker)(() =>
+					{
+						textBox1.AppendText("sell " + Trading.DemoBalance["USD"].Available.ToString().PadRight(10).Substring(0, 10) + "\r\n");
+					}));
+				else if (Trading.DemoBalance["USD"].Available < BalanceUSD)
+					textBox1.BeginInvoke((MethodInvoker)(() =>
+					{
+						textBox1.AppendText("buy " + Trading.DemoBalance["USD"].Available.ToString().PadRight(10).Substring(0, 10) + "\r\n");
+					}));
 			}
+
+			chart1.BeginInvoke((MethodInvoker)(() =>
+			{
+				chart1.Series["Candles"].Points.Clear();
+				chart1.Series["SmaFast"].Points.Clear();
+				chart1.Series["SmaSlow"].Points.Clear();
+
+				chart1.Series["Candles"].Points.DataBind(HitBTC.Candles[Symbol].ToList(), "TimeStamp", "Max,Min,Open,Close", "");
+				chart1.Series["SmaFast"].Points.DataBindXY(Trading.d_DateTimes[Symbol].ToList(), Trading.d_lSmaFast[Symbol].ToList());
+				chart1.Series["SmaSlow"].Points.DataBindXY(Trading.d_DateTimes[Symbol].ToList(), Trading.d_lSmaSlow[Symbol].ToList());
+			}));
 		}
 
 		private void CheckBoxAll_CheckedChanged(object sender, EventArgs e)
@@ -180,5 +209,9 @@ namespace ViewChart
 			chart1.ChartAreas[0].AxisY.Maximum = maxY;
 		}
 
+		private void Form1_Load(object sender, EventArgs e)
+		{
+
+		}
 	}
 }

@@ -36,7 +36,7 @@ namespace Screen
 
 		private void PrintPendingOrders(int column, int row, int count, List<PendingOrder> PendingOrders)
 		{
-			decimal profit = PendingOrders.Sum(p => p.Side == "sell" ? p.CurrProfitPercent : 0.0m);
+			decimal profit = PendingOrders.Sum(p => p.Side == "sell" ? p.CurrProfitInUSD : 0.0m);
 
 			Console.SetCursorPosition(30, 0);
 			Console.Write(profit.ToString().PadRight(10).Substring(0, 10));
@@ -53,7 +53,7 @@ namespace Screen
 															PendingOrder.Side.PadRight(6),
 															PendingOrder.OpenPrice.ToString().PadRight(10).Substring(0, 10),
 															PendingOrder.ClosePrice.ToString().PadRight(10).Substring(0, 10),
-															PendingOrder.CurrProfitPercent.ToString().PadRight(10).Substring(0, 10)
+															PendingOrder.CurrProfitInUSD.ToString().PadRight(10).Substring(0, 10)
 															//(Trading.SmaFast[PendingOrder.Symbol].LastAverage - Trading.SmaSlow[PendingOrder.Symbol].LastAverage).
 															//	ToString().PadRight(10).Substring(0, 10) 
 															);
@@ -104,21 +104,22 @@ namespace Screen
 
 		public void Print()
 		{
-			var t = Trading.PendingOrders.SelectMany(kvp => kvp.Value).ToList();
-			var tempPendingOrders = t.OrderByDescending(o => o.Side == "sell" ? o.CurrProfitPercent : -333.0m).ToList();
+			var t = Trading.PendingOrders.Select(kvp => kvp.Value).ToList();
+			var tempPendingOrders = t.OrderByDescending(o => o.Side == "sell" ? o.CurrProfitInUSD : -333.0m).ToList();
+			Trading.PendingOrders = tempPendingOrders.ToDictionary(l => l.Symbol);
 
 			if (StaticId != PendingOrder.StaticId)
 			{
 				Console.SetCursorPosition(column_1, 0);
 				Console.Write("Pending orders {0}  Id {1}", tempPendingOrders.Count, PendingOrder.StaticId);
 				Console.SetCursorPosition(column_1, 1);
-				Console.Write("Id    Sym      Side   Open        Close       Profit");
+				Console.Write("Id    Sym       Side   Open        Close       Profit");
 
 				Console.SetCursorPosition(column_2, 0);
 				decimal sumProfit = Trading.ClosedOrders.Sum(x => x.CurrProfitInUSD);
 				Console.Write("Closed orders {0}  {1}", Trading.ClosedOrders.Count, sumProfit);
 				Console.SetCursorPosition(column_2, 1);
-				Console.Write("Id    Sym      Side   Open        Close       Profit");
+				Console.Write("Id    Sym       Side   Open        Close       Profit");
 
 				Console.SetCursorPosition(column_1, series_2 + 4);
 				Console.Write("Balance");
@@ -187,18 +188,20 @@ namespace Screen
 			switch (ansver)
 			{
 				case "1":
+					Console.CursorVisible = false;
+					Trading.Save(TradingDataFileName);
 					break;
 				case "2":
 					Console.CursorVisible = false;
 					Trading.Save(TradingDataFileName);
-					Trading.SellAll();
+					Trading.SellAll("BTC");
 					PrintBalance(column: column_1, row: series_2 + 5, count: series_2, Trading.DemoBalance);
 					Console.ReadLine();
 					Trading.Load(TradingDataFileName);
 					break;
 				case "3":
 					Console.CursorVisible = false;
-					Trading.SellAll();
+					Trading.SellAll("BTC");
 					PrintBalance(column: column_1, row: series_2 + 5, count: series_2, Trading.DemoBalance);
 					Trading.Save(TradingDataFileName);
 					Console.ReadLine();
@@ -207,7 +210,7 @@ namespace Screen
 				case "4":
 					Console.CursorVisible = false;
 					Trading.Save(TradingDataFileName);
-					Trading.SellAll();
+					Trading.SellAll("BTC");
 					PrintBalance(column: column_1, row: series_2 + 5, count: series_2, Trading.DemoBalance);
 					Console.ReadLine();
 					close = true;

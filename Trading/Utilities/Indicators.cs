@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Trading.Utilities
 {
@@ -19,7 +17,7 @@ namespace Trading.Utilities
 			Queue = new List<decimal>();
 		}
 
-		public decimal NextAverage(decimal value)
+		public decimal NextValue(decimal value)
 		{
 			if (Queue.Count >= Period)
 				Queue.RemoveRange(0, Queue.Count-Period);
@@ -33,7 +31,7 @@ namespace Trading.Utilities
 			return LastAverage;
 		}
 
-		public decimal Average(decimal value)
+		public decimal Value(decimal value)
 		{
 			Queue.Add(value);
 			var average = Queue.Average();
@@ -54,6 +52,7 @@ namespace Trading.Utilities
 		public void Clear()
 		{
 			Queue.Clear();
+			LastAverage = 0;
 		}
 	}
 
@@ -70,14 +69,14 @@ namespace Trading.Utilities
 			Alpha = 2.0m / (period + 1.0m);
 		}
 
-		public decimal NextAverage(decimal value)
+		public decimal NextValue(decimal value)
 		{
 			LastAverage = LastAverage == 0 ? value : (value - LastAverage) * Alpha + LastAverage;
 
 			return LastAverage;
 		}
 
-		public decimal Average(decimal value)
+		public decimal Value(decimal value)
 		{
 			var average = LastAverage == 0 ? value : (value - LastAverage) * Alpha + LastAverage;
 
@@ -117,12 +116,12 @@ namespace Trading.Utilities
 
 		public void ReceiveTick(decimal Val)
 		{
-			slowEMA.NextAverage(Val);
-			fastEMA.NextAverage(Val);
+			slowEMA.NextValue(Val);
+			fastEMA.NextValue(Val);
 
 			if (slowEMA.IsPrimed() && fastEMA.IsPrimed())
 			{
-				signalEMA.NextAverage( fastEMA.LastAverage - slowEMA.LastAverage );
+				signalEMA.NextValue( fastEMA.LastAverage - slowEMA.LastAverage );
 			}
 		}
 
@@ -179,6 +178,129 @@ namespace Trading.Utilities
 
 			if (val != 0) LastState = val > 0 ? true : false;
 			return ReversNow;
+		}
+	}
+
+	public class RSI
+	{
+		public int Period = 0;
+		private int Counter = 0;
+		public decimal LastRSI = 0;
+		public decimal PrevValue = 0;
+
+		public RSI(int period)
+		{
+			Period = period;
+		}
+
+		decimal AverageGain = 0;
+		decimal AverageLoss = 0;
+
+		public decimal NextValue(decimal value)
+		{
+			if (Counter == 0) PrevValue = value;
+			decimal diff = value - PrevValue;
+			decimal gain = 0;
+			decimal loss = 0;
+
+			if(Counter < Period)
+			{
+				if (diff >= 0)
+					AverageGain = AverageGain + diff;
+				else
+					AverageLoss = AverageLoss - diff;
+			}
+			else if(Counter == Period)
+			{
+				AverageGain = AverageGain / Period;
+				AverageLoss = AverageLoss / Period;
+				decimal rs = AverageGain / AverageLoss;
+
+				LastRSI = 100.0m - (100.0m / (1.0m + rs));
+			}
+			else if(Counter > Period)
+			{
+				if (diff >= 0)
+				{
+					AverageGain = ((AverageGain * (Period - 1)) + diff) / Period;
+					AverageLoss = (AverageLoss * (Period - 1)) / Period;
+				}
+				else
+				{
+					AverageLoss = ((AverageLoss * (Period - 1)) - diff) / Period;
+					AverageGain = (AverageGain * (Period - 1)) / Period;
+				}
+
+				decimal rs = AverageGain / AverageLoss;
+
+				LastRSI = 100.0m - (100.0m / (1.0m + rs));
+			}
+
+			Counter++;
+			PrevValue = value;
+			return LastRSI;
+		}
+
+		public decimal Value(decimal value)
+		{
+			if (Counter == 0) PrevValue = value;
+			decimal diff = value - PrevValue;
+			decimal gain = 0;
+			decimal loss = 0;
+			decimal averageGain = 0;
+			decimal averageLoss = 0;
+			decimal rsi = 0;
+
+			if (diff >= 0) gain = diff;
+			if (diff < 0) loss = Math.Abs(diff);
+
+			if (Counter < Period)
+			{
+				if (diff >= 0)
+					averageGain = AverageGain + diff;
+				else
+					averageLoss = AverageLoss - diff;
+			}
+			else if (Counter == Period)
+			{
+				averageGain = AverageGain / Period;
+				averageLoss = AverageLoss / Period;
+				decimal rs = AverageGain / AverageLoss;
+
+				rsi = 100.0m - (100.0m / (1.0m + rs));
+			}
+			else if (Counter > Period)
+			{
+				if (diff >= 0)
+				{
+					averageGain = ((AverageGain * (Period - 1)) + diff) / Period;
+					averageLoss = (AverageLoss * (Period - 1)) / Period;
+				}
+				else
+				{
+					averageLoss = ((AverageLoss * (Period - 1)) - diff) / Period;
+					averageGain = (AverageGain * (Period - 1)) / Period;
+				}
+
+				decimal rs = averageGain / averageLoss;
+
+				rsi = 100.0m - (100.0m / (1.0m + rs));
+			}
+
+			return rsi;
+		}
+
+		public bool IsPrimed()
+		{
+			if (Counter > Period) return true;
+			else return false;
+		}
+
+		public void Clear()
+		{
+			Counter = 0;
+			LastRSI = 0;
+			PrevValue = 0;
 		}
 	}
 

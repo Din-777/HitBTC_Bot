@@ -17,6 +17,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Temp", "Temp\Temp.csproj", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ViewChart", "ViewChart\ViewChart.csproj", "{29627F60-FBCA-42C0-89BD-9419FDFFDEF6}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tepm2", "Tepm2\Tepm2.csproj", "{A5E3E060-7F3C-4B74-952F-6A5E7E0EE352}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -51,6 +53,10 @@ Global
 		{29627F60-FBCA-42C0-89BD-9419FDFFDEF6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{29627F60-FBCA-42C0-89BD-9419FDFFDEF6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{29627F60-FBCA-42C0-89BD-9419FDFFDEF6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A5E3E060-7F3C-4B74-952F-6A5E7E0EE352}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A5E3E060-7F3C-4B74-952F-6A5E7E0EE352}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A5E3E060-7F3C-4B74-952F-6A5E7E0EE352}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A5E3E060-7F3C-4B74-952F-6A5E7E0EE352}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

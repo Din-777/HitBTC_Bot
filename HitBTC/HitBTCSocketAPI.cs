@@ -36,7 +36,7 @@ namespace HitBTC
 		public Dictionary<string, List<SocketTrade>> Trades;
 		public Dictionary<string, SocketTrade> d_Trades = new Dictionary<string, SocketTrade>();
 		public Dictionary<string, Candle> d_Candle = new Dictionary<string, Candle>();
-		public Stack<ParamsActiveOrders> ActiveOrders;
+		public List<ParamsActiveOrders> ActiveOrders;
 
 		public async void ConnectAsync(WebSocket socket)
 		{
@@ -173,9 +173,14 @@ namespace HitBTC
 					Symbols = (JsonConvert.DeserializeObject<List<Symbol>>(result.ToString())).ToDictionary(t => t.Id);
 					MessageType = "getSymbol";
 				}
-				else if (method == "activeOrders")
+				else if (method == "activeOrders" && Params != null)
 				{
-					this.ActiveOrders = JsonConvert.DeserializeObject<Stack<ParamsActiveOrders>>(Params.ToString());
+					this.ActiveOrders = JsonConvert.DeserializeObject<List<ParamsActiveOrders>>(Params.ToString());
+					MessageType = "activeOrders";
+				}
+				else if (method == "report" && Params != null)
+				{
+					MessageType = "report";
 				}
 				else if (method == "ticker" && Params != null)
 				{

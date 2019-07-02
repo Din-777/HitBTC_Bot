@@ -118,6 +118,7 @@
 			this.Controls.Add(this.splitContainer1);
 			this.Name = "Form1";
 			this.Text = "Form1";
+			this.Load += new System.EventHandler(this.Form1_Load);
 			this.Shown += new System.EventHandler(this.Form1_Shown);
 			((System.ComponentModel.ISupportInitialize)(this.chart1)).EndInit();
 			this.splitContainer1.Panel1.ResumeLayout(false);
