@@ -64,6 +64,15 @@ namespace Chart
 			chart1.Series["SmaFast"].IsXValueIndexed = true;
 			chart1.Series["SmaFast"].Color = Color.Crimson;
 
+			chart1.Series.Add("SMA");
+			chart1.Series["SMA"].ChartType = SeriesChartType.Line;
+			chart1.Series["SMA"].XValueType = ChartValueType.Time;
+			chart1.Series["SMA"].YValueMembers = "EMA";
+			chart1.Series["SMA"].XValueMember = "TimeStamp";
+			chart1.Series["SMA"].BorderWidth = 2;
+			chart1.Series["SMA"].IsXValueIndexed = true;
+			chart1.Series["SMA"].Color = Color.Crimson;
+
 			chart1.ChartAreas.Add("0");
 			chart1.ChartAreas["0"].AxisY.IsStartedFromZero = false;
 			chart1.ChartAreas["0"].AxisY.IsStartedFromZero = false;
@@ -145,8 +154,8 @@ namespace Chart
 				HitBTC.d_Candle.Clear();
 
 			HitBTC.ReceiveMessages(true);
-			Trading.Add(symbol: Symbol, period: Period.M5, tradingQuantityInPercent: 100.0m, stopPercent: 20.0m, closePercent: 1.0m,
-				SmaPeriodFast: 15, SmaPeriodSlow: 5);			
+			Trading.Add(symbol: Symbol, period: Period.M5, tradingQuantityInPercent: 100.0m, stopPercent: 20.0m, closePercent: 2.0m,
+				SmaPeriodFast: 50, SmaPeriodSlow: 5);			
 
 			while (!HitBTC.Candles.ContainsKey(Symbol)) Thread.Sleep(1);
 			HitBTC.SocketMarketData.UnSubscribeCandles(symbol: Symbol);
@@ -168,6 +177,8 @@ namespace Chart
 				Trading.RSI[Symbol].Clear();
 			if (Trading.d_lRSI.ContainsKey(Symbol))
 				Trading.d_lRSI[Symbol].Clear();
+			if (Trading.d_lBB.ContainsKey(Symbol))
+				Trading.d_lBB[Symbol].Clear();
 
 			decimal BalanceUSD = Trading.DemoBalance["USD"].Available;
 			List<Candle> candles = HitBTC.Candles[Symbol].ToList();
@@ -176,27 +187,39 @@ namespace Chart
 				Trading.d_lSmaFast[Symbol].Add(Trading.SmaFast[Symbol].NextValue(candle.Close));
 				Trading.d_lSmaSlow[Symbol].Add(Trading.SmaSlow[Symbol].NextValue(candle.Close));
 				Trading.d_lRSI[Symbol].Add(Trading.RSI[Symbol].NextValue(candle.Close));
+				Trading.d_lBB[Symbol].Add(Trading.BB[Symbol].NextValue(candle.Close));
 				Trading.d_DateTimes[Symbol].Add(candle.TimeStamp);
 
-				if (Trading.RSI[Symbol].IsPrimed())
-					Trading.Run_7_RSI(Symbol, candle.Close);
+				if (HitBTC.d_Candle[Symbol].VolumeQuote > 0.5m)
+				{
+					if (Trading.RSI[Symbol].IsPrimed())
+						Trading.Run_7_RSI(Symbol, candle.Close);
+				}
 
 				var currBal = Trading.DemoBalance["USD"].Available;
 				if (currBal > BalanceUSD)
 					textBox1.BeginInvoke((MethodInvoker)(() =>
 					{
 						textBox1.AppendText("sell " + currBal.ToString().PadRight(10).Substring(0, 10) + "  " +
-							candle.Close.ToString().PadRight(10).Substring(0, 10) + "  " + 
-							Trading.RSI[Symbol].LastRSI.ToString().PadRight(10).Substring(0, 10) + "  " + candle.TimeStamp + "\r\n");
+							candle.Close.ToString().PadRight(10).Substring(0, 10) + "  " +
+							Trading.d_lRSI[Symbol].Last().ToString().PadRight(10).Substring(0, 10) + "  " + candle.TimeStamp + "\r\n");
 					}));
 				else if (currBal < BalanceUSD)
 					textBox1.BeginInvoke((MethodInvoker)(() =>
 					{
 						textBox1.AppendText("buy " + currBal.ToString().PadRight(10).Substring(0, 10) + "  " +
 							candle.Close.ToString().PadRight(10).Substring(0, 10) + "  " +
-							Trading.RSI[Symbol].LastRSI.ToString().PadRight(10).Substring(0, 10) + "  " + candle.TimeStamp + "\r\n");
+							Trading.d_lRSI[Symbol].Last().ToString().PadRight(10).Substring(0, 10) + "  " + candle.TimeStamp + "\r\n");
 					}));
 				BalanceUSD = currBal;
+			}
+
+			if (Trading.DemoBalance[HitBTC.Symbols[Symbol].BaseCurrency].Available > 0)
+			{
+				Trading.Sell(Symbol, candles.Last().Close, Trading.DemoBalance[HitBTC.Symbols[Symbol].BaseCurrency].Available);
+				textBox1.AppendText("sell " + Trading.DemoBalance["USD"].Available.ToString().PadRight(10).Substring(0, 10) + "  " +
+								candles.Last().Close.ToString().PadRight(10).Substring(0, 10) + "  " +
+								candles.Last().TimeStamp + "\r\n");
 			}
 
 			chart1.BeginInvoke((MethodInvoker)(() =>
@@ -205,10 +228,17 @@ namespace Chart
 				chart1.Series["SmaFast"].Points.Clear();
 				chart1.Series["SmaSlow"].Points.Clear();
 
-				//chart1.Series["Candles"].Points.DataBind(HitBTC.Candles[Symbol].ToList(), "TimeStamp", "Max,Min,Open,Close", "");
+				chart1.Series["Candles"].Points.DataBind(HitBTC.Candles[Symbol].ToList(), "TimeStamp", "Max,Min,Open,Close", "");
 				//chart1.Series["SmaFast"].Points.DataBindXY(Trading.d_DateTimes[Symbol].ToList(), Trading.d_lSmaFast[Symbol].ToList());
 				//chart1.Series["SmaSlow"].Points.DataBindXY(Trading.d_DateTimes[Symbol].ToList(), Trading.d_lSmaSlow[Symbol].ToList());
-				chart1.Series["SmaSlow"].Points.DataBindXY(Trading.d_DateTimes[Symbol].ToList(), Trading.d_lRSI[Symbol].ToList());
+				//chart1.Series["SmaSlow"].Points.DataBindXY(Trading.d_DateTimes[Symbol].ToList(), Trading.d_lRSI[Symbol].ToList());
+
+				var BU = Trading.d_lBB[Symbol].Select(v => v.BU).ToList();
+				var BD = Trading.d_lBB[Symbol].Select(v => v.BD).ToList();
+				var SMA = Trading.d_lBB[Symbol].Select(v => v.Sma).ToList();
+				chart1.Series["SmaFast"].Points.DataBindXY(Trading.d_DateTimes[Symbol].ToList(), BU);
+				chart1.Series["SmaSlow"].Points.DataBindXY(Trading.d_DateTimes[Symbol].ToList(), BD);
+				chart1.Series["SMA"].Points.DataBindXY(Trading.d_DateTimes[Symbol].ToList(), SMA);
 			}));
 
 			Trading.Save("1");

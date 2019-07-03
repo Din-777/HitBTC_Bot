@@ -130,10 +130,12 @@ namespace Trading
 		public Dictionary<string, SMA> SmaSlow = new Dictionary<string, SMA>();
 		public Dictionary<string, SMA> SmaFast = new Dictionary<string, SMA>();
 		public Dictionary<string, RSI> RSI = new Dictionary<string, RSI>();
+		public Dictionary<string, BB> BB = new Dictionary<string, BB>();
 
 		public Dictionary<string, List<decimal>> d_lSmaSlow;
 		public Dictionary<string, List<decimal>> d_lSmaFast;
 		public Dictionary<string, List<decimal>> d_lRSI;
+		public Dictionary<string, List<(decimal Sma, decimal BU, decimal BD)>> d_lBB;
 
 		private HitBTCSocketAPI HitBTC;
 		public bool DataFileIsloaded = false;
@@ -170,6 +172,7 @@ namespace Trading
 			d_lSmaSlow = new Dictionary<string, List<decimal>>();
 			d_lSmaFast = new Dictionary<string, List<decimal>>();
 			d_lRSI = new Dictionary<string, List<decimal>>();
+			d_lBB = new Dictionary<string, List<(decimal Sma, decimal BU, decimal BD)>>();
 
 			HitBTC.Closed += HitBTC_Closed;
 			HitBTC.MessageReceived += HitBTC_MessageReceived;
@@ -196,12 +199,14 @@ namespace Trading
 				SmaSlow.Add(symbol, new SMA(SmaPeriodSlow));
 			if (!RSI.ContainsKey(symbol))
 				RSI.Add(symbol, new RSI(14));
+			if (!BB.ContainsKey(symbol))
+				BB.Add(symbol, new BB(20));
 
 			//HitBTC.SocketMarketData.SubscribeTicker(symbol);
 			Thread.Sleep(10);
 			//HitBTC.SocketMarketData.SubscribeTrades(symbol, 5000);
 			Thread.Sleep(10);
-			HitBTC.SocketMarketData.SubscribeCandles(symbol, period, 100);
+			HitBTC.SocketMarketData.SubscribeCandles(symbol, period, 200);
 			Thread.Sleep(200);
 		}
 
@@ -408,17 +413,18 @@ namespace Trading
 			{
 				var SmaFastPrice = SmaFast[symbol].LastAverage;
 				var SmaSlowPrice = SmaSlow[symbol].LastAverage;
+				var SmaDiff = SmaFastPrice - SmaSlowPrice;
 				PendingOrders[symbol].CalcCurrProfitPercent(price);
 
 				var rsi_value = d_lRSI[symbol][d_lRSI[symbol].Count - 1];
 
 				if (PendingOrders[symbol].Side == "buy")
 				{
-					if (rsi_value < 30)
+					if (rsi_value < 20)
 					{
 						PendingOrders[symbol].Type = Type.Processed;
 					}
-					else if (rsi_value > 30)
+					else if (rsi_value > 20)
 					{
 						if(PendingOrders[symbol].Type == Type.Processed)
 							_Buy(PendingOrders[symbol], price: price);
@@ -426,11 +432,11 @@ namespace Trading
 				}
 				else if (PendingOrders[symbol].Side == "sell")
 				{
-					if(rsi_value > 70)
+					if(rsi_value > 80)
 					{
 						PendingOrders[symbol].Type = Type.Processed;
 					}
-					if (rsi_value > 70)
+					if (rsi_value > 80)
 					{
 						if(PendingOrders[symbol].Type == Type.Processed)
 							_Sell(pendingOrder: PendingOrders[symbol], price: price);
@@ -452,8 +458,6 @@ namespace Trading
 			{
 				PendingOrders.Remove(symbol);
 			}
-			else if (PendingOrders[symbol].Type == Type.New)
-				PendingOrders[symbol].Type = Type.Processed;
 		}
 
 		public (bool IsSell, decimal QuantityBase, decimal QuantityQuote) Sell(string symbol, decimal price, decimal quantityInBase, bool demo = true)
@@ -672,6 +676,7 @@ namespace Trading
 					d_lSmaFast[symbol].Add(SmaFast[symbol].NextValue(candle.Close));
 					d_lSmaSlow[symbol].Add(SmaFast[symbol].NextValue(candle.Close));
 					d_lRSI[symbol].Add(RSI[symbol].NextValue(candle.Close));
+					d_lBB[symbol].Add(BB[symbol].NextValue(candle.Close));
 					d_DateTimes[symbol].Add(candle.TimeStamp);
 				}
 				else
@@ -679,6 +684,7 @@ namespace Trading
 					d_lSmaFast[symbol][d_lSmaFast[symbol].Count - 1] = SmaFast[symbol].Value(candle.Close);
 					d_lSmaSlow[symbol][d_lSmaSlow[symbol].Count - 1] = SmaSlow[symbol].Value(candle.Close);
 					d_lRSI[symbol][d_lRSI[symbol].Count - 1] = RSI[symbol].Value(candle.Close);
+					d_lBB[symbol][d_lBB[symbol].Count - 1] = BB[symbol].Value(candle.Close);
 				}
 			}
 			else if (notification == "snapshotCandles" && symbol != null)
@@ -698,6 +704,9 @@ namespace Trading
 				if (!d_lRSI.ContainsKey(symbol))
 					d_lRSI.Add(symbol, new List<decimal>());
 
+				if (!d_lBB.ContainsKey(symbol))
+					d_lBB.Add(symbol, new List<(decimal Sma, decimal BU, decimal BD)>());
+
 				if (!d_DateTimes.ContainsKey(symbol))
 					d_DateTimes.Add(symbol, new List<DateTime>());
 
@@ -706,6 +715,7 @@ namespace Trading
 					d_lSmaFast[symbol].Add(SmaFast[symbol].NextValue(candle.Close));
 					d_lSmaSlow[symbol].Add(SmaSlow[symbol].NextValue(candle.Close));
 					d_lRSI[symbol].Add(RSI[symbol].NextValue(candle.Close));
+					d_lBB[symbol].Add(BB[symbol].NextValue(candle.Close));
 					d_DateTimes[symbol].Add(candle.TimeStamp);
 				}
 			}

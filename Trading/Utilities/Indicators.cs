@@ -1,4 +1,5 @@
-﻿using System;
+﻿using HitBTC.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -183,7 +184,7 @@ namespace Trading.Utilities
 
 	public class RSI
 	{
-		public int Period = 0;
+		public int Period = 14;
 		private int Counter = 0;
 		public decimal LastRSI = 0;
 		public decimal PrevValue = 0;
@@ -200,8 +201,6 @@ namespace Trading.Utilities
 		{
 			if (Counter == 0) PrevValue = value;
 			decimal diff = value - PrevValue;
-			decimal gain = 0;
-			decimal loss = 0;
 
 			if(Counter < Period)
 			{
@@ -236,7 +235,7 @@ namespace Trading.Utilities
 				LastRSI = 100.0m - (100.0m / (1.0m + rs));
 			}
 
-			Counter++;
+			Counter += 1;
 			PrevValue = value;
 			return LastRSI;
 		}
@@ -245,14 +244,9 @@ namespace Trading.Utilities
 		{
 			if (Counter == 0) PrevValue = value;
 			decimal diff = value - PrevValue;
-			decimal gain = 0;
-			decimal loss = 0;
 			decimal averageGain = 0;
 			decimal averageLoss = 0;
 			decimal rsi = 0;
-
-			if (diff >= 0) gain = diff;
-			if (diff < 0) loss = Math.Abs(diff);
 
 			if (Counter < Period)
 			{
@@ -265,7 +259,7 @@ namespace Trading.Utilities
 			{
 				averageGain = AverageGain / Period;
 				averageLoss = AverageLoss / Period;
-				decimal rs = AverageGain / AverageLoss;
+				decimal rs = averageGain / averageLoss;
 
 				rsi = 100.0m - (100.0m / (1.0m + rs));
 			}
@@ -301,6 +295,84 @@ namespace Trading.Utilities
 			Counter = 0;
 			LastRSI = 0;
 			PrevValue = 0;
+		}
+	}
+
+	public class BB
+	{
+		public int Period;
+		public List<decimal> QueueTP;
+
+		private (decimal Sma, decimal BU, decimal BD) LastBB = (0.0m , 0.0m, 0.0m);
+
+		public BB(int period = 20)
+		{
+			Period = period;
+			QueueTP = new List<decimal>();
+		}
+
+		public (decimal Sma, decimal BU, decimal BD) NextValue(decimal value)
+		{
+			if (QueueTP.Count > Period)
+				QueueTP.RemoveRange(0, QueueTP.Count - Period);
+
+			//var tp = (candle.Max + candle.Min + candle.Close) / 3.0m;
+			var tp = value;
+			QueueTP.Add(tp);
+			var average = QueueTP.Average();
+			var diff = 0.0;
+
+			foreach (var q in QueueTP)
+			{
+				diff += Math.Pow(Convert.ToDouble(q - average), 2);
+			}
+
+			var StdDev = Convert.ToDecimal(Math.Sqrt(diff / (Period - 1.0)));
+
+			LastBB.Sma = average;
+			LastBB.BU = average + (2.0m * StdDev);
+			LastBB.BD = average - (2.0m * StdDev);
+			
+			return LastBB;
+		}
+
+		public (decimal Sma, decimal BU, decimal BD) Value(decimal value)
+		{
+			(decimal Sma, decimal BU, decimal BD) bb = (0.0m, 0.0m, 0.0m);
+
+			var lastTP = QueueTP.Last();
+
+			var tp = value;
+			QueueTP[QueueTP.Count - 1] = tp;
+			var average = QueueTP.Average();
+			var diff = 0.0;
+
+			foreach (var q in QueueTP)
+			{
+				diff += Math.Pow(Convert.ToDouble(q - average), 2);
+			}
+
+			var StdDev = Convert.ToDecimal(Math.Sqrt(diff / (Period - 1.0)));
+
+			bb.Sma = average;
+			bb.BU = average + (2.0m * StdDev);
+			bb.BD = average - (2.0m * StdDev);
+
+			QueueTP[QueueTP.Count - 1] = lastTP;
+
+			return bb;
+		}
+
+		public bool IsPrimed()
+		{
+			if (QueueTP.Count >= Period) return true;
+			else return false;
+		}
+
+		public void Clear()
+		{
+			QueueTP.Clear();
+			LastBB = (0.0m, 0.0m, 0.0m);
 		}
 	}
 
