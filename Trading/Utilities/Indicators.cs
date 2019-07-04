@@ -97,7 +97,8 @@ namespace Trading.Utilities
 		}
 	}
 
-	[Serializable]
+	//??????????????????????????
+	[Serializable]			//??
 	public class iMACD
 	{
 		int pSlowEMA, pFastEMA, pSignalEMA;
@@ -157,7 +158,8 @@ namespace Trading.Utilities
 			else
 				return false;
 		}
-	}
+	}	  
+	//??????????????????????????
 
 	public class Revers
 	{
@@ -184,23 +186,24 @@ namespace Trading.Utilities
 
 	public class RSI
 	{
-		public int Period = 14;
-		private int Counter = 0;
+		public int Period = 14;		
 		public decimal LastRSI = 0;
-		public decimal PrevValue = 0;
+
+		private int Counter = 0;
+		private decimal PrevValue = 0;
+		private decimal AverageGain = 0;
+		private decimal AverageLoss = 0;
 
 		public RSI(int period)
 		{
 			Period = period;
 		}
 
-		decimal AverageGain = 0;
-		decimal AverageLoss = 0;
-
 		public decimal NextValue(decimal value)
 		{
 			if (Counter == 0) PrevValue = value;
 			decimal diff = value - PrevValue;
+			if (diff == 0) return LastRSI;
 
 			if(Counter < Period)
 			{
@@ -303,7 +306,7 @@ namespace Trading.Utilities
 		public int Period;
 		public List<decimal> QueueTP;
 
-		private (decimal Sma, decimal BU, decimal BD) LastBB = (0.0m , 0.0m, 0.0m);
+		private (decimal MA, decimal Upper, decimal Lower) LastBB = (0.0m , 0.0m, 0.0m);
 
 		public BB(int period = 20)
 		{
@@ -311,7 +314,7 @@ namespace Trading.Utilities
 			QueueTP = new List<decimal>();
 		}
 
-		public (decimal Sma, decimal BU, decimal BD) NextValue(decimal value)
+		public (decimal MA, decimal Upper, decimal Lower) NextValue(decimal value)
 		{
 			if (QueueTP.Count > Period)
 				QueueTP.RemoveRange(0, QueueTP.Count - Period);
@@ -329,16 +332,16 @@ namespace Trading.Utilities
 
 			var StdDev = Convert.ToDecimal(Math.Sqrt(diff / (Period - 1.0)));
 
-			LastBB.Sma = average;
-			LastBB.BU = average + (2.0m * StdDev);
-			LastBB.BD = average - (2.0m * StdDev);
+			LastBB.MA = average;
+			LastBB.Upper = average + (2.0m * StdDev);
+			LastBB.Lower = average - (2.0m * StdDev);
 			
 			return LastBB;
 		}
 
-		public (decimal Sma, decimal BU, decimal BD) Value(decimal value)
+		public (decimal MA, decimal Upper, decimal Lower) Value(decimal value)
 		{
-			(decimal Sma, decimal BU, decimal BD) bb = (0.0m, 0.0m, 0.0m);
+			(decimal MA, decimal Upper, decimal Lower) bb = (0.0m, 0.0m, 0.0m);
 
 			var lastTP = QueueTP.Last();
 
@@ -354,9 +357,9 @@ namespace Trading.Utilities
 
 			var StdDev = Convert.ToDecimal(Math.Sqrt(diff / (Period - 1.0)));
 
-			bb.Sma = average;
-			bb.BU = average + (2.0m * StdDev);
-			bb.BD = average - (2.0m * StdDev);
+			bb.MA = average;
+			bb.Upper = average + (2.0m * StdDev);
+			bb.Lower = average - (2.0m * StdDev);
 
 			QueueTP[QueueTP.Count - 1] = lastTP;
 
