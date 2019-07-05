@@ -8,14 +8,16 @@ namespace Trading.Utilities
 	[Serializable]
 	public class SMA
 	{
-		public List<decimal> Queue;
+		private List<decimal> Queue;
 		public int Period = 0;
 		public decimal LastAverage = 0;
+		public List<decimal> l_SMA;
 
 		public SMA(int period)
 		{
 			Period = period;
 			Queue = new List<decimal>();
+			l_SMA = new List<decimal>();
 		}
 
 		public decimal NextValue(decimal value)
@@ -25,9 +27,7 @@ namespace Trading.Utilities
 
 			Queue.Add(value);
 			LastAverage = Queue.Average();
-			//Queue.RemoveAt(Queue.Count - 1);
-			//Queue.Add(LastAverage);
-			//LastAverage = Queue.Average();
+			l_SMA.Add(LastAverage);
 
 			return LastAverage;
 		}
@@ -38,6 +38,7 @@ namespace Trading.Utilities
 			var average = Queue.Average();
 			LastAverage = average;
 			Queue.RemoveAt(Queue.Count - 1);
+			l_SMA[l_SMA.Count - 1] = LastAverage;
 
 			return average;
 		}
@@ -53,6 +54,7 @@ namespace Trading.Utilities
 		public void Clear()
 		{
 			Queue.Clear();
+			l_SMA.Clear();
 			LastAverage = 0;
 		}
 	}
@@ -202,6 +204,7 @@ namespace Trading.Utilities
 		public decimal NextValue(decimal value)
 		{
 			if (Counter == 0) PrevValue = value;
+			Counter += 1;
 			decimal diff = value - PrevValue;
 			if (diff == 0) return LastRSI;
 
@@ -216,6 +219,7 @@ namespace Trading.Utilities
 			{
 				AverageGain = AverageGain / Period;
 				AverageLoss = AverageLoss / Period;
+				if (AverageLoss == 0) AverageLoss = AverageGain;
 				decimal rs = AverageGain / AverageLoss;
 
 				LastRSI = 100.0m - (100.0m / (1.0m + rs));
@@ -233,12 +237,12 @@ namespace Trading.Utilities
 					AverageGain = (AverageGain * (Period - 1)) / Period;
 				}
 
+				if (AverageLoss == 0) AverageLoss = AverageGain;
 				decimal rs = AverageGain / AverageLoss;
 
 				LastRSI = 100.0m - (100.0m / (1.0m + rs));
 			}
 
-			Counter += 1;
 			PrevValue = value;
 			return LastRSI;
 		}
@@ -306,7 +310,7 @@ namespace Trading.Utilities
 		public int Period;
 		public List<decimal> QueueTP;
 
-		private (decimal MA, decimal Upper, decimal Lower) LastBB = (0.0m , 0.0m, 0.0m);
+		private (decimal Upper, decimal Middle, decimal Lower) LastBB = (0.0m , 0.0m, 0.0m);
 
 		public BB(int period = 20)
 		{
@@ -314,7 +318,7 @@ namespace Trading.Utilities
 			QueueTP = new List<decimal>();
 		}
 
-		public (decimal MA, decimal Upper, decimal Lower) NextValue(decimal value)
+		public (decimal Upper, decimal Middle, decimal Lower) NextValue(decimal value)
 		{
 			if (QueueTP.Count > Period)
 				QueueTP.RemoveRange(0, QueueTP.Count - Period);
@@ -332,17 +336,15 @@ namespace Trading.Utilities
 
 			var StdDev = Convert.ToDecimal(Math.Sqrt(diff / (Period - 1.0)));
 
-			LastBB.MA = average;
+			LastBB.Middle = average;
 			LastBB.Upper = average + (2.0m * StdDev);
 			LastBB.Lower = average - (2.0m * StdDev);
 			
 			return LastBB;
 		}
 
-		public (decimal MA, decimal Upper, decimal Lower) Value(decimal value)
+		public (decimal Upper, decimal Middle, decimal Lower) Value(decimal value)
 		{
-			(decimal MA, decimal Upper, decimal Lower) bb = (0.0m, 0.0m, 0.0m);
-
 			var lastTP = QueueTP.Last();
 
 			var tp = value;
@@ -357,13 +359,13 @@ namespace Trading.Utilities
 
 			var StdDev = Convert.ToDecimal(Math.Sqrt(diff / (Period - 1.0)));
 
-			bb.MA = average;
-			bb.Upper = average + (2.0m * StdDev);
-			bb.Lower = average - (2.0m * StdDev);
+			LastBB.Middle = average;
+			LastBB.Upper = average + (2.0m * StdDev);
+			LastBB.Lower = average - (2.0m * StdDev);
 
 			QueueTP[QueueTP.Count - 1] = lastTP;
 
-			return bb;
+			return LastBB;
 		}
 
 		public bool IsPrimed()

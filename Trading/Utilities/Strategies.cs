@@ -21,39 +21,40 @@ namespace Trading.Utilities
 			None = 0
 		}
 
-		public interface IStrategy
-		{
-			Signal Update(Candle candle);
-			void Clear();
-			int abc { get; set; }
-		}
+		public SellAtStopClosePrice SellAtLoseClosePrice;
+		public SimpleRSI SimpleRsi;
+		public BB SimpleBB;
+		public int IntSignal;
 
-		public List<IStrategy> l_Stratery = new List<IStrategy>();
-		public Signal Update(Candle candle)
+		public int Update(Candle candle)
 		{
 			Signal signal = Signal.None;
 			int isig = 0;
 
-			foreach(var s in l_Stratery)
-			{
-				isig += (int)s.Update(candle);
-			}
+			if (SellAtLoseClosePrice != null)
+				isig += (int)SellAtLoseClosePrice.Update(candle);
+			if (SimpleRsi != null)
+				isig += (int)SimpleRsi.Update(candle);
+			if (SimpleBB != null)
+				isig += (int)SimpleBB.Update(candle);
 
-			if (isig > 0) return signal = Signal.Buy;
-			else if (isig < 0) return signal = Signal.Sell;
-			else return signal = Signal.None;
+			if (isig > 1) isig = 1;
+			else if (isig < -1) isig = -1;
+			else isig = 0;
+
+			IntSignal = isig;
+			return isig;
 		}
 
-		public void SaveCsv(string fileNeme = "strategies.csv")
+		public void Clear()
 		{
-			using (var writer = new StreamWriter("strategies.csv"))
-			using (var csv = new CsvWriter(writer))
-			{
-				csv.WriteRecords(l_Stratery);
-			}
+			if (SellAtLoseClosePrice != null)
+				SellAtLoseClosePrice.Clear();
+			if (SimpleRsi != null)
+				SimpleRsi.Clear();
 		}
 
-		public class SellAtStopClosePrice : IStrategy
+		public class SellAtStopClosePrice
 		{
 			public int abc { get; set; }
 			private decimal _stopPercent;
@@ -96,6 +97,7 @@ namespace Trading.Utilities
 
 			public Signal Update(Candle candle)
 			{
+				if(ClosePrice == 0) return Signal = Signal.None;
 				decimal price = candle.Close;
 				if (price >= ClosePrice) Signal = Signal.Sell;
 				else if (price <= StopPrice) Signal = Signal.Sell;
@@ -115,9 +117,8 @@ namespace Trading.Utilities
 			}
 		}
 
-		public class SimpleRSI : Signals.SignalRSI, IStrategy
+		public class SimpleRSI : Signals.SignalRSI
 		{
-			public int abc { get; set; }
 			public Signal Signal = Signal.None;
 
 			public SimpleRSI(int rsiPeriod = 14) : base(rsiPepiod: rsiPeriod)
@@ -126,14 +127,14 @@ namespace Trading.Utilities
 
 			public new Signal Update(Candle candle)
 			{
-				State _state = base.Update(candle: candle);
+				base.Update(candle: candle);
 
 				if (!base.IsPrimed()) return Signal = Signal.None;
 
-				if (base.PrevState.LO30 && _state.UP30)
-					Signal = Signal.Buy;
-				else if (base.PrevState.UP70 && _state.UP50)
+				if (base.PrevState.UP70 && base.CurrState.UP50)
 					Signal = Signal.Sell;
+				else if (base.PrevState.LO30 && base.CurrState.UP30)
+					Signal = Signal.Buy;
 				else Signal = Signal.None;
 
 				return Signal;
@@ -141,13 +142,37 @@ namespace Trading.Utilities
 
 			public new void Clear ()
 			{
-
+				base.Clear();
 			}
 		}
 
-		public class adsf
+		public class BB : Signals.SignalBB
 		{
-			public decimal a { get; set; }
+			public Signal Signal = Signal.None;
+
+			public BB(int bbPeriod = 14) : base(bbPeriod: bbPeriod)
+			{
+			}
+
+			public new Signal Update(Candle candle)
+			{
+				base.Update(candle: candle);
+
+				if (!base.IsPrimed()) return Signal = Signal.None;
+
+				if (base.PrevState.PUpUpL && base.CurrState.PUpMdL)
+					Signal = Signal.Sell;
+				else if (base.PrevState.PLoLoL&& base.CurrState.PUpLoL)
+					Signal = Signal.Buy;
+				else Signal = Signal.None;
+
+				return Signal;
+			}
+
+			public new void Clear()
+			{
+				base.Clear();
+			}
 		}
 	}
 }

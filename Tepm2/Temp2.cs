@@ -6,12 +6,12 @@ using System.Threading.Tasks;
 using System.IO;
 using CsvHelper;
 
+using System.Threading;
 using HitBTC;
 using HitBTC.Models;
 using Trading;
 using Trading.Utilities;
 using Screen;
-using System.Threading;
 
 namespace Temp2
 {
@@ -19,15 +19,12 @@ namespace Temp2
 	{
 		static void Main()
 		{
-			Queue<int> Queue = new Queue<int>();
-			Queue.Enqueue(1); Queue.Enqueue(2); Queue.Enqueue(3); Queue.Enqueue(4);
+			Strategies s = new Strategies();
+			s.l_Stratery.Add(new Strategies.SellAtStopClosePrice(closePrice: 10));
+			s.l_Stratery.Add(new Strategies.SimpleRSI(rsiPeriod: 14));
 
-			double i = 0;
-
-			foreach(var q in Queue)
-			{
-				i += Math.Sqrt(q);
-			}
+			Candle candle = new Candle { Close = 11, TimeStamp = DateTime.Now };
+			int signal = s.Update(candle);
 
 			Console.ReadLine();
 		}

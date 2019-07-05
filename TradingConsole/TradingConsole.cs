@@ -65,9 +65,9 @@ namespace TradingConsole
 				string symbol = HitBTC.Symbols.ElementAt(i).Key;
 				string baseCurrency = HitBTC.Symbols.ElementAt(i).Value.BaseCurrency;
 				string quoteCurrency = HitBTC.Symbols.ElementAt(i).Value.QuoteCurrency;
-				if (symbol.EndsWith("BTC") || symbol.EndsWith("BTC"))
+				if (symbol.EndsWith("BTC"))//|| symbol.EndsWith("USDT"))
 				{
-					Trading.Add(symbol: symbol, period: Period.M5, tradingQuantityInPercent: 10.0m, stopPercent: 10.0m, closePercent: 1.0m,
+					Trading.Add(symbol: symbol, period: Period.M1, tradingQuantityInPercent: 10.0m, stopPercent: 1.0m, closePercent: 1.0m,
 							SmaPeriodFast: 20, SmaPeriodSlow: 5);
 				}
 			}
@@ -93,13 +93,10 @@ namespace TradingConsole
 		{
 			if(s == "updateCandles" && symbol != null)
 			{
-				if (Trading.SmaFast[symbol].IsPrimed() && Trading.SmaSlow[symbol].IsPrimed())
+				if (HitBTC.d_Candle[symbol].VolumeQuote > 0.5m)
 				{
-					if (HitBTC.d_Candle[symbol].VolumeQuote > 0.5m)
-					{
-						Trading.Run_7_RSI(symbol, HitBTC.d_Candle[symbol].Close);
-						Screen.Print();
-					}
+					Trading.Run_1_RSIStrategy(symbol: symbol, candle: HitBTC.d_Candle[symbol]);
+					Screen.Print();
 				}
 			}
 		}

@@ -127,16 +127,6 @@ namespace Trading
 		public Dictionary<string, OrderParametr> OrdersParameters;
 		public Dictionary<string, Balance> DemoBalance;
 
-		public Dictionary<string, SMA> SmaSlow = new Dictionary<string, SMA>();
-		public Dictionary<string, SMA> SmaFast = new Dictionary<string, SMA>();
-		public Dictionary<string, RSI> RSI = new Dictionary<string, RSI>();
-		public Dictionary<string, BB> BB = new Dictionary<string, BB>();
-
-		public Dictionary<string, List<decimal>> d_lSmaSlow;
-		public Dictionary<string, List<decimal>> d_lSmaFast;
-		public Dictionary<string, List<decimal>> d_lRSI;
-		public Dictionary<string, List<(decimal Sma, decimal BU, decimal BD)>> d_lBB;
-
 		private HitBTCSocketAPI HitBTC;
 		public bool DataFileIsloaded = false;
 		private string TradingDataFileName;
@@ -145,6 +135,8 @@ namespace Trading
 		private Timer timer;
 		private DateTime DateTimeStart;
 		private DateTime DateTimeStartCurr;
+
+		public Dictionary<string, Strategies> d_Strategies;
 
 		private void TimerTick(object obj)
 		{
@@ -155,6 +147,7 @@ namespace Trading
 			Console.Title = String.Format("Start: {0}  Total work time: {1}  Current work time {2}  Current time {3}",
 				start, elapsedTotalTime, elapsedCurrentTime, DateTime.Now.ToString("HH:mm:ss"));
 		}
+
 
 		public Trading(ref HitBTCSocketAPI hitBTC, bool console = true, bool demo = true)
 		{
@@ -169,10 +162,8 @@ namespace Trading
 			this.OrdersParameters = new Dictionary<string, OrderParametr>();
 			this.DemoBalance = new Dictionary<string, Balance>();
 			this.ClosedOrders = new List<PendingOrder>();
-			d_lSmaSlow = new Dictionary<string, List<decimal>>();
-			d_lSmaFast = new Dictionary<string, List<decimal>>();
-			d_lRSI = new Dictionary<string, List<decimal>>();
-			d_lBB = new Dictionary<string, List<(decimal Sma, decimal BU, decimal BD)>>();
+
+			d_Strategies = new Dictionary<string, Strategies>();
 
 			HitBTC.Closed += HitBTC_Closed;
 			HitBTC.MessageReceived += HitBTC_MessageReceived;
@@ -193,14 +184,11 @@ namespace Trading
 				SmaPeriodSlow = SmaPeriodSlow
 			};
 
-			if (!SmaFast.ContainsKey(symbol))
-				SmaFast.Add(symbol, new SMA(SmaPeriodFast));
-			if (!SmaSlow.ContainsKey(symbol))
-				SmaSlow.Add(symbol, new SMA(SmaPeriodSlow));
-			if (!RSI.ContainsKey(symbol))
-				RSI.Add(symbol, new RSI(14));
-			if (!BB.ContainsKey(symbol))
-				BB.Add(symbol, new BB(20));
+			if(!d_Strategies.ContainsKey(symbol))
+				d_Strategies.Add(symbol, new Strategies());
+			d_Strategies[symbol].SellAtLoseClosePrice = new Strategies.SellAtStopClosePrice(stopPercent: stopPercent, closePercent: closePercent);
+			d_Strategies[symbol].SimpleRsi = new Strategies.SimpleRSI(14);
+			d_Strategies[symbol].SimpleBB = new Strategies.BB(20);
 
 			//HitBTC.SocketMarketData.SubscribeTicker(symbol);
 			Thread.Sleep(10);
@@ -236,11 +224,46 @@ namespace Trading
 					ClosePercent = OrdersParameters[symbol].ClosePercent
 				};
 
+				d_Strategies[symbol].SellAtLoseClosePrice.StopPercent = OrdersParameters[symbol].StopPercent;
+				d_Strategies[symbol].SellAtLoseClosePrice.ClosePercent = OrdersParameters[symbol].ClosePercent;
+
 				if (!PendingOrders.ContainsKey(symbol))
 					PendingOrders.Add(symbol, PendingOrder);
 				else PendingOrders[symbol] = PendingOrder;
 			}
 			return PendingOrder;
+		}
+
+		public void Run_1_RSIStrategy(string symbol, Candle candle)
+		{
+			var price = candle.Close;
+			if (!PendingOrders.ContainsKey(symbol))
+			{
+				PendingOrderAdd(symbol, "buy", price).Type = Type.First;
+			}
+			else
+			{
+				PendingOrders[symbol].CalcCurrProfitPercent(price);
+				var signal = d_Strategies[symbol].IntSignal;
+
+				if (PendingOrders[symbol].Side == "buy")
+				{
+					if(signal > 0)
+						_Buy(PendingOrders[symbol], price: price);
+				}
+				else if (PendingOrders[symbol].Side == "sell")
+				{
+					if(signal < 0)
+						_Sell(pendingOrder: PendingOrders[symbol], price: price);
+				}
+			}
+
+			if ((PendingOrders[symbol].Type == Type.Deleted) ||
+				(PendingOrders[symbol].Type == Type.Closed))
+			{
+				PendingOrders.Remove(symbol);
+			}
+
 		}
 
 		public void ClosedOrderById(int id)
@@ -308,158 +331,7 @@ namespace Trading
 			else
 				pendingOrder.Type = Type.First;
 		}
-
-		public void Run_6(string symbol, decimal price)
-		{
-			if (!PendingOrders.ContainsKey(symbol))
-			{
-				PendingOrderAdd(symbol, "buy", price).Type = Type.First;
-			}
-			else
-			{
-				PendingOrders[symbol].CalcCurrProfitPercent(price);
-
-				var SmaFastPrice = SmaFast[symbol].LastAverage;
-				var SmaSlowPrice = SmaSlow[symbol].LastAverage;
-
-				if (PendingOrders[symbol].Side == "buy")
-				{
-					if (SmaFastPrice > SmaSlowPrice)
-					{
-						if (PendingOrders[symbol].Type == Type.Processed)
-						{
-							PendingOrders[symbol].Type = Type.Confirmed;
-						}
-						else if (PendingOrders[symbol].Type == Type.Confirmed)
-						{
-							_Buy(PendingOrders[symbol], price: price);
-						}
-					}
-					else if (SmaFastPrice < SmaSlowPrice && PendingOrders[symbol].Type == Type.First)
-					{
-						PendingOrders[symbol].Type = Type.New;
-					}
-					else if (SmaFastPrice < SmaSlowPrice && PendingOrders[symbol].Type == Type.Confirmed)
-					{
-						PendingOrders[symbol].Type = Type.Processed;
-					}
-
-				}
-				else if (PendingOrders[symbol].Side == "sell")
-				{
-					if (SmaFastPrice < SmaSlowPrice && SmaFastPrice > PendingOrders[symbol].ClosePrice)
-					{
-						if (PendingOrders[symbol].Type == Type.Processed)
-						{
-							PendingOrders[symbol].Type = Type.Confirmed;
-						}
-						else if (PendingOrders[symbol].Type == Type.Confirmed)
-						{
-							_Sell(pendingOrder: PendingOrders[symbol], price: price);
-							if (PendingOrders[symbol].Quantity < 100)
-							{
-								PendingOrders[symbol].Quantity += 1;
-								OrdersParameters[symbol].QuantityInPercentByBalanceQuote += 1;
-							}
-
-						}
-					}
-					else if (PendingOrders[symbol].Type == Type.Sell)
-					{
-						_Sell(pendingOrder: PendingOrders[symbol], price: price);
-					}
-					else if (PendingOrders[symbol].Type == Type.Confirmed)
-					{
-						PendingOrders[symbol].Type = Type.Processed;
-					}
-					else if (SmaFastPrice < PendingOrders[symbol].StopPrice)
-					{
-						_Sell(pendingOrder: PendingOrders[symbol], price: price);
-						if (PendingOrders[symbol].Quantity > 1)
-						{
-							PendingOrders[symbol].Quantity -= 1;
-							OrdersParameters[symbol].QuantityInPercentByBalanceQuote -= 1;
-						}
-					}
-
-					if (PendingOrders[symbol].CurrProfitPercent > 50.0m)
-					{
-						_Sell(pendingOrder: PendingOrders[symbol], price: price);
-						if (PendingOrders[symbol].Quantity < 100)
-						{
-							PendingOrders[symbol].Quantity += 1;
-							OrdersParameters[symbol].QuantityInPercentByBalanceQuote += 1;
-						}
-					}
-				}
-			}
-
-			if ((PendingOrders[symbol].Type == Type.Deleted) ||
-				(PendingOrders[symbol].Type == Type.Closed))
-			{
-				PendingOrders.Remove(symbol);
-			}
-			else if (PendingOrders[symbol].Type == Type.New)
-				PendingOrders[symbol].Type = Type.Processed;
-		}
-
-		public void Run_7_RSI(string symbol, decimal price)
-		{
-			if (!PendingOrders.ContainsKey(symbol))
-			{
-				PendingOrderAdd(symbol, "buy", price).Type = Type.First;
-			}
-			else
-			{
-				var SmaFastPrice = SmaFast[symbol].LastAverage;
-				var SmaSlowPrice = SmaSlow[symbol].LastAverage;
-				var SmaDiff = SmaFastPrice - SmaSlowPrice;
-				PendingOrders[symbol].CalcCurrProfitPercent(price);
-
-				var rsi_value = d_lRSI[symbol][d_lRSI[symbol].Count - 1];
-
-				if (PendingOrders[symbol].Side == "buy")
-				{
-					if (rsi_value < 20)
-					{
-						PendingOrders[symbol].Type = Type.Processed;
-					}
-					else if (rsi_value > 20)
-					{
-						if(PendingOrders[symbol].Type == Type.Processed)
-							_Buy(PendingOrders[symbol], price: price);
-					}
-				}
-				else if (PendingOrders[symbol].Side == "sell")
-				{
-					if(rsi_value > 80)
-					{
-						PendingOrders[symbol].Type = Type.Processed;
-					}
-					if (rsi_value > 80)
-					{
-						if(PendingOrders[symbol].Type == Type.Processed)
-							_Sell(pendingOrder: PendingOrders[symbol], price: price);
-					}
-					else if (SmaFastPrice < PendingOrders[symbol].StopPrice)
-					{
-						_Sell(pendingOrder: PendingOrders[symbol], price: price);
-					}
-
-					if (PendingOrders[symbol].CurrProfitPercent > 50.0m)
-					{
-						_Sell(pendingOrder: PendingOrders[symbol], price: price);
-					}
-				}
-			}
-
-			if ((PendingOrders[symbol].Type == Type.Deleted) ||
-				(PendingOrders[symbol].Type == Type.Closed))
-			{
-				PendingOrders.Remove(symbol);
-			}
-		}
-
+		
 		public (bool IsSell, decimal QuantityBase, decimal QuantityQuote) Sell(string symbol, decimal price, decimal quantityInBase, bool demo = true)
 		{
 			var result = (isSell: false, quantityBase: 0.0m, quantityQuote: 0.0m);
@@ -663,6 +535,9 @@ namespace Trading
 			if (notification == "updateCandles" && symbol != null)
 			{
 				var candle = HitBTC.d_Candle[symbol];
+
+				d_Strategies[symbol].Update(candle);
+
 				if (!d_DateTimes.ContainsKey(symbol))
 				{
 					d_DateTimes.Add(symbol, new List<DateTime>());
@@ -671,52 +546,22 @@ namespace Trading
 
 				if (candle.TimeStamp > d_DateTimes[symbol].Last())
 				{
-					d_DateTimes[symbol][d_DateTimes[symbol].Count - 1] = candle.TimeStamp;
-
-					d_lSmaFast[symbol].Add(SmaFast[symbol].NextValue(candle.Close));
-					d_lSmaSlow[symbol].Add(SmaFast[symbol].NextValue(candle.Close));
-					d_lRSI[symbol].Add(RSI[symbol].NextValue(candle.Close));
-					d_lBB[symbol].Add(BB[symbol].NextValue(candle.Close));
 					d_DateTimes[symbol].Add(candle.TimeStamp);
 				}
 				else
 				{
-					d_lSmaFast[symbol][d_lSmaFast[symbol].Count - 1] = SmaFast[symbol].Value(candle.Close);
-					d_lSmaSlow[symbol][d_lSmaSlow[symbol].Count - 1] = SmaSlow[symbol].Value(candle.Close);
-					d_lRSI[symbol][d_lRSI[symbol].Count - 1] = RSI[symbol].Value(candle.Close);
-					d_lBB[symbol][d_lBB[symbol].Count - 1] = BB[symbol].Value(candle.Close);
 				}
 			}
 			else if (notification == "snapshotCandles" && symbol != null)
 			{
-				if (!SmaFast.ContainsKey(symbol))
-					SmaFast.Add(symbol, new SMA(5));
-
-				if (!SmaSlow.ContainsKey(symbol))
-					SmaSlow.Add(symbol, new SMA(50));
-
-				if (!d_lSmaFast.ContainsKey(symbol))
-					d_lSmaFast.Add(symbol, new List<decimal>());
-
-				if (!d_lSmaSlow.ContainsKey(symbol))
-					d_lSmaSlow.Add(symbol, new List<decimal>());
-
-				if (!d_lRSI.ContainsKey(symbol))
-					d_lRSI.Add(symbol, new List<decimal>());
-
-				if (!d_lBB.ContainsKey(symbol))
-					d_lBB.Add(symbol, new List<(decimal Sma, decimal BU, decimal BD)>());
-
 				if (!d_DateTimes.ContainsKey(symbol))
 					d_DateTimes.Add(symbol, new List<DateTime>());
 
+				d_DateTimes[symbol].Clear();
 				foreach (var candle in HitBTC.Candles[symbol])
 				{
-					d_lSmaFast[symbol].Add(SmaFast[symbol].NextValue(candle.Close));
-					d_lSmaSlow[symbol].Add(SmaSlow[symbol].NextValue(candle.Close));
-					d_lRSI[symbol].Add(RSI[symbol].NextValue(candle.Close));
-					d_lBB[symbol].Add(BB[symbol].NextValue(candle.Close));
 					d_DateTimes[symbol].Add(candle.TimeStamp);
+					d_Strategies[symbol].Update(candle);
 				}
 			}
 		}
