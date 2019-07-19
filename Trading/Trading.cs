@@ -136,7 +136,7 @@ namespace Trading
 		private DateTime DateTimeStart;
 		private DateTime DateTimeStartCurr;
 
-		public Dictionary<string, Strategies> d_Strategies;
+		public Dictionary<string, Strategies.SafetyOrders> d_Strategies;
 
 		private void TimerTick(object obj)
 		{
@@ -147,8 +147,7 @@ namespace Trading
 			Console.Title = String.Format("Start: {0}  Total work time: {1}  Current work time {2}  Current time {3}",
 				start, elapsedTotalTime, elapsedCurrentTime, DateTime.Now.ToString("HH:mm:ss"));
 		}
-
-
+		
 		public Trading(ref HitBTCSocketAPI hitBTC, bool console = true, bool demo = true)
 		{
 			Demo = demo;
@@ -163,7 +162,7 @@ namespace Trading
 			this.DemoBalance = new Dictionary<string, Balance>();
 			this.ClosedOrders = new List<PendingOrder>();
 
-			d_Strategies = new Dictionary<string, Strategies>();
+			d_Strategies = new Dictionary<string, Strategies.SafetyOrders>();
 
 			HitBTC.Closed += HitBTC_Closed;
 			HitBTC.MessageReceived += HitBTC_MessageReceived;
@@ -185,16 +184,13 @@ namespace Trading
 			};
 
 			if(!d_Strategies.ContainsKey(symbol))
-				d_Strategies.Add(symbol, new Strategies());
-			d_Strategies[symbol].SellAtLoseClosePrice = new Strategies.SellAtStopClosePrice(stopPercent: stopPercent, closePercent: closePercent);
-			d_Strategies[symbol].SimpleRsi = new Strategies.SimpleRSI(14);
-			d_Strategies[symbol].SimpleBB = new Strategies.BB(20);
+				d_Strategies.Add(symbol, new Strategies.SafetyOrders(0));
 
 			//HitBTC.SocketMarketData.SubscribeTicker(symbol);
 			Thread.Sleep(10);
 			//HitBTC.SocketMarketData.SubscribeTrades(symbol, 5000);
 			Thread.Sleep(10);
-			HitBTC.SocketMarketData.SubscribeCandles(symbol, period, 200);
+			HitBTC.SocketMarketData.SubscribeCandles(symbol, period, 1000);
 			Thread.Sleep(200);
 		}
 
@@ -224,8 +220,7 @@ namespace Trading
 					ClosePercent = OrdersParameters[symbol].ClosePercent
 				};
 
-				d_Strategies[symbol].SellAtLoseClosePrice.StopPercent = OrdersParameters[symbol].StopPercent;
-				d_Strategies[symbol].SellAtLoseClosePrice.ClosePercent = OrdersParameters[symbol].ClosePercent;
+				d_Strategies[symbol] = new Strategies.SafetyOrders(openPrice: price, takeProfitPercent: 1, stopLosePercent: 7);
 
 				if (!PendingOrders.ContainsKey(symbol))
 					PendingOrders.Add(symbol, PendingOrder);
@@ -244,17 +239,28 @@ namespace Trading
 			else
 			{
 				PendingOrders[symbol].CalcCurrProfitPercent(price);
-				var signal = d_Strategies[symbol].IntSignal;
+				var signal = d_Strategies[symbol].Update(price: price);
 
 				if (PendingOrders[symbol].Side == "buy")
 				{
-					if(signal > 0)
-						_Buy(PendingOrders[symbol], price: price);
+					_Buy(PendingOrders[symbol], price: price);
+					d_Strategies[symbol] = new Strategies.SafetyOrders(price);
 				}
 				else if (PendingOrders[symbol].Side == "sell")
 				{
-					if(signal < 0)
+					if(signal == Strategies.Signal.Sell)
 						_Sell(pendingOrder: PendingOrders[symbol], price: price);
+
+					if (signal == Strategies.Signal.Buy)
+					{
+						var result = Buy(symbol: symbol, price: price,
+							quantityInQuote: PendingOrders[symbol].QuantityInUSDBuy);
+						if (result.IsBuy)
+						{
+							PendingOrders[symbol].QuantityInUSDBuy += result.QuantityQuote;
+							PendingOrders[symbol].Quantity += result.QuantityBase;
+						}
+					}
 				}
 			}
 
