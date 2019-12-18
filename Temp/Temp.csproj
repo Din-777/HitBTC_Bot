@@ -73,10 +73,6 @@
       <Project>{E55BA61D-00D7-4556-9887-52AB104C888B}</Project>
       <Name>Trading</Name>
     </ProjectReference>
-    <ProjectReference Include="..\ViewChart\ViewChart.csproj">
-      <Project>{29627f60-fbca-42c0-89bd-9419fdffdef6}</Project>
-      <Name>ViewChart</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

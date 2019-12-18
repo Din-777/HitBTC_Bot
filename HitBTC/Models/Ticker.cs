@@ -53,7 +53,7 @@ namespace HitBTC.Models
         /// <summary>
         /// Volume in second currency per last 24h + last incomplete minute
         /// </summary>
-        [JsonProperty("volumeQuoute")]
+        [JsonProperty("volumeQuote")]
         public decimal VolumeQuoute { get; set; }
 
         /// <summary>

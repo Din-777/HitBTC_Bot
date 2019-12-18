@@ -46,9 +46,9 @@ namespace HitBTC
 			}
 			catch
 			{
-				//Console.SetCursorPosition(0, 0);
-				//Console.Clear();
-				//Console.WriteLine("Connecting...");
+				Console.SetCursorPosition(0, 0);
+				Console.Clear();
+				Console.WriteLine("Connecting...");
 			}
 		}
 		public void SocketConnect()
@@ -134,6 +134,7 @@ namespace HitBTC
 				{
 					this.Authorized = true;
 					MessageType = "auth";
+					symbol = e.Message;
 				}
 				else if (id == "balance")
 				{
@@ -202,7 +203,8 @@ namespace HitBTC
 
 							d_Tickers[Ticker.Symbol] = Ticker;
 
-							MessageType = "ticker";
+							symbol = Ticker.Symbol;
+							MessageType = "subscribeTicker";
 						}
 					}
 				}

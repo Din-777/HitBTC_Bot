@@ -24,6 +24,18 @@ namespace Trading
 		Additional
 	}
 
+	public class OrderBuy
+	{
+		public string Symbol;
+		public decimal BuyPrice;
+	}
+
+	public class OrderSell
+	{
+		public string Symbol;
+		public decimal SellPrice;
+	}
+
 	[Serializable]
 	public class PendingOrder : IComparable<PendingOrder>
 	{
@@ -121,7 +133,10 @@ namespace Trading
 	}
 
 	public class Trading
-	{		
+	{
+		public Dictionary<string, OrderBuy>  d_OrdersBuy;
+		public Dictionary<string, OrderSell> d_OrdersSell;
+
 		public Dictionary<string, PendingOrder> PendingOrders;
 		public List<PendingOrder> ClosedOrders;
 		public Dictionary<string, OrderParametr> OrdersParameters;
@@ -141,7 +156,7 @@ namespace Trading
 		private void TimerTick(object obj)
 		{
 			string start = DateTimeStart.ToString();
-			string elapsedTotalTime = (DateTime.Now - DateTimeStart).ToString(@"dd\ hh\:mm\:ss");
+			string elapsedTotalTime   = (DateTime.Now - DateTimeStart).ToString(@"dd\ hh\:mm\:ss");
 			string elapsedCurrentTime = (DateTime.Now - DateTimeStartCurr).ToString(@"dd\ hh\:mm\:ss");
 
 			Console.Title = String.Format("Start: {0}  Total work time: {1}  Current work time {2}  Current time {3}",
@@ -154,13 +169,16 @@ namespace Trading
 			DateTimeStart = DateTime.Now;
 			DateTimeStartCurr = DateTime.Now;
 			if (console)
-				timer = new Timer(new TimerCallback(TimerTick), null, 0, 500);
+				timer = new Timer(new TimerCallback(TimerTick), null, 0, 1000);
 
 			this.HitBTC = hitBTC;
 			this.PendingOrders = new Dictionary<string, PendingOrder>();
 			this.OrdersParameters = new Dictionary<string, OrderParametr>();
 			this.DemoBalance = new Dictionary<string, Balance>();
 			this.ClosedOrders = new List<PendingOrder>();
+
+			this.d_OrdersBuy  = new Dictionary<string, OrderBuy>();
+			this.d_OrdersSell = new Dictionary<string, OrderSell>();
 
 			d_Strategies = new Dictionary<string, Strategies.SafetyOrders>();
 

@@ -19,12 +19,6 @@ namespace Temp2
 	{
 		static void Main()
 		{
-			Strategies s = new Strategies();
-			s.l_Stratery.Add(new Strategies.SellAtStopClosePrice(closePrice: 10));
-			s.l_Stratery.Add(new Strategies.SimpleRSI(rsiPeriod: 14));
-
-			Candle candle = new Candle { Close = 11, TimeStamp = DateTime.Now };
-			int signal = s.Update(candle);
 
 			Console.ReadLine();
 		}
