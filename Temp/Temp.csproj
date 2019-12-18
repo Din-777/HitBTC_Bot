@@ -33,6 +33,12 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="CsvHelper, Version=12.0.0.0, Culture=neutral, PublicKeyToken=8c4959082be5c823, processorArchitecture=MSIL">
+      <HintPath>..\packages\CsvHelper.12.2.2\lib\net45\CsvHelper.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.12.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.ValueTuple, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
@@ -56,7 +62,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\HitBTC\HitBTC.csproj">
-      <Project>{DB31C129-2D33-4F37-A767-6AB8AE0B324C}</Project>
+      <Project>{db31c129-2d33-4f37-a767-6ab8ae0b324c}</Project>
       <Name>HitBTC</Name>
     </ProjectReference>
     <ProjectReference Include="..\Screen\Screen.csproj">

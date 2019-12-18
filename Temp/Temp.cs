@@ -47,8 +47,7 @@ namespace Temp
 
 			Trading.DemoBalance = HitBTC.Balance;
 
-			HitBTC.SocketTrading.SubscribeReports();
-			while (HitBTC.MessageType != "balance") { Thread.Sleep(1); }
+			HitBTC.SocketMarketData.SubscribeTicker("USDTBTC");
 
 
 			Console.ReadLine();
@@ -56,8 +55,9 @@ namespace Temp
 
 		private static void HitBTCSocket_MessageReceived(string s, string symbol)
 		{
-			if (s == "updateCandles" && symbol != null)
+			if (s == "subscribeTicker" && symbol != null)
 			{
+				Console.WriteLine(HitBTC.d_Tickers.Last());
 			}
 		}
 	}
