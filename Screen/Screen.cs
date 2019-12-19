@@ -22,13 +22,16 @@ namespace Screen
 			Trading = trading;
 			Console.CursorVisible = false;
 			TradingDataFileName = sfn;
+
+			//Console.SetBufferSize(127, 50);
+			Console.SetWindowSize(127, 50);
 		}
 
 		private int ClosedOrdersCount = 99999999;
 		private int StaticId = 99999999;
 
 		static int column_1 = 0;               // Tickers
-		static int column_2 = 60;              // Pending orders
+		static int column_2 = 30;              // Pending orders
 		static int column_3 = column_2 + 50;   // Closed orders
 		static int column_4 = column_3 + 20;   //
 
@@ -88,14 +91,19 @@ namespace Screen
 		public void PrintBalance(int column, int row, int count, Dictionary<string, Balance> Balances)
 		{
 			Balances = Balances.OrderByDescending(pair => pair.Value.Available).ToDictionary(pair => pair.Key, pair => pair.Value);
-			for (int i = 0; i < count; i++)
+
+			Console.SetCursorPosition(column, row);
+			Console.Write("{0}  {1}", Balances["USD"].Currency.PadRight(8),
+										Balances["USD"].Available.ToString().PadRight(10).Substring(0, 10));
+
+			for (int i = 1; i < count; i++)
 			{
 				if (i < Balances.Count)
 				{
 					var Balance = Balances.ElementAt(i);
-					Console.SetCursorPosition(column_1, i + row);
+					Console.SetCursorPosition(column, i + row);
 					Console.Write("{0}  {1}", Balance.Value.Currency.PadRight(8),
-												Balance.Value.Available.ToString().PadRight(10).Substring(0, 10));
+											  Balance.Value.Available.ToString().PadRight(10).Substring(0, 10));
 				}
 				else if (i > Balances.Count)
 					return;
@@ -104,35 +112,37 @@ namespace Screen
 
 		public void Print()
 		{
-			var t = Trading.PendingOrders.Select(kvp => kvp.Value).ToList();
-			var tempPendingOrders = t.OrderByDescending(o => o.Side == "sell" ? o.CurrProfitInUSD : -333.0m).ToList();
-			Trading.PendingOrders = tempPendingOrders.ToDictionary(l => l.Symbol);
+			Console.Clear();
+			Console.SetCursorPosition(column_1, 0);
+			Console.Write("Open orders: {0}", Trading.d_OrdersBuy.Count + Trading.d_OrdersSell.Count);
+			Console.SetCursorPosition(column_2, 0);
+			Console.Write("State: {0}", HitBTC.socket.State.ToString());
+			Console.SetCursorPosition(column_1, 1);
+			Console.Write("Buy orders");
+			Console.SetCursorPosition(column_1, 2);
+			Console.Write("Symbol     Distance %");
 
-			if (StaticId != PendingOrder.StaticId)
+			for (int i = 0; i <  Trading.d_OrdersBuy.Count; i++)
 			{
-				Console.SetCursorPosition(column_1, 0);
-				Console.Write("Pending orders {0}  Id {1}", tempPendingOrders.Count, PendingOrder.StaticId);
-				Console.SetCursorPosition(column_1, 1);
-				Console.Write("Id    Sym       Side   Open        Close       Profit");
-
-				Console.SetCursorPosition(column_2, 0);
-				decimal sumProfit = Trading.ClosedOrders.Sum(x => x.CurrProfitInUSD);
-				Console.Write("Closed orders {0}  {1}", Trading.ClosedOrders.Count, sumProfit);
-				Console.SetCursorPosition(column_2, 1);
-				Console.Write("Id    Sym       Side   Open        Close       Profit");
-
-				Console.SetCursorPosition(column_1, series_2 + 4);
-				Console.Write("Balance");
-
-				PrintClosedOrders(column: column_2, row: 2, count: 44, ClosedOrders: Trading.ClosedOrders);
-				PrintBalance(column: column_1, row: series_2 + 5, count: series_2, Trading.DemoBalance);
-
-				StaticId = PendingOrder.StaticId;
+				Console.SetCursorPosition(column_1, i + 3);
+				Console.Write("{0} {1}", Trading.d_OrdersBuy.ElementAt(i).Value.Symbol.PadRight(10),
+										  Trading.d_OrdersBuy.ElementAt(i).Value.Distance.ToString().PadRight(10).Substring(0, 10));
 			}
 
-			PrintPendingOrders(column: column_1, row: 2, count: series_2, tempPendingOrders);
 
-			ClosedOrdersCount = Trading.ClosedOrders.Count;
+			Console.SetCursorPosition(column_2, 1);
+			Console.Write("Sell orders");
+			Console.SetCursorPosition(column_2, 2);
+			Console.Write("Symbol     Distance %");
+
+			for (int i = 0; i < Trading.d_OrdersSell.Count; i++)
+			{
+				Console.SetCursorPosition(column_2, i + 3);
+				Console.Write("{0} {1}", Trading.d_OrdersSell.ElementAt(i).Value.Symbol.PadRight(10),
+										  Trading.d_OrdersSell.ElementAt(i).Value.Distance.ToString().PadRight(10).Substring(0, 10));
+			}
+
+			PrintBalance(column: column_1, row: 30, count: 15, Balances: Trading.DemoBalance);
 		}
 
 		public void PrintBalance()

@@ -57,37 +57,17 @@ namespace Temp
 				Thread.Sleep(10);
 			}			
 
-			Timer timer = new Timer(new TimerCallback(BotStep), null, 0, 1000*60*1);
+			Timer timer = new Timer(new TimerCallback(BotStep), null, 0, 1000*60*5);
+			Trading.DateTimeStartCurr = DateTime.Now;
 
 			Console.ReadLine();
 		}
 
-		private static void BotStep(object state)
-		{
-			Dictionary<string, Ticker> d_Tickers_sort =
-				HitBTC.d_Tickers.Where(v => v.Value.VolumeQuoute > 10000m)
-					.OrderByDescending(v => ((v.Value.Ask - v.Value.Bid) / v.Value.Bid) * v.Value.VolumeQuoute)
-					.ToDictionary(v => v.Value.Symbol, v => v.Value);
-
-
-			for (int i = 0; i < 10; i++)
-			{
-				Trading.d_OrdersBuy.Add(d_Tickers_sort[i].Symbol, new Trading.OrderBuy(Symbol= d_Tickers_sort[i].Symbol, BuyPrice = d_Tickers_sort[i].Bid));
-				//d_Tickers_sort
-			}
-		}
+		
 
 		private static void HitBTCSocket_MessageReceived(string s, string symbol)
 		{
-			if (s == "subscribeTicker")
-			{
-
-			}
-
-			if (s == "auth")
-			{
-				Console.WriteLine(symbol);
-			}
+			
 		}
 	}
 }

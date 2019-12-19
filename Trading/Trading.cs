@@ -24,16 +24,24 @@ namespace Trading
 		Additional
 	}
 
+	[Serializable]
 	public class OrderBuy
 	{
 		public string Symbol;
 		public decimal BuyPrice;
+		public decimal Quantity;
+		public decimal Distance;
 	}
 
+	[Serializable]
 	public class OrderSell
 	{
 		public string Symbol;
+		public decimal BuyPrice;
 		public decimal SellPrice;
+		public decimal Quantity;
+		public decimal Profit;
+		public decimal Distance;
 	}
 
 	[Serializable]
@@ -130,6 +138,9 @@ namespace Trading
 		public Dictionary<string, Balance> DemoBalance;
 		public Dictionary<string, OrderParametr> OrdersParameters;
 		public Dictionary<string, PendingOrder> PendingOrders;
+
+		public Dictionary<string, OrderBuy> d_OrdersBuy;
+		public Dictionary<string, OrderSell> d_OrdersSell;
 	}
 
 	public class Trading
@@ -149,7 +160,7 @@ namespace Trading
 
 		private Timer timer;
 		private DateTime DateTimeStart;
-		private DateTime DateTimeStartCurr;
+		public  DateTime DateTimeStartCurr;
 
 		public Dictionary<string, Strategies.SafetyOrders> d_Strategies;
 
@@ -282,8 +293,7 @@ namespace Trading
 				}
 			}
 
-			if ((PendingOrders[symbol].Type == Type.Deleted) ||
-				(PendingOrders[symbol].Type == Type.Closed))
+			if ((PendingOrders[symbol].Type == Type.Deleted) ||	(PendingOrders[symbol].Type == Type.Closed))
 			{
 				PendingOrders.Remove(symbol);
 			}
@@ -481,7 +491,11 @@ namespace Trading
 					DemoBalance = DemoBalance,
 					ClosedOrders = ClosedOrders,
 					OrdersParameters = OrdersParameters,
-					PendingOrders = PendingOrders
+					PendingOrders = PendingOrders,
+
+					d_OrdersBuy = d_OrdersBuy,
+					d_OrdersSell = d_OrdersSell
+
 				});
 			}
 
@@ -504,6 +518,9 @@ namespace Trading
 					PendingOrders = saveObject.PendingOrders;
 					OrdersParameters = saveObject.OrdersParameters;
 					PendingOrder.StaticId = saveObject.StaticId;
+
+					d_OrdersBuy = saveObject.d_OrdersBuy;
+					d_OrdersSell = saveObject.d_OrdersSell;
 
 					if (DateTimeStart == null)
 						DateTimeStart = DateTime.Now;
