@@ -98,15 +98,11 @@ namespace Screen
 
 			for (int i = 1; i < count; i++)
 			{
-				if (i < Balances.Count)
-				{
-					var Balance = Balances.ElementAt(i);
-					Console.SetCursorPosition(column, i + row);
-					Console.Write("{0}  {1}", Balance.Value.Currency.PadRight(8),
-											  Balance.Value.Available.ToString().PadRight(10).Substring(0, 10));
-				}
-				else if (i > Balances.Count)
-					return;
+				var Balance = Balances.ElementAt(i);
+				Console.SetCursorPosition(column, i + row);
+				Console.Write("{0}  {1}", Balance.Value.Currency.PadRight(8),
+										Balance.Value.Available.ToString().PadRight(10).Substring(0, 10));
+				
 			}
 		}
 
@@ -143,6 +139,11 @@ namespace Screen
 			}
 
 			PrintBalance(column: column_1, row: 30, count: 15, Balances: Trading.DemoBalance);
+		}
+
+		public async void PrintAsync()
+		{
+			await Task.Run(() => Print());
 		}
 
 		public void PrintBalance()

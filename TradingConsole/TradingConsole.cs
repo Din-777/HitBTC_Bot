@@ -13,6 +13,7 @@ using Screen;
 using System.Runtime.InteropServices;
 using System.IO;
 using System.Diagnostics;
+using System.Threading.Tasks;
 
 namespace TradingConsole
 {
@@ -77,7 +78,7 @@ namespace TradingConsole
 			
 			//HitBTC.MessageReceived += HitBTCSocket_MessageReceived;
 
-			Timer timer = new Timer(new TimerCallback(BotStep), null, 0, 1000 * 60 * 5);
+			Timer timer = new Timer(new TimerCallback(BotStep), null, 0, 1000 * 60 * 1);
 			Trading.DateTimeStartCurr = DateTime.Now;
 
 			//Process.Start("https://hitbtc.com/exchange/BTC-to-USDT");
@@ -99,8 +100,8 @@ namespace TradingConsole
 			Dictionary<string, Ticker> d_Tickers_sort =
 				HitBTC.d_Tickers.Where(v => v.Value.VolumeQuoute > 10000m)
 					.OrderByDescending(v => ((v.Value.Ask - v.Value.Bid) / v.Value.Bid) * v.Value.VolumeQuoute)
-					.OrderByDescending(v => 100.0m / (v.Value.Bid / v.Value.Ask) - 100.0m)
-					.Where(v => (100.0m / (v.Value.Bid / v.Value.Ask) - 100.0m) > 0.5m)
+					//.OrderByDescending(v => 100.0m / (v.Value.Bid / v.Value.Ask) - 100.0m)
+					.Where(v => (100.0m / (v.Value.Bid / v.Value.Ask) - 100.0m) > 0.2m)
 					.ToDictionary(v => v.Value.Symbol, v => v.Value);
 
 
@@ -143,10 +144,11 @@ namespace TradingConsole
 
 			foreach (var v in Trading.d_OrdersSell.Values)
 			{
-				v.Distance = 100.0m / (HitBTC.d_Tickers[v.Symbol].Bid / v.SellPrice) - 100.0m;
+				if(HitBTC.d_Tickers.ContainsKey(v.Symbol))
+					v.Distance = 100.0m / (HitBTC.d_Tickers[v.Symbol].Bid / v.SellPrice) - 100.0m;
 			}
 
-			Screen.Print();
+			Screen.PrintAsync();
 			Trading.Save(TradingDataFileName);
 		}
 
@@ -161,6 +163,8 @@ namespace TradingConsole
 						Trading.DemoBalance["USD"].Available -= HitBTC.d_Tickers[symbol].Ask * Trading.d_OrdersBuy[symbol].Quantity;
 						Trading.DemoBalance[HitBTC.Symbols[symbol].BaseCurrency].Available += Trading.d_OrdersBuy[symbol].Quantity;
 						Trading.d_OrdersBuy.Remove(symbol);
+
+						Screen.PrintAsync();
 					}
 				}
 
@@ -170,9 +174,13 @@ namespace TradingConsole
 					{
 						Trading.DemoBalance["USD"].Available += HitBTC.d_Tickers[symbol].Bid * Trading.DemoBalance[HitBTC.Symbols[symbol].BaseCurrency].Available;
 						Trading.DemoBalance[HitBTC.Symbols[symbol].BaseCurrency].Available = 0;
-						Trading.d_OrdersSell.Remove(symbol);						
+						Trading.d_OrdersSell.Remove(symbol);
+
+						Screen.PrintAsync();
 					}
 				}
+
+				Task task3 = Task.Run(() => Console.WriteLine("Task3 is executed"));
 			}
 
 			if (s == "auth")

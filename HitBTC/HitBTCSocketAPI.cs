@@ -9,6 +9,7 @@ using WebSocket4Net;
 using HitBTC.Models;
 using Newtonsoft.Json.Linq;
 using HitBTC.Categories;
+using System.Collections.Concurrent;
 
 namespace HitBTC
 {
@@ -25,7 +26,7 @@ namespace HitBTC
 		public bool Authorized = false;
 		public Error Error;
 		public Ticker Ticker;
-		public Dictionary<string, Ticker> d_Tickers = new Dictionary<string, Ticker>();
+		public ConcurrentDictionary<string, Ticker> d_Tickers = new ConcurrentDictionary<string, Ticker>();
 		public List<Ticker> L_Tickers = new List<Ticker>();
 		public Dictionary<string, Balance> Balance;
 		public SocketOrederResult NewOrederResult;
@@ -199,7 +200,7 @@ namespace HitBTC
 							if (L_Tickers.Count > 20) L_Tickers.RemoveAt(0);
 
 							if (!d_Tickers.ContainsKey(Ticker.Symbol))
-								d_Tickers.Add(Ticker.Symbol, new Ticker());
+								d_Tickers.TryAdd(Ticker.Symbol, new Ticker());
 
 							d_Tickers[Ticker.Symbol] = Ticker;
 
