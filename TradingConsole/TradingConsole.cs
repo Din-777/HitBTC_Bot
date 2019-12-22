@@ -131,14 +131,17 @@ namespace TradingConsole
 					(Trading.d_OrdersSell.ContainsKey(b.Currency + "USD") == false || !Trading.d_OrdersSell.ContainsKey(b.Currency + "USDT") == false))
 				{
 					string symbol = HitBTC.Symbols.ContainsKey(b.Currency + "USD") ? b.Currency + "USD" : b.Currency + "USDT";
-					Trading.d_OrdersSell.Add(symbol,
-						new Trading.OrderSell
-						{
-							Symbol = symbol,
-							BuyPrice = 0,
-							SellPrice = HitBTC.d_Tickers[symbol].Ask,
-							Quantity = b.Available
-						});
+					if (!Trading.d_OrdersSell.ContainsKey(symbol))
+					{
+						Trading.d_OrdersSell.Add(symbol,
+							new Trading.OrderSell
+							{
+								Symbol = symbol,
+								BuyPrice = 0,
+								SellPrice = HitBTC.d_Tickers[symbol].Ask,
+								Quantity = b.Available
+							});
+					}
 				}
 			}
 
@@ -158,11 +161,14 @@ namespace TradingConsole
 			{
 				if (Trading.d_OrdersBuy[symbol].BuyPrice >= HitBTC.d_Tickers[symbol].Ask)
 				{
-					Trading.DemoBalance["USD"].Available -= HitBTC.d_Tickers[symbol].Ask * Trading.d_OrdersBuy[symbol].Quantity;
-					Trading.DemoBalance[HitBTC.Symbols[symbol].BaseCurrency].Available += Trading.d_OrdersBuy[symbol].Quantity;
-					Trading.d_OrdersBuy.Remove(symbol);
+					if (Trading.DemoBalance["USD"].Available - (HitBTC.d_Tickers[symbol].Ask * Trading.d_OrdersBuy[symbol].Quantity) >= 0)
+					{
+						Trading.DemoBalance["USD"].Available -= HitBTC.d_Tickers[symbol].Ask * Trading.d_OrdersBuy[symbol].Quantity;
+						Trading.DemoBalance[HitBTC.Symbols[symbol].BaseCurrency].Available += Trading.d_OrdersBuy[symbol].Quantity;
+						Trading.d_OrdersBuy.Remove(symbol);
 
-					Screen.PrintAsync();
+						Screen.PrintAsync();
+					}
 				}
 			}
 

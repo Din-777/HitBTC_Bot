@@ -622,7 +622,7 @@ namespace Trading
 			foreach (var p in OrdersParameters)
 			{
 				//HitBTC.SocketMarketData.SubscribeTicker(p.Key);
-				HitBTC.SocketMarketData.SubscribeCandles(p.Key, period: p.Value.Period, 500);
+				//HitBTC.SocketMarketData.SubscribeCandles(p.Key, period: p.Value.Period, 500);
 				Thread.Sleep(200);
 				//HitBTC.SocketMarketData.SubscribeTrades(p.Key, 10);
 			}
